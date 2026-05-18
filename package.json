@@ -1,6 +1,6 @@
 {
   "name": "poe2-campaign-codex-overlay",
-  "version": "0.2.0",
+  "version": "0.2.8",
   "description": "Safe desktop overlay helper for Path of Exile 2 campaign routing.",
   "main": "dist-electron/main/main.js",
   "scripts": {
@@ -11,7 +11,11 @@
     "check:release": "node scripts/check-release-files.cjs",
     "dist:check": "npm run dist && npm run check:release",
     "clean:release": "node scripts/clean-release.cjs",
-    "dist:clean": "npm run clean:release && npm run dist && npm run check:release"
+    "dist:clean": "npm run clean:release && npm run dist && npm run check:release",
+    "test": "npm run test:regression",
+    "test:regression": "tsc -p tsconfig.test.json && node scripts/run-regression-tests.cjs",
+    "build:checked": "npm test && npm run build",
+    "dist:checked": "npm test && npm run dist"
   },
   "build": {
     "appId": "com.codex.poe2-campaign-overlay",

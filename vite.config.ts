@@ -13,6 +13,8 @@ export default defineConfig({
         settings: resolve(__dirname, 'settings.html'),
         companion: resolve(__dirname, 'companion.html'),
         info: resolve(__dirname, 'info.html'),
+        community: resolve(__dirname, 'community.html'),
+        support: resolve(__dirname, 'support.html'),
         report: resolve(__dirname, 'report.html'),
         'close-confirm': resolve(__dirname, 'close-confirm.html'),
         update: resolve(__dirname, 'update.html')
