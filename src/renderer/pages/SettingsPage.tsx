@@ -1,19 +1,23 @@
 import { useEffect, useState, type KeyboardEvent, type ReactNode } from 'react';
-import supportQrImage from '../assets/support-qr.png';
 import { useAppSnapshot, useLiveRunTimer } from '../hooks';
+import { useDocumentTitle, useI18n } from '../useI18n';
 import {
   getCurrentActElapsedMs,
   getSceneDisplayName
 } from '../companion-helpers';
 import {
-  formatActLabel,
   formatDuration,
   formatFileSize,
+  formatGuideLabel,
   getReleaseNoteItems,
   formatTimestamp,
   formatZoneOption
 } from '../utils';
+import { getGuideView, getLevelReminderView } from '../../i18n/data';
+import { formatZoneMatcherReason, translateSystemText } from '../../i18n/runtime';
+import { translate } from '../../i18n/translations';
 import type {
+  AppLanguage,
   HotkeySettings,
   OverlayDensity,
   OverlayScale,
@@ -23,12 +27,19 @@ import type {
   AutoUpdateState
 } from '../../shared/types';
 
-const DEFAULT_DEV_LINE = '2026/05/12 12:00:00 Вы вошли в область: Грельвуд';
-const DEFAULT_REWARD_LINE = 'Игрок получил +10% к сопротивлению [Resistances|холоду].';
-const PROJECT_SITE_URL = 'https://umbramalik.github.io/poe2-campaign-codex/#';
-const PROJECT_TELEGRAM_URL = 'https://t.me/POE2CampaignCodex';
-const PROJECT_FEEDBACK_URL = 'https://t.me/POE2CampaignCodex?direct';
 const SHOW_DEVELOPER_SETTINGS = import.meta.env.DEV;
+
+function getDefaultDevLine(language: AppLanguage): string {
+  return language === 'en'
+    ? '2026/05/12 12:00:00 You have entered area: Grelwood'
+    : '2026/05/12 12:00:00 Вы вошли в область: Грельвуд';
+}
+
+function getDefaultRewardLine(language: AppLanguage): string {
+  return language === 'en'
+    ? 'Player has received +10% to [Resistances|Cold].'
+    : 'Игрок получил +10% к сопротивлению [Resistances|холоду].';
+}
 
 const DEFAULT_HOTKEYS: HotkeySettings = {
   markChecklistDone: 'F6',
@@ -38,20 +49,20 @@ const DEFAULT_HOTKEYS: HotkeySettings = {
   toggleOverlayMode: 'F10'
 };
 
-const HOTKEY_LABELS: Array<{ key: keyof HotkeySettings; label: string; note: string }> = [
-  { key: 'toggleTimerPause', label: 'Пауза / продолжить таймер', note: 'Доступно всегда' },
-  { key: 'openCompanion', label: 'Подробная панель', note: 'Доступно всегда' },
-  { key: 'toggleOverlayMode', label: 'Свернуть / развернуть оверлей', note: 'Доступно всегда' }
+const HOTKEY_LABELS: Array<{ key: keyof HotkeySettings; labelKey: string; noteKey: string }> = [
+  { key: 'toggleTimerPause', labelKey: 'settings.hotkeyPause', noteKey: 'settings.hotkeyAlways' },
+  { key: 'openCompanion', labelKey: 'settings.hotkeyCompanion', noteKey: 'settings.hotkeyAlways' },
+  { key: 'toggleOverlayMode', labelKey: 'settings.hotkeyOverlayMode', noteKey: 'settings.hotkeyAlways' }
 ];
 
 const OVERLAY_VISIBILITY_LABELS = [
-  ['showOverlaySkip', 'Показывать блок “Скип”'],
-  ['showOverlayCriticalImportant', 'Показывать блок “Сейчас важно”'],
-  ['showOverlayBossTip', 'Показывать подсказки по боссу'],
-  ['showOverlayVendorReminder', 'Показывать напоминания торговцев'],
-  ['showOverlayXpStatus', 'Показывать статус уровня / XP'],
-  ['showOverlayPowerSpike', 'Показывать скачки силы'],
-  ['overlayTimerOnlyMode', 'Запускать сразу в режиме “Только таймер”']
+  ['showOverlaySkip', 'settings.overlayShowSkip'],
+  ['showOverlayCriticalImportant', 'settings.overlayShowImportant'],
+  ['showOverlayBossTip', 'settings.overlayShowBossTips'],
+  ['showOverlayVendorReminder', 'settings.overlayShowVendor'],
+  ['showOverlayXpStatus', 'settings.overlayShowXp'],
+  ['showOverlayPowerSpike', 'settings.overlayShowPower'],
+  ['overlayTimerOnlyMode', 'settings.overlayTimerOnly']
 ] as const;
 
 function hotkeyFromKeyboardEvent(event: KeyboardEvent<HTMLInputElement>): string | null {
@@ -119,40 +130,40 @@ function formatDateTimeLocalInput(
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-function formatRunTimerStatus(status: RunTimerStatus): string {
+function formatRunTimerStatus(status: RunTimerStatus, language: AppLanguage): string {
   switch (status) {
     case 'armed':
-      return 'Ожидание';
+      return translate(language, 'companion.runStatus.armed');
     case 'running':
-      return 'Идёт';
+      return translate(language, 'companion.runStatus.running');
     case 'paused':
-      return 'Пауза';
+      return translate(language, 'companion.runStatus.paused');
     case 'finished':
-      return 'Завершён';
+      return translate(language, 'companion.runStatus.finished');
     default:
-      return 'Не запущен';
+      return translate(language, 'companion.runStatus.idle');
   }
 }
 
-function formatOverlayDensity(value: OverlayDensity): string {
+function formatOverlayDensity(value: OverlayDensity, language: AppLanguage): string {
   switch (value) {
     case 'compact':
-      return 'Компактно';
+      return translate(language, 'overlayDensity.compact');
     case 'detailed':
-      return 'Подробно';
+      return translate(language, 'overlayDensity.detailed');
     default:
-      return 'Обычно';
+      return translate(language, 'overlayDensity.normal');
   }
 }
 
-function formatLogSelectionMode(mode: 'auto' | 'manual' | null): string {
+function formatLogSelectionMode(mode: 'auto' | 'manual' | null, language: AppLanguage): string {
   switch (mode) {
     case 'auto':
-      return 'Автопоиск';
+      return translate(language, 'logSelectionMode.auto');
     case 'manual':
-      return 'Выбран вручную';
+      return translate(language, 'logSelectionMode.manual');
     default:
-      return 'Ручной / старый конфиг';
+      return translate(language, 'logSelectionMode.legacy');
   }
 }
 
@@ -178,6 +189,7 @@ function InfoGrid({
 
 export function SettingsPage() {
   const snapshot = useAppSnapshot();
+  const { t, language } = useI18n(snapshot?.config.appLanguage);
   const liveRunTimer = useLiveRunTimer(
     snapshot?.config.runTimer,
     snapshot?.config.runTimerSettings,
@@ -185,7 +197,7 @@ export function SettingsPage() {
   );
   const [busy, setBusy] = useState<string | null>(null);
   const [simulateZone, setSimulateZone] = useState('');
-  const [devLogLine, setDevLogLine] = useState(DEFAULT_DEV_LINE);
+  const [devLogLine, setDevLogLine] = useState(() => getDefaultDevLine('ru'));
   const [leagueStartDraft, setLeagueStartDraft] = useState('');
   const [hotkeyDrafts, setHotkeyDrafts] = useState<HotkeySettings>(DEFAULT_HOTKEYS);
   const [hotkeySaveStatus, setHotkeySaveStatus] = useState<'idle' | 'saved'>('idle');
@@ -194,6 +206,8 @@ export function SettingsPage() {
   const [autoUpdateState, setAutoUpdateState] = useState<AutoUpdateState | null>(null);
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [updateActionBusy, setUpdateActionBusy] = useState<'download' | 'install' | 'release' | null>(null);
+
+  useDocumentTitle(t('titles.settings'));
 
   useEffect(() => {
     let isActive = true;
@@ -260,12 +274,15 @@ export function SettingsPage() {
   ]);
 
   if (!snapshot) {
-    return <div className="settings-shell">Загрузка настроек…</div>;
+    return <div className="settings-shell">{t('settings.loading')}</div>;
   }
 
   const { config, currentGuideEntry, currentZone, runtime, activeLevelReminder } = snapshot;
+  const appLanguage = language;
   const displayRunTimer = liveRunTimer.runTimer ?? config.runTimer;
   const currentGuide = currentGuideEntry;
+  const currentGuideView = getGuideView(currentGuide, appLanguage);
+  const activeLevelReminderView = getLevelReminderView(activeLevelReminder, appLanguage);
   const displayElapsedMs = liveRunTimer.runElapsedMs;
   const currentActElapsedMs = getCurrentActElapsedMs(
     displayRunTimer,
@@ -273,17 +290,17 @@ export function SettingsPage() {
     liveRunTimer.nowMs
   );
   const currentCountdownMs = liveRunTimer.countdownMs;
-  const sceneName = getSceneDisplayName(snapshot);
+  const sceneName = getSceneDisplayName(snapshot, appLanguage);
   const zoneOptions = snapshot.guideEntries.map((entry) => ({
     value: entry.id,
-    label: formatZoneOption(entry)
+    label: formatZoneOption(entry, appLanguage)
   }));
   const hasSelectedLogFile = Boolean(runtime.watchedLogPath ?? config.logFilePath);
   const logFileStatusText = !hasSelectedLogFile
-    ? 'Лог-файл ещё не выбран'
+    ? t('settings.logStatusPending')
     : runtime.logFileExists
-      ? 'Лог-файл выбран и доступен'
-      : 'Лог-файл выбран, но сейчас недоступен';
+      ? t('settings.logStatusReady')
+      : t('settings.logStatusMissing');
   const logFileStatusTone = !hasSelectedLogFile
     ? 'is-pending'
     : runtime.logFileExists
@@ -293,21 +310,26 @@ export function SettingsPage() {
   const updateReleaseNoteItems = getReleaseNoteItems(autoUpdateState?.releaseNotes ?? '');
   const updateProgress = autoUpdateState?.downloadProgress ?? null;
   const updateErrorText =
-    autoUpdateState?.errorMessage ??
-    'Не удалось проверить обновления. Проверь интернет или попробуй позже.';
+    (autoUpdateState?.errorMessage
+      ? translateSystemText(autoUpdateState.errorMessage, appLanguage)
+      : null) ??
+    t('settings.updateErrorDetails');
+  const logWatcherMessage = translateSystemText(runtime.logWatcherMessage, appLanguage);
   const updateStatusText = isCheckingUpdates
-    ? 'Проверяем обновления...'
+    ? t('settings.updateChecking')
     : autoUpdateStatus === 'available' && autoUpdateState?.latestVersion
-      ? `Доступна новая версия ${autoUpdateState.latestVersion}`
+      ? t('settings.updateAvailable', { version: autoUpdateState.latestVersion })
       : autoUpdateStatus === 'downloading'
-        ? `Скачиваем обновление${updateProgress ? ` · ${Math.round(updateProgress.percent)}%` : '...'}`
+        ? t('settings.updateDownloading', {
+            percent: updateProgress ? Math.round(updateProgress.percent) : '...'
+          })
         : autoUpdateStatus === 'downloaded'
-          ? 'Обновление скачано и готово к установке.'
+          ? t('settings.updateDownloaded')
           : autoUpdateStatus === 'not_available'
-            ? 'Установлена актуальная версия.'
+            ? t('settings.updateReady')
             : autoUpdateStatus === 'error'
-              ? 'Не удалось проверить обновления.'
-              : 'Ручная проверка ещё не запускалась.';
+              ? t('settings.updateError')
+              : t('settings.updateIdle');
   const updateStatusTone = isCheckingUpdates
     ? 'is-pending'
     : autoUpdateStatus === 'available' || autoUpdateStatus === 'downloaded' || autoUpdateStatus === 'downloading'
@@ -327,11 +349,6 @@ export function SettingsPage() {
     }
   };
 
-  const openExternalLink = async (name: string, url: string) => {
-    await runTask(name, async () => {
-      await window.poe2Overlay.openExternal(url);
-    });
-  };
 
   const checkForUpdates = async () => {
     try {
@@ -444,7 +461,7 @@ export function SettingsPage() {
                 })
               }
             >
-              Подготовить таймер
+              {t('settings.armTimer')}
             </button>
           )}
           <button
@@ -456,8 +473,8 @@ export function SettingsPage() {
                 await window.poe2Overlay.startRunTimer();
               })
             }
-          >
-            Старт
+            >
+            {t('common.start')}
           </button>
         </>
       );
@@ -476,7 +493,7 @@ export function SettingsPage() {
               })
             }
           >
-            Старт
+            {t('common.start')}
           </button>
           <button
             type="button"
@@ -488,7 +505,7 @@ export function SettingsPage() {
               })
             }
           >
-            Сбросить
+            {t('common.reset')}
           </button>
         </>
       );
@@ -507,7 +524,7 @@ export function SettingsPage() {
               })
             }
           >
-            Пауза
+            {t('common.pause')}
           </button>
           <button
             type="button"
@@ -519,7 +536,7 @@ export function SettingsPage() {
               })
             }
           >
-            Завершить
+            {t('common.finish')}
           </button>
           <button
             type="button"
@@ -531,7 +548,7 @@ export function SettingsPage() {
               })
             }
           >
-            Сбросить
+            {t('common.reset')}
           </button>
         </>
       );
@@ -550,7 +567,7 @@ export function SettingsPage() {
               })
             }
           >
-            Продолжить
+            {t('common.resume')}
           </button>
           <button
             type="button"
@@ -562,7 +579,7 @@ export function SettingsPage() {
               })
             }
           >
-            Сбросить
+            {t('common.reset')}
           </button>
         </>
       );
@@ -579,7 +596,7 @@ export function SettingsPage() {
           })
         }
       >
-        Сбросить
+        {t('common.reset')}
       </button>
     );
   })();
@@ -588,35 +605,33 @@ export function SettingsPage() {
     <main className="settings-page">
       <header className="settings-header window-drag-strip">
         <div className="settings-header-copy">
-          <p className="eyebrow">PoE2 Campaign Codex</p>
-          <h1>Настройки</h1>
-          <p className="helper-text settings-intro">
-            Единая панель для лог-файла, оверлея, подробной панели, таймера и локального прогресса.
-          </p>
+          <p className="eyebrow">{t('common.appName')}</p>
+          <h1>{t('settings.title')}</h1>
+          <p className="helper-text settings-intro">{t('settings.intro')}</p>
         </div>
         <button
           className="button-secondary no-drag"
           type="button"
           onClick={() => window.close()}
         >
-          Закрыть
+          {t('common.close')}
         </button>
       </header>
 
       <section className="settings-shell">
         <section className="settings-card first-run-card">
           <div className="settings-card-header">
-            <h2 className="settings-section-title">ПЕРВЫЙ ЗАПУСК</h2>
+            <h2 className="settings-section-title">{t('settings.firstRunTitle')}</h2>
             <span className={`settings-status-pill ${logFileStatusTone}`}>{logFileStatusText}</span>
           </div>
           <ol className="settings-step-list">
-            <li>Нажми “Выбрать лог-файл”.</li>
+            <li>{t('settings.firstRunStepChoose')}</li>
             <li>
-              Укажи файл:
+              {t('settings.firstRunStepPointTo')}
               <code className="settings-inline-path">Path of Exile 2/logs/LatestClient.txt</code>
             </li>
-            <li>Запусти игру и зайди в любую игровую зону.</li>
-            <li>Чтобы передвинуть оверлей — нажми “Открепить” и потяни окно за верхнюю часть.</li>
+            <li>{t('settings.firstRunStepEnterZone')}</li>
+            <li>{t('settings.firstRunStepMoveOverlay')}</li>
           </ol>
           <div className="button-row">
             <button
@@ -627,30 +642,50 @@ export function SettingsPage() {
                 void chooseLogFile();
               }}
             >
-              Выбрать лог-файл
+              {t('settings.chooseLogFile')}
             </button>
+          </div>
+        </section>
+
+        <section className="settings-card i18n-language-card" data-i18n-language-card="true">
+          <h2 className="settings-section-title">{t('settings.languageTitle')}</h2>
+          <p className="helper-text">{t('settings.languageDescription')}</p>
+          <div className="settings-grid">
+            <label className="settings-field">
+              <span>{t('settings.languageField')}</span>
+              <select
+                value={appLanguage}
+                onChange={(event) => {
+                  const nextLanguage = event.target.value === 'en' ? 'en' : 'ru';
+                  void window.poe2Overlay.updateSettings({
+                    appLanguage: nextLanguage
+                  });
+                }}
+              >
+                <option value="ru">{t('common.russian')}</option>
+                <option value="en">{t('common.english')}</option>
+              </select>
+            </label>
           </div>
         </section>
 
         <section className="settings-card">
           <div className="settings-card-header">
             <div>
-              <h2 className="settings-section-title">ОБНОВЛЕНИЯ</h2>
-              <p className="helper-text">
-                Приложение проверяет GitHub Releases. Обновление скачивается внутри приложения,
-                а установка запускается только после кнопки “Установить и перезапустить”.
-              </p>
+              <h2 className="settings-section-title">{t('settings.updateTitle')}</h2>
+              <p className="helper-text">{t('settings.updateDescription')}</p>
+              <p className="helper-text">{t('update.vpnHint')}</p>
             </div>
             <span className={`settings-status-pill ${updateStatusTone}`}>{updateStatusText}</span>
           </div>
 
           <div className="update-summary-grid">
             <div className="value-box">
-              <strong>Текущая версия: </strong>
+              <strong>{t('settings.currentVersion')}: </strong>
               <span>{appVersion || autoUpdateState?.currentVersion || '—'}</span>
             </div>
             <div className="value-box">
-              <strong>Статус проверки: </strong>
+              <strong>{t('common.status')}: </strong>
               <span>{updateStatusText}</span>
             </div>
           </div>
@@ -664,17 +699,18 @@ export function SettingsPage() {
                 void checkForUpdates();
               }}
             >
-              {isCheckingUpdates ? 'Проверяем обновления...' : 'Проверить обновления'}
+              {isCheckingUpdates ? t('settings.updateChecking') : t('settings.checkUpdates')}
             </button>
           </div>
 
           {autoUpdateStatus === 'not_available' && (
-            <p className="update-inline-message is-success">Установлена актуальная версия.</p>
+            <p className="update-inline-message is-success">{t('settings.updateReady')}</p>
           )}
 
           {autoUpdateStatus === 'error' && (
             <div className="update-inline-message is-warning">
               <p>{updateErrorText}</p>
+              <p className="update-vpn-hint">{t('update.vpnHint')}</p>
               <div className="button-row update-error-actions">
                 <button
                   type="button"
@@ -684,7 +720,7 @@ export function SettingsPage() {
                     void openReleasePage('https://github.com/UmbraMalik/poe2-campaign-codex-releases/releases/latest');
                   }}
                 >
-                  {updateActionBusy === 'release' ? 'Открываем релиз...' : 'Открыть релиз'}
+                  {updateActionBusy === 'release' ? t('settings.openingRelease') : t('settings.releasePage')}
                 </button>
               </div>
             </div>
@@ -694,27 +730,27 @@ export function SettingsPage() {
             <section className="update-result-card">
               <div className="settings-card-header settings-card-header-compact">
                 <div>
-                  <h3>Доступна новая версия: {autoUpdateState?.latestVersion ?? '—'}</h3>
+                  <h3>{t('settings.updateAvailableTitle', { version: autoUpdateState?.latestVersion ?? '—' })}</h3>
                   <p className="helper-text">{autoUpdateState?.releaseName ?? 'PoE2 Campaign Codex Overlay'}</p>
                 </div>
               </div>
 
               <InfoGrid
                 items={[
-                  { label: 'Текущая версия', value: autoUpdateState?.currentVersion ?? appVersion ?? '—' },
-                  { label: 'Новая версия', value: autoUpdateState?.latestVersion ?? '—' },
-                  { label: 'Релиз', value: autoUpdateState?.releaseName ?? '—' },
-                  { label: 'Дата релиза', value: formatTimestamp(autoUpdateState?.releaseDate ?? null) }
+                  { label: t('settings.currentVersion'), value: autoUpdateState?.currentVersion ?? appVersion ?? '—' },
+                  { label: t('settings.releaseVersion'), value: autoUpdateState?.latestVersion ?? '—' },
+                  { label: t('update.release'), value: autoUpdateState?.releaseName ?? '—' },
+                  { label: t('settings.releasePublished'), value: formatTimestamp(autoUpdateState?.releaseDate ?? null, appLanguage) }
                 ]}
               />
 
               {autoUpdateStatus === 'downloading' && updateProgress && (
                 <section className="update-progress-card">
                   <div className="update-progress-header">
-                    <strong>Загрузка обновления</strong>
+                    <strong>{t('update.downloadTitle')}</strong>
                     <span>{Math.round(updateProgress.percent)}%</span>
                   </div>
-                  <div className="update-progress-track" aria-label="Прогресс загрузки">
+                  <div className="update-progress-track" aria-label={t('update.progress')}>
                     <span style={{ width: `${Math.max(0, Math.min(100, updateProgress.percent))}%` }} />
                   </div>
                   <p className="helper-text">
@@ -725,12 +761,12 @@ export function SettingsPage() {
 
               {autoUpdateStatus === 'downloaded' && (
                 <p className="update-inline-message is-success">
-                  Обновление скачано. Можно установить и перезапустить приложение.
+                  {t('settings.updateDownloaded')}
                 </p>
               )}
 
               <div className="settings-subsection">
-                <h3 className="settings-subtitle">Что нового</h3>
+                <h3 className="settings-subtitle">{t('settings.releaseNotes')}</h3>
                 {updateReleaseNoteItems.length > 0 ? (
                   <div className="update-note-list">
                     {updateReleaseNoteItems.map((item, index) => (
@@ -744,7 +780,7 @@ export function SettingsPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="helper-text">Описание релиза не заполнено.</p>
+                  <p className="helper-text">{t('settings.emptyReleaseNotes')}</p>
                 )}
               </div>
 
@@ -757,7 +793,7 @@ export function SettingsPage() {
                     void openReleasePage('https://github.com/UmbraMalik/poe2-campaign-codex-releases/releases/latest');
                   }}
                 >
-                  {updateActionBusy === 'release' ? 'Открываем релиз...' : 'Открыть релиз'}
+                  {updateActionBusy === 'release' ? t('settings.openingRelease') : t('settings.releasePage')}
                 </button>
 
                 {autoUpdateStatus === 'available' && (
@@ -769,7 +805,7 @@ export function SettingsPage() {
                       void downloadAutoUpdate();
                     }}
                   >
-                    {updateActionBusy === 'download' ? 'Запускаем загрузку...' : 'Скачать обновление'}
+                    {updateActionBusy === 'download' ? t('update.autoDownloadBusy') : t('settings.downloadUpdate')}
                   </button>
                 )}
 
@@ -782,7 +818,7 @@ export function SettingsPage() {
                       void installAutoUpdate();
                     }}
                   >
-                    {updateActionBusy === 'install' ? 'Устанавливаем...' : 'Установить и перезапустить'}
+                    {updateActionBusy === 'install' ? t('update.installBusy') : t('settings.installUpdate')}
                   </button>
                 )}
               </div>
@@ -790,19 +826,17 @@ export function SettingsPage() {
           )}
         </section>
         <section className="settings-card">
-          <h2 className="settings-section-title">ЛОГ-ФАЙЛ</h2>
-          <p className="helper-text">
-            Приложение ищет `LatestClient.txt` и `Client.txt` автоматически. Если файл уже выбран вручную, этот путь больше не перезаписывается.
-          </p>
-          <div className="value-box">{config.logFilePath ?? 'Лог-файл пока не выбран.'}</div>
+          <h2 className="settings-section-title">{t('settings.logFileTitle')}</h2>
+          <p className="helper-text">{t('settings.logFileDescription')}</p>
+          <div className="value-box">{config.logFilePath ?? t('settings.logFileNotSelected')}</div>
           <InfoGrid
             items={[
-              { label: 'Источник', value: formatLogSelectionMode(config.logFileSelectionMode) },
-              { label: 'Текущий путь', value: runtime.watchedLogPath ?? '—' },
-              { label: 'Файл доступен', value: runtime.logFileExists ? 'Да' : 'Нет' },
-              { label: 'Размер файла', value: formatFileSize(runtime.logFileSize) },
-              { label: 'Позиция чтения', value: `${runtime.currentLogOffset} B` },
-              { label: 'Статус', value: runtime.logWatcherMessage }
+              { label: t('settings.selectedMode'), value: formatLogSelectionMode(config.logFileSelectionMode, appLanguage) },
+              { label: t('settings.selectedPath'), value: runtime.watchedLogPath ?? t('common.notAvailable') },
+              { label: t('settings.fileAvailable'), value: runtime.logFileExists ? t('common.yes') : t('common.no') },
+              { label: t('settings.fileSize'), value: formatFileSize(runtime.logFileSize) },
+              { label: t('settings.readOffset'), value: `${runtime.currentLogOffset} B` },
+              { label: t('common.status'), value: logWatcherMessage }
             ]}
           />
           <div className="button-row">
@@ -814,23 +848,21 @@ export function SettingsPage() {
                 void chooseLogFile();
               }}
             >
-              Выбрать лог-файл
+              {t('settings.chooseLogFile')}
             </button>
           </div>
         </section>
 
         {SHOW_DEVELOPER_SETTINGS && (
         <section className="settings-card">
-          <h2 className="settings-section-title">ПОМОЩНИК LIVE-ОБНОВЛЕНИЯ</h2>
-          <p className="helper-text">
-            Быстрая проверка живого обновления оверлея без перезапуска приложения. Строка будет дописана в выбранный лог.
-          </p>
+          <h2 className="settings-section-title">{t('settings.liveUpdateTitle')}</h2>
+          <p className="helper-text">{t('settings.liveUpdateDescription')}</p>
           <textarea
             className="dev-log-textarea"
             value={devLogLine}
             onChange={(event) => setDevLogLine(event.target.value)}
             rows={3}
-            placeholder="Строка для дописывания в лог"
+            placeholder={t('settings.liveUpdatePlaceholder')}
           />
           <div className="button-row">
             <button
@@ -843,23 +875,23 @@ export function SettingsPage() {
                 })
               }
             >
-              Добавить строку в лог
+              {t('settings.appendLogLine')}
             </button>
             <button
               type="button"
               className="button-secondary"
               disabled={busy !== null}
-              onClick={() => setDevLogLine(DEFAULT_DEV_LINE)}
+              onClick={() => setDevLogLine(getDefaultDevLine(appLanguage))}
             >
-              Пример зоны
+              {t('settings.exampleZone')}
             </button>
             <button
               type="button"
               className="button-secondary"
               disabled={busy !== null}
-              onClick={() => setDevLogLine(DEFAULT_REWARD_LINE)}
+              onClick={() => setDevLogLine(getDefaultRewardLine(appLanguage))}
             >
-              Пример награды
+              {t('settings.exampleReward')}
             </button>
           </div>
         </section>
@@ -867,19 +899,19 @@ export function SettingsPage() {
         )}
 
         <section className="settings-card">
-          <h2 className="settings-section-title">ТАЙМЕР ЛИГСТАРТА</h2>
+          <h2 className="settings-section-title">{t('settings.timerTitle')}</h2>
           <InfoGrid
             items={[
-              { label: 'Статус', value: formatRunTimerStatus(displayRunTimer.status) },
-              { label: 'Общее время', value: formatDuration(displayElapsedMs) },
-              { label: 'Текущий акт', value: currentActElapsedMs === null ? '—' : formatDuration(currentActElapsedMs) },
-              { label: 'Отсчёт', value: currentCountdownMs === null ? '—' : formatDuration(currentCountdownMs) }
+              { label: t('settings.timerStatus'), value: formatRunTimerStatus(displayRunTimer.status, appLanguage) },
+              { label: t('settings.totalTime'), value: formatDuration(displayElapsedMs) },
+              { label: t('settings.actTime'), value: currentActElapsedMs === null ? t('common.notAvailable') : formatDuration(currentActElapsedMs) },
+              { label: t('settings.countdown'), value: currentCountdownMs === null ? t('common.notAvailable') : formatDuration(currentCountdownMs) }
             ]}
           />
 
           <div className="settings-grid">
             <label className="settings-field">
-              <span>Режим автозапуска</span>
+              <span>{t('settings.autoStartMode')}</span>
               <select
                 value={config.runTimerSettings.autoStartMode}
                 onChange={(event) => {
@@ -890,13 +922,13 @@ export function SettingsPage() {
                   });
                 }}
               >
-                <option value="scheduled_time">По заданному времени</option>
-                <option value="manual">Только вручную</option>
+                <option value="scheduled_time">{t('settings.autoStartScheduled')}</option>
+                <option value="manual">{t('settings.autoStartManual')}</option>
               </select>
             </label>
 
             <label className="settings-field">
-              <span>Дата и время старта лиги</span>
+              <span>{t('settings.leagueStartLabel')}</span>
               <input
                 type="datetime-local"
                 value={leagueStartDraft}
@@ -918,7 +950,7 @@ export function SettingsPage() {
                   });
                 }}
               />
-              <span>Включить автозапуск таймера</span>
+              <span>{t('settings.autoStartEnabled')}</span>
             </label>
 
             <label className="toggle-card">
@@ -933,7 +965,7 @@ export function SettingsPage() {
                   });
                 }}
               />
-              <span>Показывать отсчёт до старта</span>
+              <span>{t('settings.showCountdown')}</span>
             </label>
 
             <label className="toggle-card">
@@ -948,7 +980,7 @@ export function SettingsPage() {
                   });
                 }}
               />
-              <span>Показывать время текущего акта</span>
+              <span>{t('settings.showActTimer')}</span>
             </label>
           </div>
 
@@ -963,20 +995,20 @@ export function SettingsPage() {
                 })
               }
             >
-              Сохранить время старта
+              {t('settings.saveLeagueStart')}
             </button>
             {timerButtons}
           </div>
         </section>
 
         <section className="settings-card">
-          <h2 className="settings-section-title">НАПОМИНАНИЯ УРОВНЯ</h2>
+          <h2 className="settings-section-title">{t('settings.levelReminderTitle')}</h2>
           <InfoGrid
             items={[
-              { label: 'Текущий уровень', value: config.currentLevel ?? '—' },
-              { label: 'Последнее повышение уровня', value: formatTimestamp(runtime.lastLevelUpDetectedAt) },
-              { label: 'Активное напоминание', value: activeLevelReminder?.title ?? '—' },
-              { label: 'Скрытые', value: config.levelRemindersState.dismissed.length || '0' }
+              { label: t('settings.currentLevel'), value: config.currentLevel ?? t('common.notAvailable') },
+              { label: t('settings.lastLevelUp'), value: formatTimestamp(runtime.lastLevelUpDetectedAt, appLanguage) },
+              { label: t('settings.activeReminder'), value: activeLevelReminderView?.displayTitle ?? t('common.notAvailable') },
+              { label: t('settings.dismissed'), value: config.levelRemindersState.dismissed.length || '0' }
             ]}
           />
           <div className="button-row">
@@ -990,7 +1022,7 @@ export function SettingsPage() {
                 })
               }
             >
-              Скрыть текущее напоминание
+              {t('settings.dismissCurrentReminder')}
             </button>
             <button
               type="button"
@@ -1002,20 +1034,18 @@ export function SettingsPage() {
                 })
               }
             >
-              Сбросить напоминания уровня
+              {t('settings.resetLevelReminders')}
             </button>
           </div>
         </section>
 
         <section className="settings-card">
-          <h2 className="settings-section-title">ОВЕРЛЕЙ</h2>
-          <p className="helper-text">
-            Основной оверлей показывает короткую памятку по текущей локации: что важно забрать, куда идти дальше, что можно пропустить, подсказки по боссу и таймер.
-          </p>
+          <h2 className="settings-section-title">{t('settings.overlayTitle')}</h2>
+          <p className="helper-text">{t('settings.overlayDescription')}</p>
 
           <div className="settings-grid">
             <label className="settings-field settings-field-full">
-              <span>Прозрачность: {Math.round(config.overlayOpacity * 100)}%</span>
+              <span>{t('settings.overlayOpacity', { value: Math.round(config.overlayOpacity * 100) })}</span>
               <input
                 type="range"
                 min={35}
@@ -1031,7 +1061,7 @@ export function SettingsPage() {
             </label>
 
             <label className="settings-field">
-              <span>Масштаб UI</span>
+              <span>{t('settings.overlayScale')}</span>
               <select
                 value={config.overlayScale}
                 onChange={(event) => {
@@ -1050,7 +1080,7 @@ export function SettingsPage() {
             </label>
 
             <label className="settings-field">
-              <span>Плотность</span>
+              <span>{t('settings.overlayDensity')}</span>
               <select
                 value={config.overlayDensity}
                 onChange={(event) => {
@@ -1059,17 +1089,17 @@ export function SettingsPage() {
                   });
                 }}
               >
-                <option value="compact">{formatOverlayDensity('compact')}</option>
-                <option value="normal">{formatOverlayDensity('normal')}</option>
-                <option value="detailed">{formatOverlayDensity('detailed')}</option>
+                <option value="compact">{formatOverlayDensity('compact', appLanguage)}</option>
+                <option value="normal">{formatOverlayDensity('normal', appLanguage)}</option>
+                <option value="detailed">{formatOverlayDensity('detailed', appLanguage)}</option>
               </select>
             </label>
           </div>
 
           <div className="settings-subsection">
-            <h3 className="settings-subtitle">ОТОБРАЖАТЬ В ОВЕРЛЕЕ</h3>
+            <h3 className="settings-subtitle">{t('settings.overlayShowTitle')}</h3>
             <div className="checkbox-grid">
-              {OVERLAY_VISIBILITY_LABELS.map(([key, label]) => (
+              {OVERLAY_VISIBILITY_LABELS.map(([key, labelKey]) => (
                 <label className="toggle-card" key={key}>
                   <input
                     type="checkbox"
@@ -1082,7 +1112,7 @@ export function SettingsPage() {
                       });
                     }}
                   />
-                  <span>{label}</span>
+                  <span>{t(labelKey)}</span>
                 </label>
               ))}
             </div>
@@ -1091,12 +1121,10 @@ export function SettingsPage() {
           <div className="settings-subsection">
             <div className="settings-card-header settings-card-header-compact">
               <div>
-                <h3>Горячие клавиши</h3>
-                <p className="helper-text">
-                  Нажми в поле и задай новую клавишу. Для букв и цифр используй модификатор: Ctrl / Alt / Shift. Например: Ctrl+F9, Alt+Q, Shift+F8. Изменения применяются после сохранения.
-                </p>
+                <h3>{t('settings.hotkeysTitle')}</h3>
+                <p className="helper-text">{t('settings.hotkeysDescription')}</p>
                 {hotkeySaveStatus === 'saved' && (
-                  <p className="helper-text hotkey-save-status">Хоткеи сохранены.</p>
+                  <p className="helper-text hotkey-save-status">{t('settings.hotkeysSaved')}</p>
                 )}
               </div>
               <div className="button-row hotkey-actions">
@@ -1108,10 +1136,10 @@ export function SettingsPage() {
                     void saveHotkeys();
                   }}
                 >
-                  Сохранить хоткеи
+                  {t('settings.saveHotkeys')}
                 </button>
                 <button type="button" className="button-secondary" disabled={busy !== null} onClick={resetHotkeys}>
-                  Сбросить поля
+                  {t('settings.resetFields')}
                 </button>
                 <button
                   type="button"
@@ -1121,7 +1149,7 @@ export function SettingsPage() {
                     void resetAndSaveHotkeys();
                   }}
                 >
-                  По умолчанию
+                  {t('settings.defaults')}
                 </button>
               </div>
             </div>
@@ -1129,11 +1157,11 @@ export function SettingsPage() {
             <div className="hotkey-grid">
               {HOTKEY_LABELS.map((item) => (
                 <label className="hotkey-field" key={item.key}>
-                  <span className="hotkey-field-title">{item.label}</span>
+                  <span className="hotkey-field-title">{t(item.labelKey)}</span>
                   <input
                     type="text"
                     value={hotkeyDrafts[item.key] || ''}
-                    placeholder="Нажми клавишу"
+                    placeholder={t('settings.hotkeyPlaceholder')}
                     onChange={(event) => {
                       updateHotkeyDraft(item.key, event.target.value);
                     }}
@@ -1147,7 +1175,7 @@ export function SettingsPage() {
                       updateHotkeyDraft(item.key, nextHotkey);
                     }}
                   />
-                  <small>{item.note}</small>
+                  <small>{t(item.noteKey)}</small>
                 </label>
               ))}
             </div>
@@ -1155,16 +1183,14 @@ export function SettingsPage() {
         </section>
 
         <section className="settings-card">
-          <h2 className="settings-section-title">ПОЛНЫЕ ДЕТАЛИ ТЕКУЩЕЙ ЗОНЫ</h2>
-          <p className="helper-text">
-            Подробная панель показывает текущую сцену, маршрут, таймер, награды и сводку без перегруза основного оверлея.
-          </p>
+          <h2 className="settings-section-title">{t('settings.detailPanelTitle')}</h2>
+          <p className="helper-text">{t('settings.detailPanelDescription')}</p>
           <InfoGrid
             items={[
-              { label: 'Текущая сцена', value: sceneName },
-              { label: 'Маршрут', value: currentGuide ? `${formatActLabel(currentGuide)} · ${currentGuide.zone_ru}` : '—' },
-              { label: 'Профиль гайда', value: 'Универсальный' },
-              { label: 'Режим тренировки', value: config.trainingModeEnabled ? 'Включён' : 'Выключен' }
+              { label: t('settings.currentScene'), value: sceneName },
+              { label: t('settings.currentRoute'), value: formatGuideLabel(currentGuide, appLanguage) },
+              { label: t('settings.guideProfile'), value: t('settings.universalProfile') },
+              { label: t('settings.trainingMode'), value: config.trainingModeEnabled ? t('companion.enabled') : t('companion.disabled') }
             ]}
           />
 
@@ -1179,7 +1205,7 @@ export function SettingsPage() {
                   });
                 }}
               />
-              <span>Держать подробную панель поверх других окон</span>
+              <span>{t('settings.companionAlwaysOnTop')}</span>
             </label>
 
             <label className="toggle-card">
@@ -1192,13 +1218,13 @@ export function SettingsPage() {
                   });
                 }}
               />
-              <span>Включить режим тренировки</span>
+              <span>{t('settings.enableTrainingMode')}</span>
             </label>
           </div>
 
           <div className="settings-grid settings-grid-wide">
             <label className="settings-field">
-              <span>Профиль гайда</span>
+              <span>{t('settings.guideProfile')}</span>
               <select
                 value={config.guideProfile}
                 onChange={(event) => {
@@ -1207,21 +1233,21 @@ export function SettingsPage() {
                   });
                 }}
               >
-                <option value="universal">Универсальный</option>
+                <option value="universal">{t('settings.universalProfile')}</option>
               </select>
             </label>
 
             <div className="settings-field">
-              <span>Целевое время актов</span>
+              <span>{t('settings.targetActTimes')}</span>
               <div className="settings-inline-grid">
                 {([
-                  ['act1', 'Акт 1'],
-                  ['act2', 'Акт 2'],
-                  ['act3', 'Акт 3'],
-                  ['act4', 'Акт 4']
-                ] as const).map(([key, label]) => (
+                  ['act1', 1],
+                  ['act2', 2],
+                  ['act3', 3],
+                  ['act4', 4]
+                ] as const).map(([key, act]) => (
                   <label className="settings-field" key={key}>
-                    <span>{label}, мин</span>
+                    <span>{t('settings.targetActMinutes', { label: t('route.act', { act }) })}</span>
                     <input
                       type="number"
                       min={0}
@@ -1252,25 +1278,23 @@ export function SettingsPage() {
                 })
               }
             >
-              Открыть подробную панель
+              {t('settings.openCompanion')}
             </button>
           </div>
         </section>
 
         {SHOW_DEVELOPER_SETTINGS && (
         <section className="settings-card">
-          <h2 className="settings-section-title">СИМУЛЯЦИЯ ЗОНЫ</h2>
-          <p className="helper-text">
-            Удобно для быстрой проверки оверлея и подробной панели без запущенной игры.
-          </p>
+          <h2 className="settings-section-title">{t('settings.simulateTitle')}</h2>
+          <p className="helper-text">{t('settings.simulateDescription')}</p>
           <div className="settings-grid settings-grid-actions">
             <label className="settings-field settings-field-full">
-              <span>Выберите зону</span>
+              <span>{t('settings.selectZone')}</span>
               <select
                 value={simulateZone}
                 onChange={(event) => setSimulateZone(event.target.value)}
               >
-                <option value="">Выберите зону</option>
+                <option value="">{t('settings.selectZonePlaceholder')}</option>
                 {zoneOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -1289,7 +1313,7 @@ export function SettingsPage() {
                   })
                 }
               >
-                Симулировать зону
+                {t('settings.simulateZone')}
               </button>
             </div>
           </div>
@@ -1297,81 +1321,13 @@ export function SettingsPage() {
 
         )}
 
-        <section className="settings-card support-card">
-          <h2 className="settings-section-title">ССЫЛКИ И ПОДДЕРЖКА</h2>
-          <p className="helper-text">
-            Быстрые ссылки на сайт проекта, Telegram и прямой контакт для фидбека. Если оверлей помог — можно поддержать проект через QR-код.
-          </p>
-          <div className="support-grid">
-            <div className="support-copy">
-              <div className="button-row">
-                <button
-                  type="button"
-                  className="button-secondary"
-                  disabled={busy !== null}
-                  onClick={() => {
-                    void openExternalLink('open-project-site', PROJECT_SITE_URL);
-                  }}
-                >
-                  Открыть сайт
-                </button>
-                <button
-                  type="button"
-                  className="button-secondary"
-                  disabled={busy !== null}
-                  onClick={() => {
-                    void openExternalLink('open-project-telegram', PROJECT_TELEGRAM_URL);
-                  }}
-                >
-                  Telegram
-                </button>
-                <button
-                  type="button"
-                  className="button-secondary"
-                  disabled={busy !== null}
-                  onClick={() => {
-                    void openExternalLink('open-project-feedback', PROJECT_FEEDBACK_URL);
-                  }}
-                >
-                  Фидбек / баги
-                </button>
-              </div>
-
-              <div className="support-link-list">
-                <div className="value-box">
-                  <strong>Сайт:</strong>
-                  <span>{PROJECT_SITE_URL}</span>
-                </div>
-                <div className="value-box">
-                  <strong>Telegram:</strong>
-                  <span>{PROJECT_TELEGRAM_URL}</span>
-                </div>
-                <div className="value-box">
-                  <strong>Фидбек:</strong>
-                  <span>{PROJECT_FEEDBACK_URL}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="support-qr-card">
-              <img src={supportQrImage} alt="QR-код для поддержки проекта" className="support-qr-image" />
-              <div className="support-qr-copy">
-                <h3>Поддержка проекта</h3>
-                <p className="helper-text">
-                  Открой приложение банка, отсканируй QR-код и отправь любую комфортную сумму. Это добровольная поддержка, не покупка доступа.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section className="settings-card danger-card">
-          <h2 className="settings-section-title">ЛОКАЛЬНЫЙ ПРОГРЕСС</h2>
+          <h2 className="settings-section-title">{t('settings.localProgressTitle')}</h2>
           <InfoGrid
             items={[
-              { label: 'Текущая сцена', value: sceneName },
-              { label: 'Текущий маршрут', value: currentGuide ? `${formatActLabel(currentGuide)} · ${currentGuide.zone_ru}` : '—' },
-              { label: 'Время забега', value: formatDuration(displayElapsedMs) }
+              { label: t('settings.currentScene'), value: sceneName },
+              { label: t('settings.currentRoute'), value: formatGuideLabel(currentGuide, appLanguage) },
+              { label: t('settings.totalTime'), value: formatDuration(displayElapsedMs) }
             ]}
           />
           <div className="button-row">
@@ -1385,17 +1341,15 @@ export function SettingsPage() {
                 })
               }
             >
-              Сбросить прогресс
+              {t('settings.resetProgress')}
             </button>
           </div>
         </section>
 
         {SHOW_DEVELOPER_SETTINGS && (
           <section className="settings-card">
-            <h2 className="settings-section-title">ДЛЯ РАЗРАБОТКИ</h2>
-            <p className="helper-text">
-              Служебные переключатели и диагностическая информация для локальной отладки.
-            </p>
+            <h2 className="settings-section-title">{t('settings.developerTitle')}</h2>
+            <p className="helper-text">{t('settings.developerDescription')}</p>
             <div className="checkbox-grid">
               <label className="toggle-card">
                 <input
@@ -1407,20 +1361,20 @@ export function SettingsPage() {
                     });
                   }}
                 />
-                <span>Показывать диагностическую панель</span>
+                <span>{t('settings.showDiagnostics')}</span>
               </label>
             </div>
 
             {config.devPanelEnabled && (
               <div className="settings-subsection">
-                <h3 className="settings-subtitle">ДИАГНОСТИКА</h3>
+                <h3 className="settings-subtitle">{t('settings.diagnosticsTitle')}</h3>
                 <InfoGrid
                   items={[
-                    { label: 'Причина последнего совпадения', value: runtime.lastMatcherReason },
-                    { label: 'Последняя валидная зона', value: formatTimestamp(runtime.lastValidGameplayZoneAt) },
-                    { label: 'Последняя сцена', value: runtime.lastSceneSource ?? '—' },
-                    { label: 'Последнее чтение', value: formatTimestamp(runtime.lastReadAt) },
-                    { label: 'Последний уровень', value: config.currentLevel ?? '—' }
+                    { label: t('settings.lastMatchReason'), value: formatZoneMatcherReason(runtime.lastMatcherReason, appLanguage) },
+                    { label: t('settings.lastValidZone'), value: formatTimestamp(runtime.lastValidGameplayZoneAt, appLanguage) },
+                    { label: t('settings.lastScene'), value: runtime.lastSceneSource ?? t('common.notAvailable') },
+                    { label: t('settings.lastRead'), value: formatTimestamp(runtime.lastReadAt, appLanguage) },
+                    { label: t('settings.lastKnownLevel'), value: config.currentLevel ?? t('common.notAvailable') }
                   ]}
                 />
               </div>

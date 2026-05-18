@@ -5,7 +5,8 @@ import type {
   OverlayMode,
   RunTimerState,
   SettingsPatch,
-  AutoUpdateState
+  AutoUpdateState,
+  TimerVisualTickPayload
 } from '../shared/types';
 
 const api: ElectronApi = {
@@ -46,13 +47,20 @@ const api: ElectronApi = {
   getRunTimerState: () => ipcRenderer.invoke('timer:get-state'),
   resizeOverlay: (width: number, height: number) =>
     ipcRenderer.invoke('app:resize-overlay', width, height),
+  resizeOverlayHeight: (height: number) =>
+    ipcRenderer.invoke('app:resize-overlay-height', height),
+  moveOverlayBy: (deltaX: number, deltaY: number) =>
+    ipcRenderer.invoke('app:move-overlay-by', deltaX, deltaY),
   setOverlayMode: (mode: OverlayMode) => ipcRenderer.invoke('app:set-overlay-mode', mode),
   toggleOverlayMode: () => ipcRenderer.invoke('app:toggle-overlay-mode'),
+  closeOverlay: () => ipcRenderer.invoke('app:close-overlay'),
   openCompanionPanel: () => ipcRenderer.invoke('app:open-companion-panel'),
   toggleCompanionPanel: () => ipcRenderer.invoke('app:toggle-companion-panel'),
   openSettings: () => ipcRenderer.invoke('app:open-settings'),
   toggleSettings: () => ipcRenderer.invoke('app:toggle-settings'),
   openInfo: () => ipcRenderer.invoke('app:open-info'),
+  openCommunity: () => ipcRenderer.invoke('app:open-community'),
+  openSupport: () => ipcRenderer.invoke('app:open-support'),
   openReportIssue: () => ipcRenderer.invoke('app:open-report-issue'),
   openUpdateDownload: (url: string) =>
     ipcRenderer.invoke('app:open-update-download', url),
@@ -76,6 +84,15 @@ const api: ElectronApi = {
     ipcRenderer.on('timer:state-changed', listener);
     return () => {
       ipcRenderer.removeListener('timer:state-changed', listener);
+    };
+  },
+  onTimerVisualTick: (callback: (payload: TimerVisualTickPayload) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, payload: TimerVisualTickPayload) => {
+      callback(payload);
+    };
+    ipcRenderer.on('timer:visual-tick', listener);
+    return () => {
+      ipcRenderer.removeListener('timer:visual-tick', listener);
     };
   },
   onStateChanged: (callback: (snapshot: AppSnapshot) => void) => {

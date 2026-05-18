@@ -7,7 +7,7 @@ import type {
 const RELEASES_API_URL =
   'https://api.github.com/repos/UmbraMalik/poe2-campaign-codex-releases/releases/latest';
 const GENERIC_UPDATE_ERROR =
-  'Не удалось проверить обновления. Проверь интернет или попробуй позже.';
+  'Не удалось проверить обновления. Проверь интернет/VPN или попробуй позже.';
 const INSTALLER_NOT_FOUND_ERROR = 'В релизе не найден установщик.';
 
 interface GitHubReleaseResponse {

@@ -10,7 +10,10 @@ import {
   getTownTimerTotalElapsed,
   getZoneTimerDisplayElapsed
 } from '../shared/timers';
+import { getGuideView, getLevelReminderView, getPowerSpikeView } from '../i18n/data';
+import { translate } from '../i18n/translations';
 import type {
+  AppLanguage,
   AppSnapshot,
   BestRunSummary,
   ChecklistItemDefinition,
@@ -81,20 +84,36 @@ export function getCountdownMs(snapshot: AppSnapshot, now: number): number | nul
   return getCountdownDisplayMs(snapshot.config.runTimerSettings, now);
 }
 
+export function getCurrentActElapsedMsForAct(
+  runTimer: RunTimerState,
+  currentAct: number | null | undefined,
+  now: number
+): number | null {
+  if (typeof currentAct !== 'number') {
+    return null;
+  }
+
+  const currentRow = getActTimeRowsFromSplits(runTimer.actSplits, getRunElapsedMs(runTimer, now), {
+    currentAct,
+    includeCurrentAct: runTimer.status === 'running' || runTimer.status === 'paused',
+    currentStatus: runTimer.status
+  })
+    .reverse()
+    .find((row) => row.act === currentAct);
+
+  return currentRow?.elapsedMs ?? null;
+}
+
 export function getCurrentActElapsedMs(
   runTimer: RunTimerState,
   guide: GuideEntry | null,
   now: number
 ): number | null {
-  if (!guide || typeof guide.act !== 'number') {
-    return null;
-  }
-
-  const currentRow = [...getActTimeRows(runTimer, guide, now)]
-    .reverse()
-    .find((row) => row.act === guide.act);
-
-  return currentRow?.elapsedMs ?? null;
+  return getCurrentActElapsedMsForAct(
+    runTimer,
+    guide && typeof guide.act === 'number' ? guide.act : null,
+    now
+  );
 }
 
 function getSortedActSplits(actSplits: RunTimerActSplit[]): RunTimerActSplit[] {
@@ -169,46 +188,49 @@ export function getActTimeRows(
   });
 }
 
-export function getXpStatus(snapshot: AppSnapshot): XpStatus {
+export function getXpStatus(
+  snapshot: AppSnapshot,
+  language: AppLanguage = 'ru'
+): XpStatus {
   const currentLevel = snapshot.config.currentLevel;
   const guide = snapshot.currentGuideEntry;
   const recommended = guide?.recommended_level ?? null;
 
   if (!guide || currentLevel === null || recommended === null) {
     return {
-      shortLabel: 'XP: ?',
-      longLabel: 'Опыт: недостаточно данных',
+      shortLabel: translate(language, 'xp.unknownShort'),
+      longLabel: translate(language, 'xp.unknownLong'),
       variant: 'unknown'
     };
   }
 
   if (guide.is_good_xp_zone && currentLevel < recommended) {
     return {
-      shortLabel: 'XP-зона',
-      longLabel: 'XP-зона: можно добрать уровень здесь',
+      shortLabel: translate(language, 'xp.farmShort'),
+      longLabel: translate(language, 'xp.farmLong'),
       variant: 'farm'
     };
   }
 
   if (currentLevel < recommended) {
     return {
-      shortLabel: 'XP: низкий',
-      longLabel: 'XP: низкий, стоит добрать опыт',
+      shortLabel: translate(language, 'xp.lowShort'),
+      longLabel: translate(language, 'xp.lowLong'),
       variant: 'low'
     };
   }
 
   if (guide.is_good_xp_zone) {
     return {
-      shortLabel: 'XP-зона',
-      longLabel: 'XP-зона: можно добрать уровень здесь',
+      shortLabel: translate(language, 'xp.farmShort'),
+      longLabel: translate(language, 'xp.farmLong'),
       variant: 'farm'
     };
   }
 
   return {
-    shortLabel: 'XP: ок',
-    longLabel: 'XP: ок',
+    shortLabel: translate(language, 'xp.okShort'),
+    longLabel: translate(language, 'xp.okLong'),
     variant: 'ok'
   };
 }
@@ -254,16 +276,19 @@ export function getDismissedReminderHistory(
 
 export function getTownReminderItems(
   guide: GuideEntry | null,
-  activeLevelReminder: LevelReminder | null
+  activeLevelReminder: LevelReminder | null,
+  language: AppLanguage = 'ru'
 ): string[] {
   if (!guide) {
-    return activeLevelReminder?.items.slice(0, 4) ?? [];
+    return getLevelReminderView(activeLevelReminder, language)?.displayItems.slice(0, 4) ?? [];
   }
 
+  const guideView = getGuideView(guide, language);
+  const reminderView = getLevelReminderView(activeLevelReminder, language);
   const items = [
-    ...guide.after,
-    ...(guide.crafting_tips ?? []),
-    ...(activeLevelReminder?.items ?? [])
+    ...(guideView?.after ?? []),
+    ...(guideView?.craftingTips ?? []),
+    ...(reminderView?.displayItems ?? [])
   ].filter(Boolean);
 
   return [...new Set(items)].slice(0, 6);
@@ -271,30 +296,37 @@ export function getTownReminderItems(
 
 export function getTownReminderShortLine(
   guide: GuideEntry | null,
-  activeLevelReminder: LevelReminder | null
+  activeLevelReminder: LevelReminder | null,
+  language: AppLanguage = 'ru'
 ): string | null {
-  const items = getTownReminderItems(guide, activeLevelReminder);
+  const items = getTownReminderItems(guide, activeLevelReminder, language);
   if (items.length === 0) {
     return null;
   }
 
-  return `Город: ${items.slice(0, 3).join(' / ')}`;
+  return `${translate(language, 'companion.detailsGroup.town')}: ${items.slice(0, 3).join(' / ')}`;
 }
 
-export function getSceneDisplayName(snapshot: AppSnapshot): string {
+export function getSceneDisplayName(
+  snapshot: AppSnapshot,
+  language: AppLanguage = 'ru'
+): string {
+  const currentGuideView = getGuideView(snapshot.currentGuideEntry, language);
+  const zoneGuideView = getGuideView(snapshot.currentZone.guide, language);
+
   if (snapshot.currentZone.sceneKind === 'gameplay') {
     return (
-      snapshot.currentGuideEntry?.zone_ru ??
-      snapshot.currentZone.guide?.zone_ru ??
+      currentGuideView?.zoneName ??
+      zoneGuideView?.zoneName ??
       snapshot.currentZone.rawZoneName ??
-      'Зона не определена'
+      translate(language, 'scene.unknownZone')
     );
   }
 
   return (
     snapshot.currentZone.rawZoneName ??
-    snapshot.currentGuideEntry?.zone_ru ??
-    'Зона не определена'
+    currentGuideView?.zoneName ??
+    translate(language, 'scene.unknownZone')
   );
 }
 
@@ -333,12 +365,17 @@ function getRouteZoneStatus(guide: GuideEntry, snapshot: AppSnapshot): RouteZone
 }
 
 
-export function getRouteActs(snapshot: AppSnapshot): RouteActGroup[] {
+export function getRouteActs(
+  snapshot: AppSnapshot,
+  language: AppLanguage = 'ru'
+): RouteActGroup[] {
   const grouped = new Map<string, RouteActGroup>();
 
   for (const guide of snapshot.guideEntries) {
     const key = guide.act === 'interlude' ? 'interlude' : `act-${guide.act}`;
-    const label = guide.act === 'interlude' ? 'Интерлюдии' : `Акт ${guide.act}`;
+    const label = guide.act === 'interlude'
+      ? translate(language, 'route.interludes')
+      : translate(language, 'route.act', { act: guide.act });
 
     if (!grouped.has(key)) {
       grouped.set(key, {
@@ -371,13 +408,14 @@ export function getRouteActs(snapshot: AppSnapshot): RouteActGroup[] {
 
 export function getRouteOverviewForAct(
   snapshot: AppSnapshot,
-  act: ZoneAct | null
+  act: ZoneAct | null,
+  language: AppLanguage = 'ru'
 ): RouteZoneStatus[] {
   if (act === null) {
     return [];
   }
 
-  return getRouteActs(snapshot).find((entry) => entry.act === act)?.zones ?? [];
+  return getRouteActs(snapshot, language).find((entry) => entry.act === act)?.zones ?? [];
 }
 
 export function getCurrentRouteAct(snapshot: AppSnapshot): ZoneAct | null {
@@ -394,11 +432,17 @@ export function getRunBestLabel(bestRun: BestRunSummary | null): string {
 
 export function getRequiredRewardLabelsForZone(
   guide: GuideEntry,
-  snapshot: AppSnapshot
+  snapshot: AppSnapshot,
+  language: AppLanguage = 'ru'
 ): string[] {
+  const guideView = getGuideView(guide, language);
+  const translatedChecklist = new Map(
+    (guideView?.checklist ?? []).map((item) => [item.id, item.text])
+  );
+
   return getRouteRewardItems(guide, snapshot).map((item) => {
     const marker = item.displayState === 'current' ? '▶' : '○';
-    return `${marker} ${item.text}`;
+    return `${marker} ${translatedChecklist.get(item.id) ?? item.text}`;
   });
 }
 

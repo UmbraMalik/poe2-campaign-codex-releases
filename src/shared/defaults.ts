@@ -69,6 +69,7 @@ export const DEFAULT_RUN_TIMER_SETTINGS: RunTimerSettings = {
 };
 
 export const DEFAULT_CONFIG: AppConfig = {
+  appLanguage: 'ru',
   logFilePath: null,
   logFileSelectionMode: null,
   lastZoneName: null,

@@ -1,39 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AutoUpdateState, UpdateInfo } from '../../shared/types';
+import { translateSystemText } from '../../i18n/runtime';
 import { formatFileSize, formatTimestamp, getReleaseNoteItems } from '../utils';
-
-function getStatusLabel(state: AutoUpdateState | null): string {
-  switch (state?.status) {
-    case 'checking':
-      return 'Проверяем обновление…';
-    case 'available':
-      return 'Обновление доступно';
-    case 'downloading':
-      return 'Скачиваем обновление…';
-    case 'downloaded':
-      return 'Обновление готово';
-    case 'not_available':
-      return 'Установлена актуальная версия';
-    case 'error':
-      return 'Ошибка обновления';
-    default:
-      return 'Ожидание данных обновления';
-  }
-}
+import { useDocumentTitle, useI18n } from '../useI18n';
 
 function getSpeedLabel(bytesPerSecond: number | undefined): string {
   if (!bytesPerSecond || bytesPerSecond <= 0) {
     return '—';
   }
 
-  return `${formatFileSize(bytesPerSecond)}/с`;
+  return `${formatFileSize(bytesPerSecond)}/s`;
 }
 
 export function UpdatePage() {
+  const { t, language } = useI18n();
   const [manualUpdateInfo, setManualUpdateInfo] = useState<UpdateInfo | null>(null);
   const [autoUpdateState, setAutoUpdateState] = useState<AutoUpdateState | null>(null);
   const [actionBusy, setActionBusy] = useState<'download' | 'install' | 'manual' | null>(null);
   const laterButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useDocumentTitle(t('titles.update'));
 
   useEffect(() => {
     laterButtonRef.current?.focus();
@@ -76,6 +62,20 @@ export function UpdatePage() {
     () => getReleaseNoteItems(releaseNotesSource),
     [releaseNotesSource]
   );
+
+  const statusLabel = autoUpdateState?.status === 'checking'
+    ? t('update.checking')
+    : autoUpdateState?.status === 'available'
+      ? t('update.available')
+      : autoUpdateState?.status === 'downloading'
+        ? t('update.downloading')
+        : autoUpdateState?.status === 'downloaded'
+          ? t('update.downloaded')
+          : autoUpdateState?.status === 'not_available'
+            ? t('update.upToDate')
+            : autoUpdateState?.status === 'error'
+              ? t('update.error')
+              : t('update.waiting');
 
   const handleAutoDownload = async () => {
     setActionBusy('download');
@@ -122,14 +122,14 @@ export function UpdatePage() {
       <section className="update-shell">
         <header className="close-confirm-header update-header">
           <div className="close-confirm-header-copy">
-            <p className="eyebrow">PoE2 Campaign Codex</p>
-            <h1>{canInstall ? 'Обновление готово' : 'Доступна новая версия'}</h1>
+            <p className="eyebrow">{t('common.appName')}</p>
+            <h1>{canInstall ? t('update.downloaded') : t('update.newVersion')}</h1>
           </div>
           <button
             className="button-secondary close-confirm-close no-drag"
             type="button"
-            aria-label="Закрыть окно обновления"
-            title="Позже"
+            aria-label={t('update.closeLabel')}
+            title={t('common.later')}
             onClick={() => window.close()}
           >
             ×
@@ -140,45 +140,48 @@ export function UpdatePage() {
           <>
             <div className="update-content">
               <div className="update-status-banner">
-                <strong>{getStatusLabel(autoUpdateState)}</strong>
+                <strong>{statusLabel}</strong>
                 {autoUpdateState?.status === 'error' && autoUpdateState.errorMessage && (
-                  <span>{autoUpdateState.errorMessage}</span>
+                  <span>{translateSystemText(autoUpdateState.errorMessage, language)}</span>
+                )}
+                {autoUpdateState?.status === 'error' && (
+                  <span>{t('update.vpnHint')}</span>
                 )}
               </div>
 
               <div className="update-version-row">
                 <div className="update-version-card">
-                  <span>Текущая версия</span>
+                  <span>{t('update.currentVersion')}</span>
                   <strong>{currentVersion}</strong>
                 </div>
                 <div className="update-version-card">
-                  <span>Новая версия</span>
+                  <span>{t('update.latestVersion')}</span>
                   <strong>{latestVersion}</strong>
                 </div>
               </div>
 
               <dl className="update-meta-grid">
                 <div className="update-meta-item">
-                  <dt>Релиз</dt>
+                  <dt>{t('update.release')}</dt>
                   <dd>{releaseName}</dd>
                 </div>
                 <div className="update-meta-item">
-                  <dt>Опубликован</dt>
-                  <dd>{formatTimestamp(releaseDate)}</dd>
+                  <dt>{t('update.published')}</dt>
+                  <dd>{formatTimestamp(releaseDate, language)}</dd>
                 </div>
                 <div className="update-meta-item">
-                  <dt>Статус</dt>
-                  <dd>{getStatusLabel(autoUpdateState)}</dd>
+                  <dt>{t('update.status')}</dt>
+                  <dd>{statusLabel}</dd>
                 </div>
               </dl>
 
               {autoUpdateState?.status === 'downloading' && progress && (
                 <section className="update-progress-card">
                   <div className="update-progress-header">
-                    <strong>Загрузка обновления</strong>
+                    <strong>{t('update.downloadTitle')}</strong>
                     <span>{Math.round(progress.percent)}%</span>
                   </div>
-                  <div className="update-progress-track" aria-label="Прогресс загрузки">
+                  <div className="update-progress-track" aria-label={t('update.progress')}>
                     <span style={{ width: `${Math.max(0, Math.min(100, progress.percent))}%` }} />
                   </div>
                   <p className="helper-text">
@@ -188,13 +191,11 @@ export function UpdatePage() {
               )}
 
               {autoUpdateState?.status === 'downloaded' && (
-                <p className="update-inline-message is-success">
-                  Обновление скачано. Установка начнётся только после кнопки “Установить и перезапустить”.
-                </p>
+                <p className="update-inline-message is-success">{t('update.downloadedInfo')}</p>
               )}
 
               <section className="update-notes-card">
-                <h2 className="settings-section-title">Что нового</h2>
+                <h2 className="settings-section-title">{t('update.whatsNew')}</h2>
                 {releaseNoteItems.length > 0 ? (
                   <div className="update-note-list">
                     {releaseNoteItems.map((item, index) => (
@@ -208,7 +209,7 @@ export function UpdatePage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="update-inline-message">Описание релиза не заполнено.</p>
+                  <p className="update-inline-message">{t('update.emptyNotes')}</p>
                 )}
               </section>
             </div>
@@ -220,7 +221,7 @@ export function UpdatePage() {
                 type="button"
                 onClick={() => window.close()}
               >
-                Позже
+                {t('common.later')}
               </button>
               {manualUpdateInfo?.releaseUrl && (
                 <button
@@ -228,7 +229,7 @@ export function UpdatePage() {
                   type="button"
                   onClick={() => void handleOpenRelease()}
                 >
-                  Открыть релиз
+                  {t('update.openRelease')}
                 </button>
               )}
               {showManualDownload && (
@@ -238,7 +239,7 @@ export function UpdatePage() {
                   disabled={actionBusy !== null}
                   onClick={() => void handleManualDownload()}
                 >
-                  {actionBusy === 'manual' ? 'Открываем…' : 'Скачать вручную'}
+                  {actionBusy === 'manual' ? t('update.manualDownloadBusy') : t('update.manualDownload')}
                 </button>
               )}
               {canAutoDownload && (
@@ -248,7 +249,7 @@ export function UpdatePage() {
                   disabled={actionBusy !== null}
                   onClick={() => void handleAutoDownload()}
                 >
-                  {actionBusy === 'download' ? 'Запускаем загрузку…' : 'Скачать обновление'}
+                  {actionBusy === 'download' ? t('update.autoDownloadBusy') : t('update.autoDownload')}
                 </button>
               )}
               {canInstall && (
@@ -258,7 +259,7 @@ export function UpdatePage() {
                   disabled={actionBusy !== null}
                   onClick={() => void handleInstall()}
                 >
-                  {actionBusy === 'install' ? 'Устанавливаем…' : 'Установить и перезапустить'}
+                  {actionBusy === 'install' ? t('update.installBusy') : t('update.install')}
                 </button>
               )}
             </footer>
@@ -266,10 +267,7 @@ export function UpdatePage() {
         ) : (
           <>
             <div className="update-content update-content-empty">
-              <p className="close-confirm-message">
-                Данные обновления пока недоступны. Попробуйте проверить обновления ещё раз из
-                настроек.
-              </p>
+              <p className="close-confirm-message">{t('update.emptyState')}</p>
             </div>
             <footer className="button-row close-confirm-actions update-actions no-drag">
               <button
@@ -278,7 +276,7 @@ export function UpdatePage() {
                 type="button"
                 onClick={() => window.close()}
               >
-                Закрыть
+                {t('common.close')}
               </button>
             </footer>
           </>

@@ -49,6 +49,7 @@ export interface ChecklistViewItem extends ChecklistItemDefinition {
 export type OverlayDensity = 'compact' | 'normal' | 'detailed';
 export type OverlayScale = 70 | 80 | 90 | 100 | 110 | 120;
 export type OverlayMode = 'full' | 'timer_only';
+export type AppLanguage = 'ru' | 'en';
 
 export interface OverlayVisibleSections {
   rewards: boolean;
@@ -348,6 +349,7 @@ export interface RunSummary {
 }
 
 export interface AppConfig {
+  appLanguage: AppLanguage;
   logFilePath: string | null;
   logFileSelectionMode: 'auto' | 'manual' | null;
   lastZoneName: string | null;
@@ -431,6 +433,9 @@ export interface RuntimeState {
   lastLevelUpDetectedAt: string | null;
   lastLogLineAt: string | null;
   lastValidGameplayZoneAt: string | null;
+  lastGameplayGuideId: string | null;
+  lastGameplayZoneRu: string | null;
+  lastGameplayAct: number | null;
   lastSceneSource: string | null;
   lastSceneSourceAt: string | null;
   overlayMode: OverlayMode;
@@ -504,6 +509,7 @@ export interface AutoUpdateState {
 }
 
 export interface SettingsPatch {
+  appLanguage?: AppLanguage;
   overlayOpacity?: number;
   overlayMovementLocked?: boolean;
   overlayScale?: OverlayScale;
@@ -518,6 +524,11 @@ export interface SettingsPatch {
   trainingModeEnabled?: boolean;
   trainingTargetActTimes?: Partial<TrainingTargetActTimes>;
   runTimerSettings?: Partial<RunTimerSettings>;
+}
+
+
+export interface TimerVisualTickPayload {
+  now: number;
 }
 
 export interface ElectronApi {
@@ -550,13 +561,18 @@ export interface ElectronApi {
   finishRunTimer: () => Promise<AppSnapshot>;
   getRunTimerState: () => Promise<RunTimerState>;
   resizeOverlay: (width: number, height: number) => Promise<AppSnapshot>;
+  resizeOverlayHeight: (height: number) => Promise<AppSnapshot>;
+  moveOverlayBy: (deltaX: number, deltaY: number) => Promise<boolean>;
   setOverlayMode: (mode: OverlayMode) => Promise<AppSnapshot>;
   toggleOverlayMode: () => Promise<AppSnapshot>;
+  closeOverlay: () => Promise<boolean>;
   openCompanionPanel: () => Promise<AppSnapshot>;
   toggleCompanionPanel: () => Promise<AppSnapshot>;
   openSettings: () => Promise<AppSnapshot>;
   toggleSettings: () => Promise<AppSnapshot>;
   openInfo: () => Promise<AppSnapshot>;
+  openCommunity: () => Promise<AppSnapshot>;
+  openSupport: () => Promise<AppSnapshot>;
   openReportIssue: () => Promise<AppSnapshot>;
   openUpdateDownload: (url: string) => Promise<boolean>;
   openReleasePage: (url: string) => Promise<boolean>;
@@ -565,5 +581,6 @@ export interface ElectronApi {
   confirmCloseAndSave: () => Promise<boolean>;
   onAutoUpdateChanged: (callback: (state: AutoUpdateState) => void) => () => void;
   onRunTimerChanged: (callback: (runTimer: RunTimerState) => void) => () => void;
+  onTimerVisualTick: (callback: (payload: TimerVisualTickPayload) => void) => () => void;
   onStateChanged: (callback: (snapshot: AppSnapshot) => void) => () => void;
 }

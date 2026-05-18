@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
   getCountdownDisplayMs,
   getRunTimerDisplayElapsed
@@ -97,6 +97,7 @@ export interface LiveRunTimerDiagnostics {
 
 const TIMER_DRIFT_WARNING_MS = 1200;
 const TIMER_DRIFT_WARNING_INTERVAL_MS = 5000;
+const TIMER_VISUAL_HEARTBEAT_MS = 1000;
 const MIN_TIMER_TICK_MS = 16;
 const COUNTDOWN_ZERO_POLL_MS = 250;
 
@@ -235,6 +236,57 @@ function hasRunTimerElectronApi(): boolean {
   );
 }
 
+function hasTimerVisualTickElectronApi(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.poe2Overlay !== 'undefined' &&
+    typeof window.poe2Overlay.onTimerVisualTick === 'function'
+  );
+}
+
+let lastExternalVisualTickPerfMs: number | null = null;
+let lastExternalVisualTickWarningAtMs = 0;
+
+function warnOnExternalVisualTickDrift(
+  diagnostics: LiveRunTimerDiagnostics | undefined,
+  runTimer: RunTimerState | null | undefined,
+  nowMs: number
+): void {
+  if (!diagnostics) {
+    return;
+  }
+
+  const perfNow = performance.now();
+  const previousPerfMs = lastExternalVisualTickPerfMs;
+  lastExternalVisualTickPerfMs = perfNow;
+
+  if (previousPerfMs === null) {
+    return;
+  }
+
+  const driftMs = perfNow - previousPerfMs - TIMER_VISUAL_HEARTBEAT_MS;
+  const warningNow = Date.now();
+
+  if (
+    driftMs <= TIMER_DRIFT_WARNING_MS ||
+    warningNow - lastExternalVisualTickWarningAtMs < TIMER_DRIFT_WARNING_INTERVAL_MS
+  ) {
+    return;
+  }
+
+  lastExternalVisualTickWarningAtMs = warningNow;
+
+  console.warn('[TimerDrift]', {
+    driftMs: Math.round(driftMs),
+    source: 'main-heartbeat',
+    documentHidden: document.hidden,
+    visibilityState: document.visibilityState,
+    timerStatus: runTimer?.status ?? 'unknown',
+    overlayMode: diagnostics.overlayMode ?? null,
+    elapsedMs: runTimer ? getRunTimerDisplayElapsed(runTimer, nowMs) : 0
+  });
+}
+
 export function useRunTimerState(
   runTimer: RunTimerState | null | undefined
 ): RunTimerState | null {
@@ -297,6 +349,7 @@ export function useLiveRunTimerDisplay(
   const initialNowMs = Math.max(resolvedSnapshotNowMs, Date.now());
   const effectiveRunTimer = runTimer ?? null;
   const shouldTick = shouldTickRunTimer(effectiveRunTimer, settings);
+  const usesExternalVisualTick = hasTimerVisualTickElectronApi();
   const latestTimerRef = useRef({
     runTimer: effectiveRunTimer,
     settings,
@@ -474,6 +527,249 @@ export function useLiveRunTimerDisplay(
   }, [minimumDelayMs, shouldTick]);
 
   return timerState;
+}
+
+
+export type LiveRunTimerTextFormatter = (state: LiveRunTimerState) => string | null;
+
+export function useLiveRunTimerText<TElement extends HTMLElement>(
+  textRef: RefObject<TElement | null>,
+  runTimer: RunTimerState | null | undefined,
+  settings: RunTimerSettings | null | undefined,
+  snapshotNowMs: number | null | undefined,
+  formatter: LiveRunTimerTextFormatter,
+  minimumDelayMs = 32,
+  diagnostics?: LiveRunTimerDiagnostics
+): void {
+  const resolvedSnapshotNowMs = snapshotNowMs ?? Date.now();
+  const initialNowMs = Math.max(resolvedSnapshotNowMs, Date.now());
+  const effectiveRunTimer = runTimer ?? null;
+  const shouldTick = shouldTickRunTimer(effectiveRunTimer, settings);
+  const usesExternalVisualTick = hasTimerVisualTickElectronApi();
+  const latestTimerRef = useRef({
+    runTimer: effectiveRunTimer,
+    settings,
+    diagnostics
+  });
+  latestTimerRef.current = {
+    runTimer: effectiveRunTimer,
+    settings,
+    diagnostics
+  };
+
+  const formatterRef = useRef(formatter);
+  formatterRef.current = formatter;
+
+  const anchorRef = useRef({
+    nowMs: initialNowMs,
+    perfMs: performance.now()
+  });
+  const computedNowMsRef = useRef(initialNowMs);
+  const publishedNowMsRef = useRef(initialNowMs);
+  const expectedTickPerfMsRef = useRef<number | null>(null);
+  const lastDriftWarningAtRef = useRef(0);
+  const lastSnapshotReceivedAtRef = useRef(Date.now());
+  const lastPublishedTextRef = useRef<string | null>(null);
+
+  const publishText = (nowMs: number, force = false) => {
+    const latest = latestTimerRef.current;
+    const nextText = formatterRef.current(
+      createLiveRunTimerState(latest.runTimer, latest.settings, nowMs)
+    );
+
+    if (nextText === null) {
+      return;
+    }
+
+    if (!force && lastPublishedTextRef.current === nextText) {
+      return;
+    }
+
+    lastPublishedTextRef.current = nextText;
+
+    if (textRef.current) {
+      textRef.current.textContent = nextText;
+    }
+  };
+
+  useEffect(() => {
+    lastSnapshotReceivedAtRef.current = Date.now();
+  }, [resolvedSnapshotNowMs]);
+
+  useEffect(() => {
+    if (!usesExternalVisualTick) {
+      return;
+    }
+
+    const unsubscribe = window.poe2Overlay.onTimerVisualTick((payload) => {
+      const latest = latestTimerRef.current;
+      const nextNowMs = Math.max(
+        Number.isFinite(payload?.now) ? payload.now : 0,
+        Date.now(),
+        computedNowMsRef.current
+      );
+
+      warnOnExternalVisualTickDrift(
+        latest.diagnostics,
+        latest.runTimer,
+        nextNowMs
+      );
+
+      computedNowMsRef.current = nextNowMs;
+      publishedNowMsRef.current = nextNowMs;
+      expectedTickPerfMsRef.current = null;
+      publishText(nextNowMs);
+    });
+
+    return unsubscribe;
+  }, [usesExternalVisualTick]);
+
+  useEffect(() => {
+    const perfNow = performance.now();
+    const nextNowMs = Math.max(
+      resolvedSnapshotNowMs,
+      Date.now(),
+      computedNowMsRef.current
+    );
+
+    anchorRef.current = {
+      nowMs: nextNowMs,
+      perfMs: perfNow
+    };
+    computedNowMsRef.current = nextNowMs;
+    publishedNowMsRef.current = nextNowMs;
+    expectedTickPerfMsRef.current = null;
+    publishText(nextNowMs, true);
+  }, [
+    resolvedSnapshotNowMs,
+    effectiveRunTimer?.status,
+    effectiveRunTimer?.elapsedMs,
+    effectiveRunTimer?.resumedAt,
+    effectiveRunTimer?.pausedAt,
+    effectiveRunTimer?.finishedAt,
+    effectiveRunTimer?.startedAt,
+    effectiveRunTimer?.lastZoneEnteredAt,
+    effectiveRunTimer?.currentZoneElapsedMs,
+    effectiveRunTimer?.currentZoneStartedAt,
+    effectiveRunTimer?.pauseCount,
+    effectiveRunTimer?.actSplits.length,
+    settings?.leagueStartAt,
+    formatter
+  ]);
+
+  useEffect(() => {
+    if (!shouldTick || usesExternalVisualTick) {
+      return;
+    }
+
+    let timeoutId: number | null = null;
+    let cancelled = false;
+
+    const warnOnDrift = (driftMs: number, nowMs: number) => {
+      const warningNow = Date.now();
+      if (
+        driftMs <= TIMER_DRIFT_WARNING_MS ||
+        warningNow - lastDriftWarningAtRef.current < TIMER_DRIFT_WARNING_INTERVAL_MS
+      ) {
+        return;
+      }
+
+      const latest = latestTimerRef.current;
+      if (!latest.diagnostics) {
+        return;
+      }
+
+      lastDriftWarningAtRef.current = warningNow;
+
+      console.warn('[TimerDrift]', {
+        driftMs: Math.round(driftMs),
+        documentHidden: document.hidden,
+        visibilityState: document.visibilityState,
+        timerStatus: latest.runTimer?.status ?? 'unknown',
+        overlayMode: latest.diagnostics?.overlayMode ?? null,
+        elapsedMs: latest.runTimer
+          ? getRunTimerDisplayElapsed(latest.runTimer, nowMs)
+          : 0,
+        lastSnapshotAgeMs: Math.max(
+          0,
+          Date.now() - lastSnapshotReceivedAtRef.current
+        )
+      });
+    };
+
+    const scheduleNextTick = () => {
+      if (cancelled) {
+        return;
+      }
+
+      const latest = latestTimerRef.current;
+      const delayMs = getNextTimerUpdateDelay(
+        latest.runTimer,
+        latest.settings,
+        computedNowMsRef.current,
+        minimumDelayMs
+      );
+
+      if (delayMs === null) {
+        expectedTickPerfMsRef.current = null;
+        return;
+      }
+
+      expectedTickPerfMsRef.current = performance.now() + delayMs;
+      timeoutId = window.setTimeout(runTick, delayMs);
+    };
+
+    const runTick = () => {
+      if (cancelled) {
+        return;
+      }
+
+      timeoutId = null;
+
+      const perfNow = performance.now();
+      const expectedTickPerfMs = expectedTickPerfMsRef.current;
+      expectedTickPerfMsRef.current = null;
+
+      if (expectedTickPerfMs !== null) {
+        warnOnDrift(perfNow - expectedTickPerfMs, computedNowMsRef.current);
+      }
+
+      const anchor = anchorRef.current;
+      const nextNowMs = Math.max(
+        computedNowMsRef.current,
+        anchor.nowMs + (perfNow - anchor.perfMs)
+      );
+      computedNowMsRef.current = nextNowMs;
+
+      const latest = latestTimerRef.current;
+      const previousPublishedNowMs = publishedNowMsRef.current;
+
+      if (
+        shouldPublishTimerTick(
+          previousPublishedNowMs,
+          nextNowMs,
+          latest.runTimer,
+          latest.settings
+        )
+      ) {
+        publishedNowMsRef.current = nextNowMs;
+        publishText(nextNowMs);
+      }
+
+      scheduleNextTick();
+    };
+
+    scheduleNextTick();
+
+    return () => {
+      cancelled = true;
+      expectedTickPerfMsRef.current = null;
+
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [minimumDelayMs, shouldTick, usesExternalVisualTick]);
 }
 
 export function useLiveRunTimer(

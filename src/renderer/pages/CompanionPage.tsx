@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAppSnapshot, useLiveRunTimer } from '../hooks';
+import { useDocumentTitle, useI18n } from '../useI18n';
 import {
   getActTimeRows,
   getActTimeRowsFromSplits,
@@ -15,58 +16,124 @@ import {
   getUpcomingVendorReminders,
   getXpStatus
 } from '../companion-helpers';
-import { formatDuration } from '../utils';
+import { formatDuration, formatRecommendedLevelLabel } from '../utils';
 import type { ActTimeRow } from '../companion-helpers';
-import type { CampaignBonusDefinition, CampaignBonusProgress, GuideEntry, RunSummary, ZoneAct } from '../../shared/types';
+import { getCampaignBonusView, getGuideView, translateDataText } from '../../i18n/data';
+import { translate } from '../../i18n/translations';
+import type { AppLanguage, CampaignBonusDefinition, CampaignBonusProgress, GuideEntry, RunSummary, ZoneAct } from '../../shared/types';
 
 type CompanionTab = 'zone' | 'route' | 'timer' | 'actTimes' | 'reminders' | 'bonuses' | 'summary';
 
-const PROJECT_SITE_URL = 'https://umbramalik.github.io/poe2-campaign-codex/#';
-const PROJECT_TELEGRAM_URL = 'https://t.me/POE2CampaignCodex';
-const PROJECT_FEEDBACK_URL = 'https://t.me/POE2CampaignCodex?direct';
+const ROUTE_OVERVIEW_VISIBLE_ITEMS = 2;
 
-function getRouteStatusIcon(status: 'current' | 'missed' | 'completed' | 'visited' | 'pending') {
+function getRouteStatusLabel(
+  status: 'current' | 'missed' | 'completed' | 'visited' | 'pending',
+  language: AppLanguage
+) {
   switch (status) {
     case 'current':
-      return '▶';
+      return translate(language, 'companion.routeStatusCurrent');
     case 'missed':
-      return '⚠';
-    case 'completed':
-    case 'visited':
-      return '✓';
+      return translate(language, 'companion.routeStatusMissed');
     default:
-      return '○';
+      return null;
   }
 }
 
-function formatActTitle(act: ZoneAct | null) {
+function getGuideDetailsList(guide: GuideEntry, key: string): string[] {
+  if (!guide.details || Array.isArray(guide.details)) {
+    return [];
+  }
+
+  const value = (guide.details as Record<string, unknown>)[key];
+
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+function getRouteFallbackLabels(guide: GuideEntry, language: AppLanguage): string[] {
+  const guideView = getGuideView(guide, language);
+  const localizedDetails = guideView?.details;
+  const detailsRoute = localizedDetails && !Array.isArray(localizedDetails) && Array.isArray(localizedDetails.route)
+    ? localizedDetails.route.filter((item): item is string => typeof item === 'string')
+    : [];
+  const navigation = localizedDetails && !Array.isArray(localizedDetails) && Array.isArray(localizedDetails.navigation)
+    ? localizedDetails.navigation.filter((item): item is string => typeof item === 'string')
+    : [];
+  const craftPlan = localizedDetails && !Array.isArray(localizedDetails) && Array.isArray(localizedDetails.craft_plan)
+    ? localizedDetails.craft_plan.filter((item): item is string => typeof item === 'string')
+    : [];
+  const timeSaves = localizedDetails && !Array.isArray(localizedDetails) && Array.isArray(localizedDetails.time_saves)
+    ? localizedDetails.time_saves.filter((item): item is string => typeof item === 'string')
+    : [];
+
+  const candidates = [
+    ...(guideView?.checklist ?? []).map((item) => item.text),
+    ...detailsRoute,
+    ...(guideView?.important ?? []),
+    ...navigation,
+    ...craftPlan,
+    ...timeSaves,
+    ...(guideView?.rewards ?? []).map((item) => translate(language, 'companion.routeRewardPrefix', { text: item })),
+    guideView?.nextZoneName ? translate(language, 'companion.routeNextPrefix', { text: guideView.nextZoneName }) : ''
+  ];
+
+  const seen = new Set<string>();
+
+  return candidates
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .filter((item) => {
+      const key = item.toLocaleLowerCase(language === 'en' ? 'en' : 'ru');
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 4);
+}
+
+function formatRouteCardTitle(guide: GuideEntry, language: AppLanguage): string {
+  if (guide.id === 'interlude_level_52_power_spike') {
+    return translate(language, 'companion.setup52');
+  }
+
+  return getGuideView(guide, language)?.zoneName ?? (language === 'en' ? guide.zone_en : guide.zone_ru);
+}
+
+
+function formatActTitle(act: ZoneAct | null, language: AppLanguage) {
   if (act === null) {
-    return 'Маршрут';
+    return translate(language, 'companion.routeTitleFallback');
   }
 
-  return act === 'interlude' ? 'Интерлюдии' : `Акт ${act}`;
+  return act === 'interlude'
+    ? translate(language, 'companion.interludes')
+    : translate(language, 'route.act', { act });
 }
 
-function formatRunStatus(status: string) {
+function formatRunStatus(status: string, language: AppLanguage) {
   switch (status) {
     case 'armed':
-      return 'Ожидание';
+      return translate(language, 'companion.runStatus.armed');
     case 'running':
-      return 'Идёт';
+      return translate(language, 'companion.runStatus.running');
     case 'paused':
-      return 'Пауза';
+      return translate(language, 'companion.runStatus.paused');
     case 'finished':
-      return 'Завершён';
+      return translate(language, 'companion.runStatus.finished');
     default:
-      return 'Не запущен';
+      return translate(language, 'companion.runStatus.idle');
   }
 }
 
-function formatActTimeStatus(status: ActTimeRow['status']) {
-  return status === 'finished' ? 'завершён' : 'идёт';
+function formatActTimeStatus(status: ActTimeRow['status'], language: AppLanguage) {
+  return status === 'finished'
+    ? translate(language, 'companion.actStatusFinished')
+    : translate(language, 'companion.actStatusCurrent');
 }
 
-function renderActTimeTable(rows: ActTimeRow[], emptyMessage: string) {
+function renderActTimeTable(rows: ActTimeRow[], emptyMessage: string, language: AppLanguage) {
   if (rows.length === 0) {
     return <p className="helper-text">{emptyMessage}</p>;
   }
@@ -76,10 +143,10 @@ function renderActTimeTable(rows: ActTimeRow[], emptyMessage: string) {
       <table className="compact-table">
         <thead>
           <tr>
-            <th>Акт</th>
-            <th>Время акта</th>
-            <th>Статус</th>
-            <th>Сплит / общее время</th>
+            <th>{translate(language, 'route.act', { act: '' }).trim()}</th>
+            <th>{translate(language, 'companion.timerTitle')}</th>
+            <th>{translate(language, 'common.status')}</th>
+            <th>{translate(language, 'common.summary')} / {translate(language, 'companion.totalTime')}</th>
           </tr>
         </thead>
         <tbody>
@@ -87,7 +154,7 @@ function renderActTimeTable(rows: ActTimeRow[], emptyMessage: string) {
             <tr key={`act-time-${row.act}`}>
               <td>{row.act}</td>
               <td>{formatDuration(row.elapsedMs)}</td>
-              <td>{formatActTimeStatus(row.status)}</td>
+              <td>{formatActTimeStatus(row.status, language)}</td>
               <td>{formatDuration(row.totalElapsedMs)}</td>
             </tr>
           ))}
@@ -119,11 +186,15 @@ function renderStringSection(
 }
 
 
-function renderCompactReminderList(items: { id: string; level: number; title: string; items?: string[] }[], limit?: number) {
+function renderCompactReminderList(
+  items: { id: string; level: number; title: string; items?: string[] }[],
+  language: AppLanguage,
+  limit?: number
+) {
   const visible = typeof limit === 'number' ? items.slice(0, limit) : items;
 
   if (visible.length === 0) {
-    return <p className="helper-text">Пока нет актуальных напоминаний.</p>;
+    return <p className="helper-text">{translate(language, 'companion.remindersEmpty')}</p>;
   }
 
   return (
@@ -131,14 +202,14 @@ function renderCompactReminderList(items: { id: string; level: number; title: st
       {visible.map((entry, index) => (
         <li key={entry.id} className={`reminder-item ${index === 0 ? 'is-nearest' : ''}`}>
           <div className="reminder-line">
-            <span className="reminder-level">Ур. {entry.level}</span>
-            <span className="reminder-title">{entry.title}</span>
-            {index === 0 && <span className="reminder-badge">ближайшее</span>}
+            <span className="reminder-level">{translate(language, 'common.level')} {entry.level}</span>
+            <span className="reminder-title">{translateDataText(entry.title, language)}</span>
+            {index === 0 && <span className="reminder-badge">{translate(language, 'overlay.currentBadge')}</span>}
           </div>
           {entry.items && entry.items.length > 0 && (
             <ul className="reminder-sublist">
               {entry.items.slice(0, 3).map((item) => (
-                <li key={`${entry.id}-${item}`}>{item}</li>
+                <li key={`${entry.id}-${item}`}>{translateDataText(item, language)}</li>
               ))}
             </ul>
           )}
@@ -148,13 +219,19 @@ function renderCompactReminderList(items: { id: string; level: number; title: st
   );
 }
 
-function renderDetails(details: GuideEntry['details']) {
+function renderDetails(
+  details: GuideEntry['details'] | ReturnType<typeof getGuideView>['details'],
+  language: AppLanguage
+) {
   if (!details) {
     return null;
   }
 
   if (Array.isArray(details)) {
-    return renderStringSection('Детали', details.filter(Boolean));
+    return renderStringSection(
+      translate(language, 'companion.detailsTitle'),
+      details.filter(Boolean).map((item) => translateDataText(item, language))
+    );
   }
 
   if (typeof details === 'object') {
@@ -169,22 +246,6 @@ function renderDetails(details: GuideEntry['details']) {
       'crafting_tips'
     ]);
 
-    const groupLabels: Record<string, string> = {
-      navigation: 'Навигация',
-      checkpoint: 'Чекпоинт',
-      town_plan: 'Городской план',
-      opportunistic: 'По пути',
-      time_saves: 'Скип времени',
-      xp_strategy: 'XP-стратегия',
-      craft_plan: 'Крафт-план',
-      danger: 'Опасность',
-      notes: 'Заметки',
-      route_notes: 'Маршрут',
-      vendor: 'Торговцы',
-      town: 'Город',
-      loot: 'Лут'
-    };
-
     const groups = Object.entries(details).filter(
       ([key, value]) =>
         !duplicatedSectionKeys.has(key) &&
@@ -198,14 +259,16 @@ function renderDetails(details: GuideEntry['details']) {
 
     return (
       <section className="companion-block companion-details-block">
-        <h3>Детали</h3>
+        <h3>{translate(language, 'companion.detailsTitle')}</h3>
         <div className="companion-stack">
           {groups.map(([key, value]) => (
             <div key={key}>
-              <p className="companion-inline-title">{groupLabels[key] ?? key}</p>
+              <p className="companion-inline-title">
+                {translate(language, `companion.detailsGroup.${key}`)}
+              </p>
               <ul className="details-list">
                 {(value as string[]).map((item) => (
-                  <li key={`${key}-${item}`}>{item}</li>
+                  <li key={`${key}-${item}`}>{translateDataText(item, language)}</li>
                 ))}
               </ul>
             </div>
@@ -219,28 +282,33 @@ function renderDetails(details: GuideEntry['details']) {
 }
 
 
-function formatBonusAct(act: ZoneAct): string {
-  return act === 'interlude' ? 'Интерлюдии' : `Акт ${act}`;
+function formatBonusAct(act: ZoneAct, language: AppLanguage): string {
+  return act === 'interlude'
+    ? translate(language, 'companion.interludes')
+    : translate(language, 'route.act', { act });
 }
 
-function getBonusCategoryLabel(category: CampaignBonusDefinition['category']): string {
+function getBonusCategoryLabel(
+  category: CampaignBonusDefinition['category'],
+  language: AppLanguage
+): string {
   switch (category) {
     case 'weapon_set_passive':
-      return 'Пассивки оружия';
+      return translate(language, 'companion.bonusCategories.weapon_set_passive');
     case 'resistance':
-      return 'Сопротивления';
+      return translate(language, 'companion.bonusCategories.resistance');
     case 'spirit':
-      return 'Дух';
+      return translate(language, 'companion.bonusCategories.spirit');
     case 'life':
-      return 'Здоровье';
+      return translate(language, 'companion.bonusCategories.life');
     case 'mana':
-      return 'Мана';
+      return translate(language, 'companion.bonusCategories.mana');
     case 'choice':
-      return 'Выборный бонус';
+      return translate(language, 'companion.bonusCategories.choice');
     case 'utility':
-      return 'Утилити';
+      return translate(language, 'companion.bonusCategories.utility');
     default:
-      return 'Предметы';
+      return translate(language, 'companion.bonusCategories.default');
   }
 }
 
@@ -445,9 +513,9 @@ function getCurrentZoneCampaignBonuses(snapshot: NonNullable<ReturnType<typeof u
     .sort((left, right) => Number(left.done) - Number(right.done));
 }
 
-function renderSummary(summary: RunSummary | null) {
+function renderSummary(summary: RunSummary | null, language: AppLanguage) {
   if (!summary) {
-    return <p className="helper-text">Итоги появятся после завершения забега.</p>;
+    return <p className="helper-text">{translate(language, 'companion.summaryEmpty')}</p>;
   }
 
   const actTimeRows = getActTimeRowsFromSplits(summary.actSplits, summary.totalElapsedMs);
@@ -455,34 +523,34 @@ function renderSummary(summary: RunSummary | null) {
   return (
     <div className="companion-stack">
       <section className="companion-block">
-        <h3>Итоги забега</h3>
+        <h3>{translate(language, 'companion.summaryTitle')}</h3>
         <dl className="info-grid companion-info-grid">
           <div className="info-cell">
-            <dt>Общее время</dt>
+            <dt>{translate(language, 'companion.totalTime')}</dt>
             <dd>{formatDuration(summary.totalElapsedMs)}</dd>
           </div>
           <div className="info-cell">
-            <dt>Паузы</dt>
+            <dt>{translate(language, 'companion.pauses')}</dt>
             <dd>{summary.pauseCount}</dd>
           </div>
           <div className="info-cell">
-            <dt>Рекорд</dt>
-            <dd>{summary.isNewPb ? 'Новый рекорд' : 'Без обновления'}</dd>
+            <dt>{translate(language, 'companion.record')}</dt>
+            <dd>{summary.isNewPb ? translate(language, 'companion.newRecord') : translate(language, 'companion.noRecordUpdate')}</dd>
           </div>
         </dl>
       </section>
 
       <section className="companion-block">
-        <h3>Время актов</h3>
-        {renderActTimeTable(actTimeRows, 'Время актов появится после первых сплитов.')}
+        <h3>{translate(language, 'common.actTimes')}</h3>
+        {renderActTimeTable(actTimeRows, translate(language, 'companion.actTimesEmptyRunning'), language)}
       </section>
 
       <section className="companion-block">
-        <h3>Самые долгие зоны</h3>
+        <h3>{translate(language, 'companion.longestZones')}</h3>
         <ul className="details-list">
           {summary.longestZones.map((entry) => (
             <li key={`${entry.zoneId}-${entry.enteredAt}`}>
-              {entry.zone_ru} · {formatDuration(entry.elapsedMs)}
+              {translateDataText(entry.zone_ru, language)} · {formatDuration(entry.elapsedMs)}
             </li>
           ))}
         </ul>
@@ -493,6 +561,7 @@ function renderSummary(summary: RunSummary | null) {
 
 export function CompanionPage() {
   const snapshot = useAppSnapshot();
+  const { t, language } = useI18n(snapshot?.config.appLanguage);
   const liveRunTimer = useLiveRunTimer(
     snapshot?.config.runTimer,
     snapshot?.config.runTimerSettings,
@@ -502,20 +571,22 @@ export function CompanionPage() {
   const [selectedAct, setSelectedAct] = useState<ZoneAct | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
+  useDocumentTitle(t('titles.companion'));
+
   useEffect(() => {
     if (!snapshot) {
       return;
     }
 
     const currentAct = getCurrentRouteAct(snapshot);
-    const availableActs = new Set(getRouteActs(snapshot).map((entry) => entry.act));
+    const availableActs = new Set(getRouteActs(snapshot, language).map((entry) => entry.act));
     if (selectedAct === null || !availableActs.has(selectedAct)) {
       setSelectedAct(currentAct);
     }
-  }, [snapshot, selectedAct]);
+  }, [snapshot, selectedAct, language]);
 
   if (!snapshot) {
-    return <div className="settings-shell">Загрузка подробной панели…</div>;
+    return <div className="settings-shell">{t('companion.loading')}</div>;
   }
 
   const { config, currentGuideEntry, currentZone, activeLevelReminder } =
@@ -523,11 +594,12 @@ export function CompanionPage() {
   const displayRunTimer = liveRunTimer.runTimer ?? config.runTimer;
   const nowAct = getCurrentRouteAct(snapshot);
   const guide = currentGuideEntry;
-  const guideChecklist = guide?.checklist ?? [];
-  const sceneName = getSceneDisplayName(snapshot);
-  const routeActs = getRouteActs(snapshot);
-  const routeZones = getRouteOverviewForAct(snapshot, selectedAct ?? nowAct);
-  const xpStatus = getXpStatus(snapshot);
+  const guideView = getGuideView(guide, language);
+  const guideChecklist = guideView?.checklist ?? [];
+  const sceneName = getSceneDisplayName(snapshot, language);
+  const routeActs = getRouteActs(snapshot, language);
+  const routeZones = getRouteOverviewForAct(snapshot, selectedAct ?? nowAct, language);
+  const xpStatus = getXpStatus(snapshot, language);
   const countdownMs = liveRunTimer.countdownMs;
   const currentActElapsed = getCurrentActElapsedMs(
     displayRunTimer,
@@ -556,6 +628,10 @@ export function CompanionPage() {
     campaignBonusProgress
   );
   const currentZoneBonuses = getCurrentZoneCampaignBonuses(snapshot);
+  const localizedCurrentZoneBonuses = currentZoneBonuses.map(({ bonus, done }) => ({
+    bonus: getCampaignBonusView(bonus, language) ?? bonus,
+    done
+  }));
   const actTimeRows = getActTimeRows(displayRunTimer, guide, liveRunTimer.nowMs);
   const hasNoGuideForKnownZone =
     !guide &&
@@ -602,23 +678,23 @@ export function CompanionPage() {
   const zoneTab = (
     <div className="companion-tab-layout">
       <section className="companion-block companion-overview-card">
-        <h3>{guide ? `${formatActTitle(guide.act)} · ${sceneName}` : sceneName}</h3>
+        <h3>{guide ? `${formatActTitle(guide.act, language)} · ${sceneName}` : sceneName}</h3>
         <dl className="info-grid companion-info-grid">
           <div className="info-cell">
-            <dt>Следующая зона</dt>
-            <dd>{guide?.next_zone_ru ?? '—'}</dd>
+            <dt>{t('companion.nextZone')}</dt>
+            <dd>{guideView?.nextZoneName ?? t('common.notAvailable')}</dd>
           </div>
           <div className="info-cell">
-            <dt>Уровень / рек</dt>
-            <dd>Ур. {config.currentLevel ?? '?'} · {guide?.recommended_level_label ?? '—'}</dd>
+            <dt>{t('companion.levelRec')}</dt>
+            <dd>{t('common.level')} {config.currentLevel ?? '?'} · {guideView?.recommendedLevelLabel ?? t('common.notAvailable')}</dd>
           </div>
           <div className="info-cell">
-            <dt>Опыт</dt>
+            <dt>{t('companion.experience')}</dt>
             <dd>{xpStatus.longLabel}</dd>
           </div>
           <div className="info-cell">
-            <dt>Сцена</dt>
-            <dd>{currentZone.sceneKind === 'town' ? 'Город / хаб' : 'Игровая зона'}</dd>
+            <dt>{t('companion.sceneLabel')}</dt>
+            <dd>{currentZone.sceneKind === 'town' ? t('companion.sceneTownHub') : t('companion.sceneGameplay')}</dd>
           </div>
         </dl>
       </section>
@@ -626,7 +702,7 @@ export function CompanionPage() {
       <div className="companion-zone-dashboard">
         <div className="companion-column">
           <section className="companion-block">
-            <h3>Что в локации</h3>
+            <h3>{t('overlay.inThisZone')}</h3>
             {guideChecklist.length > 0 ? (
               <ul className="checklist-list companion-checklist-list">
                 {guideChecklist.map((item) => (
@@ -637,42 +713,42 @@ export function CompanionPage() {
               </ul>
             ) : (
               <p className="helper-text">
-                {hasNoGuideForKnownZone ? 'Инфы по этой локации нет.' : 'Для этой зоны пока нет заметок.'}
+                {hasNoGuideForKnownZone ? t('companion.noGuideKnown') : t('overlay.emptyZoneNotes')}
               </p>
             )}
           </section>
 
 
-          {currentZoneBonuses.length > 0 && (
+          {localizedCurrentZoneBonuses.length > 0 && (
             <section className="companion-block zone-bonuses-card">
-              <h3>Бонусы зоны</h3>
+              <h3>{t('overlay.zoneBonuses')}</h3>
               <ul className="details-list zone-bonus-details-list">
-                {currentZoneBonuses.map(({ bonus, done }) => (
+                {localizedCurrentZoneBonuses.map(({ bonus, done }) => (
                   <li key={bonus.id} className={done ? 'bonus-line is-done' : 'bonus-line'}>
                     <span className="bonus-state-marker">{done ? '✓' : '○'}</span>
-                    <span>{bonus.title}</span>
+                    <span>{'displayTitle' in bonus ? bonus.displayTitle : bonus.title}</span>
                   </li>
                 ))}
               </ul>
-              <p className="helper-text compact-helper-text">Полный список и ручные отметки — во вкладке “Бонусы”.</p>
+              <p className="helper-text compact-helper-text">{t('companion.zoneBonusesHint')}</p>
             </section>
           )}
 
-          {renderStringSection('Дальше', guide?.next_zone_ru ? [guide.next_zone_ru] : [])}
-          {renderStringSection('Скип', guide?.skip ?? [], 'skip-section')}
+          {renderStringSection(t('common.next'), guideView?.nextZoneName ? [guideView.nextZoneName] : [])}
+          {renderStringSection(t('common.skip'), guideView?.skip ?? [], 'skip-section')}
         </div>
 
         <div className="companion-column">
-          {renderStringSection('Забрать', guide?.rewards ?? [])}
-          {renderStringSection('Важно', guide?.important ?? [])}
-          {renderStringSection('Босс', guide?.boss_tips ?? [])}
+          {renderStringSection(t('companion.take'), guideView?.rewards ?? [])}
+          {renderStringSection(t('common.important'), guideView?.important ?? [])}
+          {renderStringSection(t('common.bossTips'), guideView?.bossTips ?? [])}
         </div>
 
         <div className="companion-column">
-          {renderStringSection('Опыт', guide?.xp_notes ?? [])}
-          {renderStringSection('Крафт', guide?.crafting_tips ?? [])}
-          {renderStringSection('После', guide?.after ?? [])}
-          {renderDetails(guide?.details)}
+          {renderStringSection(t('common.xpNotes'), guideView?.xpNotes ?? [])}
+          {renderStringSection(t('common.craftingTips'), guideView?.craftingTips ?? [])}
+          {renderStringSection(t('common.after'), guideView?.after ?? [])}
+          {renderDetails(guideView?.details ?? guide?.details, language)}
         </div>
       </div>
     </div>
@@ -695,16 +771,23 @@ export function CompanionPage() {
         </div>
         <div className="button-row">
           <button type="button" className="button-secondary" onClick={focusCurrentZone}>
-            К текущей зоне
+            {t('companion.focusCurrentZone')}
           </button>
         </div>
       </section>
 
       <section className="companion-block companion-route-list-card">
-        <h3>{formatActTitle(selectedAct ?? nowAct)}</h3>
+        <h3>{formatActTitle(selectedAct ?? nowAct, language)}</h3>
         <div className="route-overview-list route-overview-grid">
           {routeZones.map((entry, index) => {
-            const rewardLabels = getRequiredRewardLabelsForZone(entry.guide, snapshot);
+            const rewardLabels = getRequiredRewardLabelsForZone(entry.guide, snapshot, language);
+            const fallbackLabels = rewardLabels.length > 0 ? [] : getRouteFallbackLabels(entry.guide, language);
+            const routeLabels = rewardLabels.length > 0 ? rewardLabels : fallbackLabels;
+            const visibleRouteLabels = routeLabels.slice(0, ROUTE_OVERVIEW_VISIBLE_ITEMS);
+            const hiddenRouteLabelsCount = Math.max(0, routeLabels.length - visibleRouteLabels.length);
+            const statusLabel = getRouteStatusLabel(entry.status, language);
+            const routeCardTitle = formatRouteCardTitle(entry.guide, language);
+            const routeGuideView = getGuideView(entry.guide, language);
 
             return (
               <article
@@ -714,22 +797,34 @@ export function CompanionPage() {
               >
                 <div className="route-overview-header">
                   <span className="route-step-index">{String(index + 1).padStart(2, '0')}</span>
-                  <span className="route-status-icon">{getRouteStatusIcon(entry.status)}</span>
-                  <strong className="route-zone-name">{entry.guide.zone_ru}</strong>
-                  <span className="route-rec-badge">Рек: {entry.guide.recommended_level_label}</span>
+                  <strong className="route-zone-name">{routeCardTitle}</strong>
+                  <span className="route-rec-badge">{t('companion.routeCardLevel', { level: routeGuideView?.recommendedLevelLabel ?? formatRecommendedLevelLabel(entry.guide, language) })}</span>
+                  {statusLabel && <span className="route-state-pill">{statusLabel}</span>}
                 </div>
 
-                {rewardLabels.length > 0 && (
-                  <ul className="details-list compact-reward-list">
-                    {rewardLabels.map((item) => (
-                      <li key={`${entry.guide.id}-${item}`}>{item}</li>
-                    ))}
-                  </ul>
+                {visibleRouteLabels.length > 0 ? (
+                  <>
+                    <ul className="details-list compact-reward-list">
+                      {visibleRouteLabels.map((item) => (
+                        <li key={`${entry.guide.id}-${item}`}>{item}</li>
+                      ))}
+                    </ul>
+                    {hiddenRouteLabelsCount > 0 && (
+                      <p className="route-more-note">{t('companion.routeMore', { count: hiddenRouteLabelsCount })}</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="route-empty-note">{t('companion.routeEmpty')}</p>
                 )}
 
                 {entry.missedItems.length > 0 && (
-                  <p className="warning-inline">
-                    Пропущено: {entry.missedItems.map((item) => item.text).join(', ')}
+                  <p className="warning-inline route-warning-inline">
+                    {t('companion.missedInline', {
+                      items: entry.missedItems
+                        .slice(0, 2)
+                        .map((item) => translateDataText(item.text, language))
+                        .join(', ')
+                    })}
                   </p>
                 )}
               </article>
@@ -743,26 +838,26 @@ export function CompanionPage() {
   const timerTab = (
     <div className="companion-tab-layout">
       <section className="companion-block">
-        <h3>Таймер кампании</h3>
+        <h3>{t('companion.timerTitle')}</h3>
         <dl className="info-grid companion-info-grid">
           <div className="info-cell">
-            <dt>Общее время</dt>
+            <dt>{t('companion.totalTime')}</dt>
             <dd>{formatDuration(currentRunElapsed)}</dd>
           </div>
           <div className="info-cell">
-            <dt>Текущий акт</dt>
-            <dd>{currentActElapsed === null ? '—' : formatDuration(currentActElapsed)}</dd>
+            <dt>{t('settings.actTime')}</dt>
+            <dd>{currentActElapsed === null ? t('common.notAvailable') : formatDuration(currentActElapsed)}</dd>
           </div>
           <div className="info-cell">
-            <dt>Статус</dt>
-            <dd>{formatRunStatus(displayRunTimer.status)}</dd>
+            <dt>{t('common.status')}</dt>
+            <dd>{formatRunStatus(displayRunTimer.status, language)}</dd>
           </div>
           <div className="info-cell">
-            <dt>Отсчёт</dt>
-            <dd>{countdownMs === null ? '—' : formatDuration(countdownMs)}</dd>
+            <dt>{t('settings.countdown')}</dt>
+            <dd>{countdownMs === null ? t('common.notAvailable') : formatDuration(countdownMs)}</dd>
           </div>
         </dl>
-        <p className="helper-text">Подробная таблица по актам вынесена во вкладку “Время актов”.</p>
+        <p className="helper-text">{t('companion.timerDescription')}</p>
         <div className="button-row">
           {displayRunTimer.status === 'running' ? (
             <button
@@ -775,7 +870,7 @@ export function CompanionPage() {
                 })
               }
             >
-              Пауза
+              {t('common.pause')}
             </button>
           ) : displayRunTimer.status === 'paused' ? (
             <button
@@ -788,7 +883,7 @@ export function CompanionPage() {
                 })
               }
             >
-              Продолжить
+              {t('common.resume')}
             </button>
           ) : (
             <button
@@ -801,7 +896,7 @@ export function CompanionPage() {
                 })
               }
             >
-              Старт
+              {t('common.start')}
             </button>
           )}
           <button
@@ -814,7 +909,7 @@ export function CompanionPage() {
               })
             }
           >
-            Завершить
+            {t('common.finish')}
           </button>
           <button
             type="button"
@@ -826,7 +921,7 @@ export function CompanionPage() {
               })
             }
           >
-            Сбросить
+            {t('common.reset')}
           </button>
         </div>
       </section>
@@ -836,12 +931,13 @@ export function CompanionPage() {
   const actTimesTab = (
     <div className="companion-tab-layout">
       <section className="companion-block companion-table-card">
-        <h3>Время актов</h3>
+        <h3>{t('common.actTimes')}</h3>
         {renderActTimeTable(
           actTimeRows,
           displayRunTimer.status === 'finished'
-            ? 'В этом забеге не записались сплиты по актам.'
-            : 'Время актов появится после перехода между актами.'
+            ? t('companion.actTimesEmptyFinished')
+            : t('companion.actTimesEmptyRunning'),
+          language
         )}
       </section>
     </div>
@@ -857,41 +953,41 @@ export function CompanionPage() {
     <div className="companion-tab-layout reminders-tab-layout">
       <div className="reminders-dashboard-grid">
         <section className="companion-block reminders-card reminders-card-nearest">
-          <h3>Ближайшие</h3>
+          <h3>{t('companion.nearest')}</h3>
           {renderCompactReminderList([
             ...(activeLevelReminder ? [activeLevelReminder] : []),
             ...upcomingVendorReminders.slice(0, 2),
             ...(nearestPowerSpike ? [nearestPowerSpike] : [])
-          ], 4)}
+          ], language, 4)}
         </section>
 
         <section className="companion-block reminders-card">
-          <h3>Фласки</h3>
-          {renderCompactReminderList(reminderFlasks)}
+          <h3>{t('companion.flasks')}</h3>
+          {renderCompactReminderList(reminderFlasks, language)}
         </section>
 
         <section className="companion-block reminders-card reminders-card-wide">
-          <h3>Базы оружия/брони</h3>
+          <h3>{t('companion.gearBases')}</h3>
           <div className="reminder-chip-grid">
             {reminderBases.map((entry) => (
               <div key={entry.id} className="reminder-chip">
-                <span>Ур. {entry.level}</span>
-                <strong>{entry.title}</strong>
+                <span>{t('common.level')} {entry.level}</span>
+                <strong>{translateDataText(entry.title, language)}</strong>
               </div>
             ))}
           </div>
         </section>
 
         <section className="companion-block reminders-card reminders-card-wide">
-          <h3>Скачки силы</h3>
-          {renderCompactReminderList(filteredPowerSpikes)}
+          <h3>{t('companion.powerSpikes')}</h3>
+          {renderCompactReminderList(filteredPowerSpikes, language)}
         </section>
       </div>
 
       {dismissedReminders.length > 0 && (
         <section className="companion-block reminders-dismissed-card">
-          <h3>Скрытые напоминания</h3>
-          {renderCompactReminderList(dismissedReminders)}
+          <h3>{t('companion.dismissedReminders')}</h3>
+          {renderCompactReminderList(dismissedReminders, language)}
         </section>
       )}
     </div>
@@ -915,44 +1011,47 @@ export function CompanionPage() {
   const bonusesTab = (
     <div className="companion-tab-layout bonuses-tab-layout">
       <section className="companion-block bonuses-summary-card">
-        <h3>Бонусы актов</h3>
+        <h3>{t('companion.bonusesTitle')}</h3>
         <dl className="info-grid companion-info-grid bonuses-summary-grid">
           <div className="info-cell">
-            <dt>Пассивки оружия</dt>
+            <dt>{t('companion.bonusCategories.weapon_set_passive')}</dt>
             <dd>{campaignBonusTotals.weaponSetPassivePoints} / 24</dd>
           </div>
           <div className="info-cell">
-            <dt>Холод</dt>
+            <dt>{t('common.cold')}</dt>
             <dd>{campaignBonusTotals.coldResistance} / 20%</dd>
           </div>
           <div className="info-cell">
-            <dt>Огонь</dt>
+            <dt>{t('common.fire')}</dt>
             <dd>{campaignBonusTotals.fireResistance} / 20%</dd>
           </div>
           <div className="info-cell">
-            <dt>Молния</dt>
+            <dt>{t('common.lightning')}</dt>
             <dd>{campaignBonusTotals.lightningResistance} / 20%</dd>
           </div>
           <div className="info-cell">
-            <dt>Дух</dt>
+            <dt>{t('companion.bonusCategories.spirit')}</dt>
             <dd>{campaignBonusTotals.spirit} / 100</dd>
           </div>
           <div className="info-cell">
-            <dt>Здоровье</dt>
-            <dd>+{campaignBonusTotals.flatLife} здоровья · +{campaignBonusTotals.increasedLife}%</dd>
+            <dt>{t('companion.bonusCategories.life')}</dt>
+            <dd>{t('companion.lifeSummary', {
+              flat: campaignBonusTotals.flatLife,
+              percent: campaignBonusTotals.increasedLife
+            })}</dd>
           </div>
           <div className="info-cell">
-            <dt>Мана</dt>
-            <dd>+{campaignBonusTotals.increasedMana}% макс.</dd>
+            <dt>{t('companion.bonusCategories.mana')}</dt>
+            <dd>{t('companion.manaSummary', {
+              percent: campaignBonusTotals.increasedMana
+            })}</dd>
           </div>
           <div className="info-cell">
-            <dt>Всего</dt>
+            <dt>{t('common.summary')}</dt>
             <dd>{campaignBonusTotals.done} / {campaignBonusTotals.total}</dd>
           </div>
         </dl>
-        <p className="helper-text">
-          Галочки мягкие: лог нашёл событие — пункт отмечается. Если не нашёл — это просто “не отмечено”, без красных плашек.
-        </p>
+        <p className="helper-text">{t('companion.bonusSummaryHelp')}</p>
         <div className="button-row">
           <button
             type="button"
@@ -964,7 +1063,7 @@ export function CompanionPage() {
               })
             }
           >
-            Сбросить отметки бонусов
+            {t('companion.resetBonusMarks')}
           </button>
         </div>
       </section>
@@ -972,7 +1071,7 @@ export function CompanionPage() {
       <div className="bonuses-act-grid">
         {bonusGroupOrder.map((groupKey) => {
           const bonuses = bonusGroups[groupKey] ?? [];
-          const title = groupKey === 'interlude' ? 'Интерлюдии' : `Акт ${groupKey}`;
+          const title = groupKey === 'interlude' ? t('companion.interludes') : t('route.act', { act: groupKey });
 
           return (
             <section key={groupKey} className="companion-block bonuses-act-card">
@@ -981,6 +1080,7 @@ export function CompanionPage() {
                 {bonuses.map((bonus) => {
                   const progress = campaignBonusProgress[bonus.id];
                   const done = Boolean(progress);
+                  const bonusView = getCampaignBonusView(bonus, language) ?? bonus;
 
                   return (
                     <article key={bonus.id} className={`bonus-row ${done ? 'is-done' : 'is-pending'}`}>
@@ -989,25 +1089,28 @@ export function CompanionPage() {
                       </div>
                       <div className="bonus-main">
                         <div className="bonus-title-line">
-                          <strong>{bonus.title}</strong>
-                          <span className="bonus-category-pill">{getBonusCategoryLabel(bonus.category)}</span>
+                          <strong>{'displayTitle' in bonusView ? bonusView.displayTitle : bonus.title}</strong>
+                          <span className="bonus-category-pill">{getBonusCategoryLabel(bonus.category, language)}</span>
                           {bonus.needsVerification && (
-                            <span className="bonus-verify-pill">проверить</span>
+                            <span className="bonus-verify-pill">{t('companion.verify')}</span>
                           )}
                         </div>
                         <p className="bonus-meta">
-                          {bonus.zone_ru} · {bonus.source}
+                          {('displayZoneName' in bonusView ? bonusView.displayZoneName : bonus.zone_ru)} · {('displaySource' in bonusView ? bonusView.displaySource : bonus.source)}
                         </p>
                         {bonus.details.length > 0 && (
                           <ul className="bonus-details-list">
-                            {bonus.details.slice(0, 2).map((detail) => (
+                            {(('displayDetails' in bonusView ? bonusView.displayDetails : bonus.details) as string[]).slice(0, 2).map((detail) => (
                               <li key={`${bonus.id}-${detail}`}>{detail}</li>
                             ))}
                           </ul>
                         )}
                         {progress && (
                           <p className="bonus-detected-line">
-                            Отмечено: {progress.detectedBy === 'manual' ? 'вручную' : 'по логу'} · {new Date(progress.timestamp).toLocaleTimeString('ru-RU')}
+                            {t('companion.markedBy', {
+                              method: progress.detectedBy === 'manual' ? t('companion.markedManually') : t('companion.markedByLog'),
+                              time: new Date(progress.timestamp).toLocaleTimeString(language === 'en' ? 'en-US' : 'ru-RU')
+                            })}
                           </p>
                         )}
                       </div>
@@ -1021,7 +1124,7 @@ export function CompanionPage() {
                           })
                         }
                       >
-                        {done ? 'Снять' : 'Отметить'}
+                        {done ? t('companion.clearMark') : t('companion.markDone')}
                       </button>
                     </article>
                   );
@@ -1037,33 +1140,33 @@ export function CompanionPage() {
   const summaryTab = (
     <div className="companion-tab-layout">
       {displayRunTimer.status === 'finished'
-        ? renderSummary(config.lastRunSummary)
-        : <p className="helper-text">Итоги появятся после завершения забега.</p>}
+        ? renderSummary(config.lastRunSummary, language)
+        : <p className="helper-text">{t('companion.summaryEmpty')}</p>}
 
       <section className="companion-block">
-        <h3>Личный рекорд</h3>
+        <h3>{t('companion.bestRun')}</h3>
         {config.bestRun ? (
           <ul className="details-list">
-            <li>Лучшее время: {formatDuration(config.bestRun.totalElapsedMs)}</li>
-            <li>Дата: {new Date(config.bestRun.finishedAt).toLocaleString('ru-RU')}</li>
+            <li>{t('companion.bestTime', { time: formatDuration(config.bestRun.totalElapsedMs) })}</li>
+            <li>{t('companion.bestDate', { date: new Date(config.bestRun.finishedAt).toLocaleString(language === 'en' ? 'en-US' : 'ru-RU') })}</li>
           </ul>
         ) : (
-          <p className="helper-text">Рекорд появится после первого завершённого забега.</p>
+          <p className="helper-text">{t('companion.bestRunEmpty')}</p>
         )}
       </section>
 
       <section className="companion-block">
-        <h3>Самые долгие зоны</h3>
+        <h3>{t('companion.longestZones')}</h3>
         {longestZones.length > 0 ? (
           <ul className="details-list">
             {longestZones.map((entry) => (
               <li key={`${entry.zoneId}-${entry.enteredAt}`}>
-                {entry.zone_ru} · {formatDuration(entry.elapsedMs)}
+                {translateDataText(entry.zone_ru, language)} · {formatDuration(entry.elapsedMs)}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="helper-text">Пока нет сохранённой истории зон.</p>
+          <p className="helper-text">{t('companion.zoneHistoryEmpty')}</p>
         )}
       </section>
     </div>
@@ -1083,11 +1186,9 @@ export function CompanionPage() {
     <main className="settings-page companion-page">
       <header className="settings-header window-drag-strip">
         <div className="settings-header-copy">
-          <p className="eyebrow">PoE2 Campaign Codex</p>
-          <h1>Подробная панель</h1>
-          <p className="helper-text settings-intro">
-            Живая панель забега, маршрута, наград и таймера без перегруза основного оверлея.
-          </p>
+          <p className="eyebrow">{t('common.appName')}</p>
+          <h1>{t('companion.title')}</h1>
+          <p className="helper-text settings-intro">{t('companion.intro')}</p>
         </div>
         <div className="button-row no-drag companion-header-actions">
           <button
@@ -1099,7 +1200,29 @@ export function CompanionPage() {
               })
             }
           >
-            Инфо
+            {t('common.info')}
+          </button>
+          <button
+            className="button-secondary"
+            type="button"
+            onClick={() =>
+              runTask('open-community', async () => {
+                await window.poe2Overlay.openCommunity();
+              })
+            }
+          >
+            {t('common.community')}
+          </button>
+          <button
+            className="button-secondary"
+            type="button"
+            onClick={() =>
+              runTask('open-support', async () => {
+                await window.poe2Overlay.openSupport();
+              })
+            }
+          >
+            {t('common.support')}
           </button>
           <button
             className="button-secondary"
@@ -1110,7 +1233,7 @@ export function CompanionPage() {
               })
             }
           >
-            Настройки
+            {t('common.settings')}
           </button>
           <button
             className="button-secondary"
@@ -1121,14 +1244,14 @@ export function CompanionPage() {
               })
             }
           >
-            Сообщить о проблеме
+            {t('common.reportIssue')}
           </button>
           <button
             className="button-secondary"
             type="button"
             onClick={() => window.close()}
           >
-            Закрыть
+            {t('common.close')}
           </button>
         </div>
       </header>
@@ -1137,13 +1260,13 @@ export function CompanionPage() {
         <section className="settings-card companion-card">
           <div className="companion-tab-row">
             {([
-              ['zone', 'Текущая зона'],
-              ['route', 'Маршрут'],
-              ['timer', 'Таймер'],
-              ['actTimes', 'Время актов'],
-              ['reminders', 'Напоминания'],
-              ['bonuses', 'Бонусы'],
-              ['summary', 'Итоги']
+              ['zone', t('companion.tabs.zone')],
+              ['route', t('companion.tabs.route')],
+              ['timer', t('companion.tabs.timer')],
+              ['actTimes', t('companion.tabs.actTimes')],
+              ['reminders', t('companion.tabs.reminders')],
+              ['bonuses', t('companion.tabs.bonuses')],
+              ['summary', t('companion.tabs.summary')]
             ] as const).map(([tab, label]) => (
               <button
                 key={tab}

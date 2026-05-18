@@ -6,6 +6,8 @@ import { OverlayPage } from './pages/OverlayPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { InfoPage } from './pages/InfoPage';
 import { ReportIssuePage } from './pages/ReportIssuePage';
+import { CommunityPage } from './pages/CommunityPage';
+import { SupportPage } from './pages/SupportPage';
 import { UpdatePage } from './pages/UpdatePage';
 import './styles.css';
 
@@ -30,6 +32,10 @@ ReactDOM.createRoot(root).render(
       <InfoPage />
     ) : page === 'report' ? (
       <ReportIssuePage />
+    ) : page === 'community' ? (
+      <CommunityPage />
+    ) : page === 'support' ? (
+      <SupportPage />
     ) : (
       <OverlayPage />
     )}

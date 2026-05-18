@@ -19,6 +19,7 @@ const defaults_1 = require("../shared/defaults");
 const checklist_1 = require("../shared/checklist");
 const timers_1 = require("../shared/timers");
 const overlay_layout_1 = require("../shared/overlay-layout");
+const translations_1 = require("../i18n/translations");
 const town_scenes_json_1 = __importDefault(require("../data/town-scenes.json"));
 const campaign_bonuses_json_1 = __importDefault(require("../data/campaign-bonuses.json"));
 const forceProductionRenderer = process.env.ELECTRON_RENDERER_MODE === 'production' ||
@@ -29,6 +30,7 @@ const DEV_SAMPLE_ZONE_LINE = '2026/05/12 12:00:00 Вы вошли в облас�
 const DEFAULT_LOG_STATUS_MESSAGE = 'Ожидание лог-файла';
 const BROADCAST_THROTTLE_MS = 100;
 const UPDATE_CHECK_DELAY_MS = 4000;
+const TIMER_VISUAL_HEARTBEAT_MS = 1000;
 const TOWN_ZONE_HINTS = ['encampment', 'camp', 'town', 'hideout', 'лагерь', 'город', 'убежище'];
 const SCENE_SOURCE_RE = /\[SCENE\]\s+Set Source\s+\[(.+?)\]/i;
 const NON_GAMEPLAY_SCENES = new Set([
@@ -81,6 +83,25 @@ function normalizeSceneText(input) {
         .replace(/\u0451/g, '\u0435')
         .trim();
 }
+export function inferActHintFromInternalAreaId(areaId) {
+    const normalized = normalizeSceneText(areaId).replace(/^c_/, '');
+    if (/^g1(?:_|$)/.test(normalized)) {
+        return 1;
+    }
+    if (/^g2(?:_|$)/.test(normalized)) {
+        return 2;
+    }
+    if (/^g3(?:_|$)/.test(normalized)) {
+        return 3;
+    }
+    if (/^g4(?:_|$)/.test(normalized)) {
+        return 4;
+    }
+    if (/^g5(?:_|$)/.test(normalized) || /^p[123](?:_|$)/.test(normalized)) {
+        return 5;
+    }
+    return null;
+}
 const TOWN_SCENES = new Set((Array.isArray(town_scenes_json_1.default) ? town_scenes_json_1.default : [])
     .map((entry) => normalizeSceneText(String(entry ?? '')))
     .filter(Boolean));
@@ -88,6 +109,19 @@ electron_1.app.commandLine.appendSwitch('disable-renderer-backgrounding');
 electron_1.app.commandLine.appendSwitch('disable-background-timer-throttling');
 electron_1.app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 electron_1.app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion,IntensiveWakeUpThrottling');
+if (process.platform === 'linux') {
+    const requestedOzonePlatform = String(process.env.POE2_OVERLAY_OZONE_PLATFORM ?? '').trim().toLowerCase();
+    // Transparent Electron overlays are still compositor-sensitive on Linux.
+    // Wayland sessions are forced through XWayland by default because the overlay relies on alpha.
+    // Advanced users can opt back into native Wayland with POE2_OVERLAY_OZONE_PLATFORM=wayland.
+    if (requestedOzonePlatform === 'x11' || requestedOzonePlatform === 'wayland') {
+        electron_1.app.commandLine.appendSwitch('ozone-platform', requestedOzonePlatform);
+    }
+    else if (process.env.WAYLAND_DISPLAY) {
+        electron_1.app.commandLine.appendSwitch('ozone-platform', 'x11');
+    }
+    electron_1.app.commandLine.appendSwitch('enable-transparent-visuals');
+}
 if (process.platform === 'win32') {
     electron_1.app.setAppUserModelId('com.codex.poe2-campaign-overlay');
 }
@@ -194,7 +228,7 @@ function createAppIcon() {
     const icon = electron_1.nativeImage.createFromPath(iconPath);
     return icon.isEmpty() ? createTrayIcon() : icon;
 }
-class PoeOverlayApp {
+export class PoeOverlayApp {
     constructor() {
         this.configStore = new config_store_1.ConfigStore((0, node_path_1.join)(electron_1.app.getPath('userData'), 'config.json'));
         this.guideService = new guide_service_1.GuideService();
@@ -244,10 +278,14 @@ class PoeOverlayApp {
         this.settingsWindow = null;
         this.companionWindow = null;
         this.infoWindow = null;
+        this.communityWindow = null;
+        this.supportWindow = null;
         this.reportWindow = null;
         this.closeConfirmWindow = null;
         this.updateWindow = null;
         this.tray = null;
+        this.processedCampaignRewardLogLineKeys = new Set();
+        this.processedCampaignRewardLogLineOrder = [];
         this.cachedUpdateCheckResult = null;
         this.startupUpdateInfo = null;
         this.autoUpdateService = new auto_update_service_1.AutoUpdateService();
@@ -285,6 +323,9 @@ class PoeOverlayApp {
             lastLevelUpDetectedAt: null,
             lastLogLineAt: null,
             lastValidGameplayZoneAt: null,
+            lastGameplayGuideId: null,
+            lastGameplayZoneRu: null,
+            lastGameplayAct: null,
             lastSceneSource: null,
             lastSceneSourceAt: null,
             overlayMode: 'full',
@@ -292,8 +333,10 @@ class PoeOverlayApp {
             missedWarningItems: []
         };
         this.isQuitting = false;
+        this.isClosingOverlayWindow = false;
         this.isQuittingConfirmed = false;
         this.isQuitConfirmationInFlight = false;
+        this.isOverlayCloseConfirmationInFlight = false;
         this.pendingCloseConfirmResult = null;
         this.resolveCloseConfirmResult = null;
         this.logInfoRefreshTimer = null;
@@ -303,6 +346,7 @@ class PoeOverlayApp {
         this.overlayBoundsTimer = null;
         this.companionBoundsTimer = null;
         this.runTimerStartTimer = null;
+        this.timerVisualHeartbeat = null;
         this.updateCheckTimer = null;
         this.isAutoUpdateCheckInFlight = false;
         this.globalHotkeysRegistered = false;
@@ -317,6 +361,7 @@ class PoeOverlayApp {
         await this.ensureLogFile();
         this.registerGlobalHotkeys();
         this.createOverlayWindow();
+        this.startTimerVisualHeartbeat();
         this.createTray();
         this.registerIpc();
         this.bindAppEvents();
@@ -349,16 +394,29 @@ class PoeOverlayApp {
             event.preventDefault();
             void this.confirmQuitWhileRunTimerIsRunning();
         });
+        electron_1.app.on('window-all-closed', () => {
+            // Keep the tray app alive when the overlay window itself is closed.
+            // Explicit app.quit() still works through the tray/menu and goes through before-quit above.
+        });
     }
     prepareForQuit() {
         if (this.isQuitting) {
             return;
         }
         this.isQuitting = true;
+        this.stopTimerVisualHeartbeat();
         if (this.closeConfirmWindow && !this.closeConfirmWindow.isDestroyed()) {
             this.closeConfirmWindow.destroy();
         }
         this.closeConfirmWindow = null;
+        if (this.communityWindow && !this.communityWindow.isDestroyed()) {
+            this.communityWindow.destroy();
+        }
+        this.communityWindow = null;
+        if (this.supportWindow && !this.supportWindow.isDestroyed()) {
+            this.supportWindow.destroy();
+        }
+        this.supportWindow = null;
         if (this.reportWindow && !this.reportWindow.isDestroyed()) {
             this.reportWindow.destroy();
         }
@@ -394,11 +452,17 @@ class PoeOverlayApp {
         if (focusedWindow && !focusedWindow.isDestroyed()) {
             return focusedWindow;
         }
-        return [this.overlayWindow, this.settingsWindow, this.companionWindow, this.infoWindow, this.reportWindow].find((win) => Boolean(win && !win.isDestroyed() && win.isVisible()));
+        return [this.overlayWindow, this.settingsWindow, this.companionWindow, this.infoWindow, this.communityWindow, this.supportWindow, this.reportWindow].find((win) => Boolean(win && !win.isDestroyed() && win.isVisible()));
     }
     async showMessageBoxSafe(options) {
         const owner = this.getQuitDialogOwnerWindow();
         return owner ? electron_1.dialog.showMessageBox(owner, options) : electron_1.dialog.showMessageBox(options);
+    }
+    getCurrentLanguage() {
+        return this.config?.appLanguage === 'en' ? 'en' : 'ru';
+    }
+    t(key, params) {
+        return (0, translations_1.translate)(this.getCurrentLanguage(), key, params);
     }
     getUpdateWindowOwner() {
         const focusedWindow = electron_1.BrowserWindow.getFocusedWindow();
@@ -407,7 +471,7 @@ class PoeOverlayApp {
             focusedWindow !== this.updateWindow) {
             return focusedWindow;
         }
-        return [this.settingsWindow, this.companionWindow, this.infoWindow, this.reportWindow, this.overlayWindow].find((win) => Boolean(win && !win.isDestroyed() && win.isVisible()));
+        return [this.settingsWindow, this.companionWindow, this.infoWindow, this.communityWindow, this.supportWindow, this.reportWindow, this.overlayWindow].find((win) => Boolean(win && !win.isDestroyed() && win.isVisible()));
     }
     broadcastAutoUpdateState(state) {
         const windows = [
@@ -415,6 +479,8 @@ class PoeOverlayApp {
             this.updateWindow,
             this.companionWindow,
             this.infoWindow,
+            this.communityWindow,
+            this.supportWindow,
             this.reportWindow,
             this.overlayWindow
         ];
@@ -550,7 +616,7 @@ class PoeOverlayApp {
                 frame: false,
                 transparent: false,
                 backgroundColor: '#101318',
-                title: 'Таймер запущен',
+                title: this.t('main.quitTitle'),
                 skipTaskbar: true,
                 alwaysOnTop: true,
                 modal: Boolean(parentWindow),
@@ -600,10 +666,10 @@ class PoeOverlayApp {
     async showNativeQuitConfirmation() {
         const result = await this.showMessageBoxSafe({
             type: 'warning',
-            title: 'Таймер запущен',
-            message: 'Таймер запущен',
-            detail: 'Таймер забега сейчас работает. Если закрыть приложение, таймер будет поставлен на паузу, а текущее время сохранится.',
-            buttons: ['Остаться', 'Закрыть и сохранить'],
+            title: this.t('main.quitTitle'),
+            message: this.t('main.quitMessage'),
+            detail: this.t('main.quitDetail'),
+            buttons: [this.t('main.stay'), this.t('main.closeAndSave')],
             defaultId: 0,
             cancelId: 0,
             noLink: true
@@ -658,10 +724,10 @@ class PoeOverlayApp {
             console.error('[Quit] Failed to preserve running timer before exit.', error);
             await this.showMessageBoxSafe({
                 type: 'error',
-                title: 'Не удалось сохранить таймер',
-                message: 'Не удалось сохранить таймер',
-                detail: 'Приложение останется открытым, чтобы вы не потеряли прогресс забега.',
-                buttons: ['ОК'],
+                title: this.t('main.saveTimerErrorTitle'),
+                message: this.t('main.saveTimerErrorTitle'),
+                detail: this.t('main.saveTimerErrorDetail'),
+                buttons: [this.t('common.ok')],
                 defaultId: 0,
                 cancelId: 0,
                 noLink: true
@@ -720,11 +786,11 @@ class PoeOverlayApp {
         electron_1.ipcMain.handle('app:choose-log-file', async () => {
             const owner = this.settingsWindow ?? this.overlayWindow;
             const dialogOptions = {
-                title: 'Выберите Client.txt или LatestClient.txt',
+                title: this.t('main.chooseLogFileTitle'),
                 properties: ['openFile'],
                 filters: [
-                    { name: 'PoE2 Log', extensions: ['txt'] },
-                    { name: 'All files', extensions: ['*'] }
+                    { name: this.t('main.logFileFilter'), extensions: ['txt'] },
+                    { name: this.t('main.allFilesFilter'), extensions: ['*'] }
                 ]
             };
             const result = owner
@@ -769,8 +835,12 @@ class PoeOverlayApp {
                     ? { overlayOpacity: clampOpacity(patch.overlayOpacity) }
                     : {})
             });
-            this.overlayWindow?.setOpacity(this.config.overlayOpacity);
-            this.companionWindow?.setAlwaysOnTop(this.config.companionAlwaysOnTop);
+            if (patch.overlayOpacity !== undefined) {
+                this.overlayWindow?.setOpacity(this.config.overlayOpacity);
+            }
+            if (patch.companionAlwaysOnTop !== undefined) {
+                this.companionWindow?.setAlwaysOnTop(this.config.companionAlwaysOnTop);
+            }
             if (patch.runTimerSettings !== undefined) {
                 this.reconcileRunTimerState();
             }
@@ -822,6 +892,9 @@ class PoeOverlayApp {
             this.runtime.lastMatchedZoneEn = null;
             this.runtime.lastMatchedZoneRu = null;
             this.runtime.lastMatchedGuideId = null;
+            this.runtime.lastGameplayGuideId = null;
+            this.runtime.lastGameplayZoneRu = null;
+            this.runtime.lastGameplayAct = null;
             this.runtime.lastZoneSource = null;
             this.runtime.lastLevelUpDetectedAt = null;
             this.runtime.missedWarningZoneRu = null;
@@ -932,6 +1005,40 @@ class PoeOverlayApp {
             this.broadcastState();
             return this.getSnapshot();
         });
+        electron_1.ipcMain.handle('app:resize-overlay-height', async (_event, height) => {
+            const targetWindow = this.overlayWindow;
+            if (!targetWindow || targetWindow.isDestroyed()) {
+                return this.getSnapshot();
+            }
+            const currentBounds = targetWindow.getBounds();
+            const nextBounds = this.normalizeOverlayBoundsForMode({
+                ...currentBounds,
+                height: Math.round(Number(height) || currentBounds.height)
+            }, this.overlayMode, this.config.overlayDensity);
+            targetWindow.setBounds(nextBounds);
+            this.persistOverlayBoundsForCurrentState(nextBounds);
+            this.broadcastState();
+            return this.getSnapshot();
+        });
+        electron_1.ipcMain.handle('app:move-overlay-by', async (_event, deltaX, deltaY) => {
+            const targetWindow = this.overlayWindow;
+            if (!targetWindow || targetWindow.isDestroyed()) {
+                return false;
+            }
+            const currentBounds = targetWindow.getBounds();
+            const safeDeltaX = Math.max(-300, Math.min(300, Math.round(Number(deltaX) || 0)));
+            const safeDeltaY = Math.max(-300, Math.min(300, Math.round(Number(deltaY) || 0)));
+            if (safeDeltaX === 0 && safeDeltaY === 0) {
+                return true;
+            }
+            const nextBounds = this.normalizeOverlayBoundsForMode({
+                ...currentBounds,
+                x: currentBounds.x + safeDeltaX,
+                y: currentBounds.y + safeDeltaY
+            }, this.overlayMode, this.config.overlayDensity);
+            targetWindow.setBounds(nextBounds);
+            return true;
+        });
         electron_1.ipcMain.handle('app:set-overlay-mode', async (_event, mode) => {
             this.setOverlayMode(mode);
             return this.getSnapshot();
@@ -940,6 +1047,7 @@ class PoeOverlayApp {
             this.toggleOverlayMode();
             return this.getSnapshot();
         });
+        electron_1.ipcMain.handle('app:close-overlay', async () => this.requestCloseOverlayWindow());
         electron_1.ipcMain.handle('app:open-companion-panel', async () => {
             this.openCompanionWindow();
             return this.getSnapshot();
@@ -958,6 +1066,14 @@ class PoeOverlayApp {
         });
         electron_1.ipcMain.handle('app:open-info', async () => {
             this.openInfoWindow();
+            return this.getSnapshot();
+        });
+        electron_1.ipcMain.handle('app:open-community', async () => {
+            this.openCommunityWindow();
+            return this.getSnapshot();
+        });
+        electron_1.ipcMain.handle('app:open-support', async () => {
+            this.openSupportWindow();
             return this.getSnapshot();
         });
         electron_1.ipcMain.handle('app:open-report-issue', async () => {
@@ -994,7 +1110,9 @@ class PoeOverlayApp {
             ...bounds,
             frame: false,
             transparent: true,
-            resizable: true,
+            // Native resize is unstable with transparent frameless Electron windows on high-DPI
+            // and Linux compositors. The app uses its own resize grip via setBounds instead.
+            resizable: false,
             minWidth: minimumSize.width,
             minHeight: minimumSize.height,
             show: false,
@@ -1021,10 +1139,17 @@ class PoeOverlayApp {
         this.overlayWindow.setMenuBarVisibility(false);
         this.overlayWindow.setFocusable(true);
         this.overlayWindow.on('close', (event) => {
+            if (this.isClosingOverlayWindow) {
+                return;
+            }
             if (!this.isQuitting) {
                 event.preventDefault();
                 this.overlayWindow?.hide();
             }
+        });
+        this.overlayWindow.on('closed', () => {
+            this.overlayWindow = null;
+            this.isClosingOverlayWindow = false;
         });
         this.overlayWindow.on('move', () => {
             this.persistOverlayBounds();
@@ -1316,6 +1441,86 @@ class PoeOverlayApp {
             this.infoWindow?.show();
         });
     }
+    openCommunityWindow() {
+        if (this.communityWindow) {
+            this.communityWindow.show();
+            this.communityWindow.focus();
+            return;
+        }
+        this.communityWindow = new electron_1.BrowserWindow({
+            icon: createAppIcon(),
+            width: 760,
+            height: 680,
+            minWidth: 680,
+            minHeight: 560,
+            frame: false,
+            titleBarStyle: 'hidden',
+            backgroundColor: '#10161f',
+            show: false,
+            autoHideMenuBar: true,
+            webPreferences: {
+                preload: (0, node_path_1.join)(__dirname, 'preload.js'),
+                contextIsolation: true,
+                nodeIntegration: false,
+                backgroundThrottling: false
+            }
+        });
+        this.attachManualHotkeys(this.communityWindow);
+        this.communityWindow.on('close', (event) => {
+            if (!this.isQuitting) {
+                event.preventDefault();
+                this.communityWindow?.hide();
+            }
+        });
+        this.communityWindow.on('closed', () => {
+            this.communityWindow = null;
+        });
+        void this.loadWindowPage(this.communityWindow, 'community');
+        this.communityWindow.once('ready-to-show', () => {
+            this.communityWindow?.show();
+            this.communityWindow?.focus();
+        });
+    }
+    openSupportWindow() {
+        if (this.supportWindow) {
+            this.supportWindow.show();
+            this.supportWindow.focus();
+            return;
+        }
+        this.supportWindow = new electron_1.BrowserWindow({
+            icon: createAppIcon(),
+            width: 760,
+            height: 700,
+            minWidth: 680,
+            minHeight: 560,
+            frame: false,
+            titleBarStyle: 'hidden',
+            backgroundColor: '#10161f',
+            show: false,
+            autoHideMenuBar: true,
+            webPreferences: {
+                preload: (0, node_path_1.join)(__dirname, 'preload.js'),
+                contextIsolation: true,
+                nodeIntegration: false,
+                backgroundThrottling: false
+            }
+        });
+        this.attachManualHotkeys(this.supportWindow);
+        this.supportWindow.on('close', (event) => {
+            if (!this.isQuitting) {
+                event.preventDefault();
+                this.supportWindow?.hide();
+            }
+        });
+        this.supportWindow.on('closed', () => {
+            this.supportWindow = null;
+        });
+        void this.loadWindowPage(this.supportWindow, 'support');
+        this.supportWindow.once('ready-to-show', () => {
+            this.supportWindow?.show();
+            this.supportWindow?.focus();
+        });
+    }
     openReportIssueWindow() {
         if (this.reportWindow) {
             this.reportWindow.show();
@@ -1358,7 +1563,7 @@ class PoeOverlayApp {
     }
     createTray() {
         this.tray = new electron_1.Tray(createAppIcon());
-        this.tray.setToolTip('PoE2 Campaign Codex — оверлей');
+        this.tray.setToolTip(this.t('main.trayTooltip'));
         this.refreshTrayMenu();
         this.tray.on('double-click', () => {
             this.showOverlay();
@@ -1366,30 +1571,36 @@ class PoeOverlayApp {
     }
     getHotkeyTrayLabel() {
         const hotkeys = this.getConfiguredHotkeys();
-        const manual = this.config.manualHotkeysEnabled
-            ? `${hotkeys.markChecklistDone} — отметить, ${hotkeys.undoChecklistMark} — отменить. `
-            : '';
-        return `Горячие клавиши: ${manual}${hotkeys.toggleTimerPause} — пауза/продолжить, ${hotkeys.openCompanion} — подробная панель, ${hotkeys.toggleOverlayMode} — режим оверлея`;
+        const segments = [];
+        if (this.config.manualHotkeysEnabled) {
+            segments.push(`${hotkeys.markChecklistDone} — ${this.t('main.hotkeysMark')}`);
+            segments.push(`${hotkeys.undoChecklistMark} — ${this.t('main.hotkeysUndo')}`);
+        }
+        segments.push(`${hotkeys.toggleTimerPause} — ${this.t('main.hotkeysPause')}`);
+        segments.push(`${hotkeys.openCompanion} — ${this.t('main.hotkeysCompanion')}`);
+        segments.push(`${hotkeys.toggleOverlayMode} — ${this.t('main.hotkeysOverlayMode')}`);
+        return `${this.t('main.hotkeysLabel')}: ${segments.join(', ')}`;
     }
     refreshTrayMenu() {
         if (!this.tray) {
             return;
         }
+        this.tray.setToolTip(this.t('main.trayTooltip'));
         const menu = electron_1.Menu.buildFromTemplate([
             {
-                label: 'Показать оверлей',
+                label: this.t('main.trayShowOverlay'),
                 click: () => this.showOverlay()
             },
             {
-                label: 'Скрыть оверлей',
+                label: this.t('main.trayHideOverlay'),
                 click: () => this.overlayWindow?.hide()
             },
             {
-                label: 'Открыть подробную панель',
+                label: this.t('main.trayOpenCompanion'),
                 click: () => this.openCompanionWindow()
             },
             {
-                label: 'Настройки',
+                label: this.t('main.traySettings'),
                 click: () => this.openSettingsWindow()
             },
             { type: 'separator' },
@@ -1398,7 +1609,7 @@ class PoeOverlayApp {
                 enabled: false
             },
             {
-                label: 'Выход',
+                label: this.t('main.trayQuit'),
                 click: () => {
                     electron_1.app.quit();
                 }
@@ -1416,6 +1627,76 @@ class PoeOverlayApp {
         await this.logWatcher.checkNow();
         this.broadcastState();
     }
+    async requestCloseOverlayWindow() {
+        const targetWindow = this.overlayWindow;
+        if (!targetWindow || targetWindow.isDestroyed()) {
+            return false;
+        }
+        // The overlay X is treated as a real app close action, not "hide to tray".
+        // If the timer is running, ask first; if the user stays, keep the overlay visible.
+        if (this.config.runTimer.status !== 'running') {
+            return this.quitApplicationFromOverlayClose();
+        }
+        if (this.isOverlayCloseConfirmationInFlight) {
+            this.closeConfirmWindow?.show();
+            this.closeConfirmWindow?.focus();
+            return false;
+        }
+        this.isOverlayCloseConfirmationInFlight = true;
+        let shouldCloseApplication = false;
+        try {
+            const customResult = await this.showCustomQuitConfirmation();
+            if (customResult === 'close_and_save') {
+                shouldCloseApplication = true;
+            }
+            else if (customResult === null) {
+                shouldCloseApplication = await this.showNativeQuitConfirmation();
+            }
+            if (!shouldCloseApplication) {
+                this.showOverlayInactive();
+                return false;
+            }
+            this.pauseRunTimerForQuit(Date.now());
+            return this.quitApplicationFromOverlayClose();
+        }
+        catch (error) {
+            console.error('[Overlay] Failed to confirm app close while timer is running.', error);
+            this.showOverlayInactive();
+            return false;
+        }
+        finally {
+            this.isOverlayCloseConfirmationInFlight = false;
+        }
+    }
+    quitApplicationFromOverlayClose() {
+        try {
+            if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
+                this.persistOverlayBoundsForCurrentState(this.overlayWindow.getBounds());
+            }
+        }
+        catch {
+            // Bounds persistence is best-effort; quitting must still work.
+        }
+        this.isQuittingConfirmed = true;
+        this.prepareForQuit();
+        electron_1.app.quit();
+        return true;
+    }
+    closeOverlayWindow() {
+        const targetWindow = this.overlayWindow;
+        if (!targetWindow || targetWindow.isDestroyed()) {
+            return false;
+        }
+        this.isClosingOverlayWindow = true;
+        try {
+            this.persistOverlayBoundsForCurrentState(targetWindow.getBounds());
+        }
+        catch {
+            // Bounds persistence is best-effort; closing must still work.
+        }
+        targetWindow.close();
+        return true;
+    }
     showOverlayInactive() {
         if (!this.overlayWindow || this.overlayWindow.isDestroyed()) {
             return;
@@ -1427,6 +1708,10 @@ class PoeOverlayApp {
         this.overlayWindow.showInactive();
     }
     showOverlay() {
+        if (!this.overlayWindow || this.overlayWindow.isDestroyed()) {
+            this.createOverlayWindow();
+            return;
+        }
         this.showOverlayInactive();
     }
     setOverlayMode(mode) {
@@ -1525,6 +1810,22 @@ class PoeOverlayApp {
             height: Math.max(minimumSize.height, Math.round((defaults_1.DEFAULT_OVERLAY_BOUNDS.height * this.config.overlayScale) / 100))
         };
     }
+    getOverlayVirtualWorkArea() {
+        const displays = electron_1.screen.getAllDisplays();
+        if (displays.length === 0) {
+            return electron_1.screen.getPrimaryDisplay().workArea;
+        }
+        const left = Math.min(...displays.map((display) => display.workArea.x));
+        const top = Math.min(...displays.map((display) => display.workArea.y));
+        const right = Math.max(...displays.map((display) => display.workArea.x + display.workArea.width));
+        const bottom = Math.max(...displays.map((display) => display.workArea.y + display.workArea.height));
+        return {
+            x: left,
+            y: top,
+            width: right - left,
+            height: bottom - top
+        };
+    }
     normalizeOverlayBoundsForMode(bounds, mode, density = this.config.overlayDensity) {
         const minimumSize = this.getOverlayMinimumSize(mode, density);
         const roundedBounds = {
@@ -1535,14 +1836,15 @@ class PoeOverlayApp {
         };
         const display = electron_1.screen.getDisplayMatching(roundedBounds);
         const area = display.workArea;
+        const virtualArea = this.getOverlayVirtualWorkArea();
         const width = Math.min(Math.max(minimumSize.width, area.width), Math.max(minimumSize.width, roundedBounds.width));
         const height = Math.min(Math.max(minimumSize.height, area.height - 16), Math.max(minimumSize.height, roundedBounds.height));
         const minVisibleWidth = this.getOverlayMinimumVisibleWidth(width);
         const minVisibleHeight = this.getOverlayMinimumVisibleHeight(height);
-        const minX = area.x - this.getOverlayMaximumOffscreenX(width);
-        const maxX = area.x + area.width - minVisibleWidth;
-        const minY = area.y;
-        const maxY = area.y + area.height - minVisibleHeight;
+        const minX = virtualArea.x - this.getOverlayMaximumOffscreenX(width);
+        const maxX = virtualArea.x + virtualArea.width - minVisibleWidth;
+        const minY = virtualArea.y;
+        const maxY = virtualArea.y + virtualArea.height - minVisibleHeight;
         return {
             x: Math.min(Math.max(roundedBounds.x, minX), Math.max(minX, maxX)),
             y: Math.min(Math.max(roundedBounds.y, minY), Math.max(minY, maxY)),
@@ -1711,7 +2013,9 @@ class PoeOverlayApp {
             this.runtime.guideLoadedAt = this.guideService.getLoadedAt();
         }
         catch (error) {
-            const message = error instanceof Error ? error.message : 'Не удалось загрузить guide.json';
+            const message = error instanceof Error && error.message
+                ? `${this.t('main.guideLoadError')}: ${error.message}`
+                : this.t('main.guideLoadError');
             this.setLogStatus('error', message);
         }
     }
@@ -1771,7 +2075,7 @@ class PoeOverlayApp {
         });
         await this.refreshLogFileInfo(this.config.logFilePath);
         if (!this.config.logFilePath) {
-            this.setLogStatus('missing', 'Лог-файл не найден. Выберите Client.txt или LatestClient.txt вручную.');
+            this.setLogStatus('missing', this.t('system.logWatcher.missingManual'));
         }
     }
     async findAutoLogFile() {
@@ -1854,9 +2158,9 @@ class PoeOverlayApp {
         this.scheduleLogFileInfoRefresh();
         this.broadcastState();
     }
-    setCurrentZone(rawZoneName, source, guide = this.guideService.findByZoneName(rawZoneName)) {
+    setCurrentZone(rawZoneName, source, guide = this.guideService.findByZoneName(rawZoneName), actHint = null) {
         if (!guide) {
-            this.setSceneWithoutGuide(rawZoneName, source, 'gameplay');
+            this.setSceneWithoutGuide(rawZoneName, source, 'gameplay', actHint);
             return;
         }
         const now = Date.now();
@@ -1877,6 +2181,10 @@ class PoeOverlayApp {
             sceneKind: 'gameplay',
             actHint: guide.act
         };
+        this.runtime.lastGameplayGuideId = guide.id;
+        this.runtime.lastGameplayZoneRu = guide.zone_ru;
+        this.runtime.lastGameplayAct = guide.act;
+        this.runtime.lastValidGameplayZoneAt = new Date().toISOString();
         this.syncRuntimeZoneFields(rawZoneName, guide);
         this.runtime.lastZoneSource = source;
         this.updateZoneProgress(guide);
@@ -1906,13 +2214,21 @@ class PoeOverlayApp {
     getTotalTownElapsedMs(_now = Date.now()) {
         return 0;
     }
-    setSceneWithoutGuide(rawZoneName, source, sceneKind) {
+    setSceneWithoutGuide(rawZoneName, source, sceneKind, actHint = null) {
+        const now = Date.now();
+        const previousActHint = this.currentZone.guide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null;
+        const nextActHint = this.getFallbackActHintForScene(sceneKind, actHint);
         this.currentZone = {
             rawZoneName,
-            guide: sceneKind === 'gameplay' ? null : this.currentZone.guide,
+            guide: sceneKind === 'gameplay' || sceneKind === 'unknown' ? null : this.currentZone.guide,
             sceneKind,
-            actHint: this.currentZone.guide?.act ?? this.currentZone.actHint
+            actHint: nextActHint
         };
+        if ((sceneKind === 'gameplay' || sceneKind === 'unknown') && typeof nextActHint === 'number') {
+            this.runtime.lastGameplayAct = nextActHint;
+            this.runtime.lastValidGameplayZoneAt = new Date(now).toISOString();
+            this.recordActTransitionByHint(previousActHint, nextActHint, now);
+        }
         this.syncRuntimeZoneFields(rawZoneName, this.currentZone.guide);
         this.runtime.lastZoneSource = source;
         this.config = this.configStore.update({
@@ -1935,7 +2251,7 @@ class PoeOverlayApp {
             rawZoneName,
             guide: nextTownGuide,
             sceneKind: 'town',
-            actHint: nextTownGuide?.act ?? this.currentZone.actHint
+            actHint: nextTownGuide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null
         };
         this.syncRuntimeZoneFields(rawZoneName, this.currentZone.guide);
         this.runtime.lastZoneSource = source;
@@ -2043,6 +2359,18 @@ class PoeOverlayApp {
     }
     normalizeSceneSource(rawSceneSource) {
         return normalizeSceneText(rawSceneSource);
+    }
+    getZoneMatchActHint(zoneMatch) {
+        return zoneMatch?.guide?.act ?? inferActHintFromInternalAreaId(zoneMatch?.extractedInternalAreaId) ?? null;
+    }
+    getFallbackActHintForScene(sceneKind, explicitActHint = null) {
+        if (explicitActHint !== null && explicitActHint !== undefined) {
+            return explicitActHint;
+        }
+        if (sceneKind === 'gameplay' || sceneKind === 'unknown' || sceneKind === 'town') {
+            return this.currentZone.guide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null;
+        }
+        return this.currentZone.actHint;
     }
     isUnknownOrNullScene(rawSceneSource) {
         const normalized = this.normalizeSceneSource(rawSceneSource);
@@ -2170,7 +2498,7 @@ class PoeOverlayApp {
                     rawZoneName: rawSceneSource,
                     guide: nextTownGuide,
                     sceneKind: 'town',
-                    actHint: nextTownGuide?.act ?? this.currentZone.actHint
+                    actHint: nextTownGuide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null
                 };
                 this.syncRuntimeZoneFields(rawSceneSource, this.currentZone.guide);
                 this.logZoneEventDecision(zoneMatch, 'updated');
@@ -2184,8 +2512,14 @@ class PoeOverlayApp {
                     rawZoneName: rawSceneSource,
                     guide: matchedGuide,
                     sceneKind: matchedGuide ? 'gameplay' : 'unknown',
-                    actHint: matchedGuide?.act ?? this.currentZone.actHint
+                    actHint: matchedGuide?.act ?? this.getZoneMatchActHint(zoneMatch) ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null
                 };
+                if (matchedGuide) {
+                    this.runtime.lastGameplayGuideId = matchedGuide.id;
+                    this.runtime.lastGameplayZoneRu = matchedGuide.zone_ru;
+                    this.runtime.lastGameplayAct = matchedGuide.act;
+                    this.runtime.lastValidGameplayZoneAt = nowIso;
+                }
                 this.syncRuntimeZoneFields(rawSceneSource, matchedGuide);
                 this.logZoneEventDecision(zoneMatch, 'updated');
             }
@@ -2198,7 +2532,7 @@ class PoeOverlayApp {
                 this.logZoneEventDecision(zoneMatch, 'updated');
             }
             else {
-                this.setSceneWithoutGuide(rawSceneSource, 'log', 'unknown');
+                this.setSceneWithoutGuide(rawSceneSource, 'log', 'unknown', this.getZoneMatchActHint(zoneMatch));
                 this.logZoneEventDecision(zoneMatch, 'updated');
             }
             return;
@@ -2214,7 +2548,7 @@ class PoeOverlayApp {
                 return;
             }
             this.runtime.lastValidGameplayZoneAt = nowIso;
-            this.setCurrentZone(rawSceneSource ?? '', 'log', matchedGuide);
+            this.setCurrentZone(rawSceneSource ?? '', 'log', matchedGuide, this.getZoneMatchActHint(zoneMatch));
             this.logZoneEventDecision(zoneMatch, 'updated');
             return;
         }
@@ -2233,7 +2567,7 @@ class PoeOverlayApp {
             this.logZoneEventDecision(zoneMatch, 'updated');
             return;
         }
-        this.setSceneWithoutGuide(rawSceneSource, 'log', 'unknown');
+        this.setSceneWithoutGuide(rawSceneSource, 'log', 'unknown', this.getZoneMatchActHint(zoneMatch));
         this.logZoneEventDecision(zoneMatch, 'updated');
     }
     clearRunTimerStartTimer() {
@@ -2455,26 +2789,55 @@ class PoeOverlayApp {
         this.broadcastState();
     }
     finalizeCurrentActSplit(runTimer, now) {
-        const guide = this.currentZone.guide;
-        if (!guide || typeof guide.act !== 'number') {
+        const currentAct = this.currentZone.guide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null;
+        if (typeof currentAct !== 'number') {
             return [...runTimer.actSplits];
         }
-        if (runTimer.actSplits.some((split) => split.act === guide.act)) {
+        if (runTimer.actSplits.some((split) => split.act === currentAct)) {
             return [...runTimer.actSplits];
         }
         const highestRecordedAct = [...runTimer.actSplits]
             .sort((left, right) => right.act - left.act)[0]?.act ?? 0;
-        if (guide.act < highestRecordedAct) {
+        if (currentAct < highestRecordedAct) {
             return [...runTimer.actSplits];
         }
         return [
             ...runTimer.actSplits,
             {
-                act: guide.act,
+                act: currentAct,
                 elapsedMs: this.getRunTimerDisplayElapsedMs(now),
                 timestamp: now
             }
         ];
+    }
+    tryRecordActSplitByAct(previousAct, nextAct, now) {
+        const runTimer = this.config.runTimer;
+        if (runTimer.status !== 'running' ||
+            typeof previousAct !== 'number' ||
+            typeof nextAct !== 'number' ||
+            nextAct === previousAct ||
+            nextAct < previousAct ||
+            runTimer.actSplits.some((split) => split.act === previousAct)) {
+            return null;
+        }
+        return [
+            ...runTimer.actSplits,
+            {
+                act: previousAct,
+                elapsedMs: this.getRunTimerDisplayElapsedMs(now),
+                timestamp: now
+            }
+        ];
+    }
+    recordActTransitionByHint(previousAct, nextAct, now) {
+        const nextSplits = this.tryRecordActSplitByAct(previousAct, nextAct, now);
+        if (!nextSplits) {
+            return;
+        }
+        this.persistRunTimer({
+            ...this.config.runTimer,
+            actSplits: nextSplits
+        });
     }
     tryRecordActSplit(previousGuide, nextGuide, now) {
         const runTimer = this.config.runTimer;
@@ -2572,6 +2935,23 @@ class PoeOverlayApp {
     normalizeCampaignBonusSceneName(value) {
         return (0, log_parser_1.normalizeText)(value ?? '');
     }
+    getCampaignBonusContextGuideIds() {
+        const ids = new Set();
+        const currentGuideId = this.currentZone.guide?.id ?? null;
+        const lastGameplayGuideId = this.runtime.lastGameplayGuideId ?? null;
+        if (this.currentZone.sceneKind === 'town') {
+            if (lastGameplayGuideId) {
+                ids.add(lastGameplayGuideId);
+            }
+        }
+        else if (currentGuideId) {
+            ids.add(currentGuideId);
+        }
+        if (ids.size === 0 && this.currentZone.sceneKind !== 'town' && lastGameplayGuideId) {
+            ids.add(lastGameplayGuideId);
+        }
+        return ids;
+    }
     campaignBonusRuleMatches(rule, line) {
         const normalizedLine = (0, log_parser_1.normalizeText)(line);
         if (rule.all.some((phrase) => !normalizedLine.includes((0, log_parser_1.normalizeText)(phrase)))) {
@@ -2586,9 +2966,10 @@ class PoeOverlayApp {
         if (rule.none && rule.none.some((phrase) => normalizedLine.includes((0, log_parser_1.normalizeText)(phrase)))) {
             return false;
         }
-        const currentGuideId = this.currentZone.guide?.id ?? null;
+        const contextGuideIds = this.getCampaignBonusContextGuideIds();
         if (rule.zoneIds && rule.zoneIds.length > 0) {
-            if (!currentGuideId || !rule.zoneIds.includes(currentGuideId)) {
+            const hasAllowedZone = rule.zoneIds.some((zoneId) => contextGuideIds.has(zoneId));
+            if (!hasAllowedZone) {
                 return false;
             }
         }
@@ -2804,12 +3185,16 @@ class PoeOverlayApp {
     }
     getCampaignBonusRewardFallbackScore(bonus) {
         let score = 0;
-        const currentGuideId = this.currentZone.guide?.id ?? null;
-        const currentAct = this.currentZone.guide?.act ?? this.currentZone.actHint ?? null;
+        const contextGuideIds = this.getCampaignBonusContextGuideIds();
+        const currentAct = this.currentZone.sceneKind === 'town'
+            ? (this.runtime.lastGameplayAct ?? this.currentZone.actHint ?? null)
+            : (this.currentZone.guide?.act ?? this.currentZone.actHint ?? null);
         const currentScene = this.normalizeCampaignBonusSceneName(this.currentZone.rawZoneName);
-        const currentGuideName = this.normalizeCampaignBonusSceneName(this.currentZone.guide?.zone_ru);
+        const currentGuideName = this.currentZone.sceneKind === 'town'
+            ? ''
+            : this.normalizeCampaignBonusSceneName(this.currentZone.guide?.zone_ru);
         const bonusScene = this.normalizeCampaignBonusSceneName(bonus.zone_ru);
-        if (currentGuideId && bonus.zoneId === currentGuideId) {
+        if (contextGuideIds.has(bonus.zoneId)) {
             score += 100;
         }
         if (bonusScene && (bonusScene === currentScene || bonusScene === currentGuideName)) {
@@ -2823,22 +3208,91 @@ class PoeOverlayApp {
         }
         return score;
     }
-    findCampaignBonusFromParsedReward(line) {
-        const parsedReward = (0, log_parser_1.parsePermanentReward)(line);
-        if (!parsedReward) {
+    getCampaignBonusRewardFallbackMinScore(parsedReward) {
+        switch (parsedReward?.rewardKey) {
+            case 'weaponSetPassivePoints':
+                // There are several identical +2 weapon-set rewards inside the same act.
+                // Mark them only when the current/last gameplay zone points to the exact reward zone.
+                return 80;
+            case 'spirit30':
+            case 'spirit40':
+            case 'resistance5':
+            case 'coldResistance10':
+            case 'lightningResistance10':
+            case 'fireResistance10':
+            case 'life20':
+            case 'life5':
+            case 'mana5':
+            case 'flatMana':
+            case 'charmSlot':
+            case 'charmChargeGain':
+            case 'flaskLifeRecovery':
+            case 'stunThreshold':
+            case 'elementalAilmentThreshold':
+                // For non-weapon permanent rewards the act context is enough, but a zero-score
+                // fallback is too risky: a repeated +30 Spirit line could otherwise tick the next
+                // uncompleted +30 Spirit bonus in another act.
+                return 20;
+            default:
+                return 1;
+        }
+    }
+    findCampaignBonusFromParsedReward(line, parsedReward) {
+        const reward = parsedReward ?? (0, log_parser_1.parsePermanentReward)(line);
+        if (!reward) {
             return null;
         }
         const candidates = this.campaignBonuses
             .map((bonus, index) => ({ bonus, index, score: this.getCampaignBonusRewardFallbackScore(bonus) }))
             .filter(({ bonus }) => !this.config.campaignBonusProgress[bonus.id])
-            .filter(({ bonus }) => this.campaignBonusRewardMatchesParsedReward(bonus, parsedReward))
+            .filter(({ bonus }) => this.campaignBonusRewardMatchesParsedReward(bonus, reward))
             .sort((left, right) => right.score - left.score || left.index - right.index);
-        return candidates[0]?.bonus ?? null;
+        const best = candidates[0] ?? null;
+        if (!best) {
+            return null;
+        }
+        if (best.score < this.getCampaignBonusRewardFallbackMinScore(reward)) {
+            return null;
+        }
+        return best.bonus;
+    }
+    getCampaignBonusLogLineDedupeKey(line, parsedReward) {
+        const normalizedLine = (0, log_parser_1.normalizeText)(line);
+        const rewardPart = parsedReward
+            ? [parsedReward.rewardKey, parsedReward.amount ?? '', parsedReward.element ?? '', parsedReward.sourceText ?? ''].join('|')
+            : normalizedLine;
+        return `${rewardPart}|${normalizedLine}`;
+    }
+    rememberCampaignBonusLogLineKey(key) {
+        if (!key) {
+            return;
+        }
+        this.processedCampaignRewardLogLineKeys.add(key);
+        this.processedCampaignRewardLogLineOrder.push(key);
+        const maxSize = 250;
+        while (this.processedCampaignRewardLogLineOrder.length > maxSize) {
+            const oldest = this.processedCampaignRewardLogLineOrder.shift();
+            if (oldest) {
+                this.processedCampaignRewardLogLineKeys.delete(oldest);
+            }
+        }
     }
     applyCampaignBonusMatchesFromLogLine(line, source) {
         // Old log tail must not resurrect progress after reset. Only live appended
         // lines are allowed to softly tick campaign bonuses.
         if (source !== 'append') {
+            return;
+        }
+        const parsedReward = (0, log_parser_1.parsePermanentReward)(line);
+        const dedupeKey = this.getCampaignBonusLogLineDedupeKey(line, parsedReward);
+        if (this.processedCampaignRewardLogLineKeys.has(dedupeKey)) {
+            return;
+        }
+        // PoE2 can write two neighbouring lines for one weapon-set reward:
+        // 1) generic passive points, 2) weapon-set passive points.
+        // The generic line must not complete the next/nearby weapon-set bonus.
+        if (parsedReward?.rewardKey === 'passivePoints') {
+            this.rememberCampaignBonusLogLineKey(dedupeKey);
             return;
         }
         const matchedByExplicitRule = this.campaignBonuses.find((bonus) => {
@@ -2847,11 +3301,14 @@ class PoeOverlayApp {
             }
             return bonus.eventRules.some((rule) => this.campaignBonusRuleMatches(rule, line));
         });
-        const matchedBonus = matchedByExplicitRule ?? this.findCampaignBonusFromParsedReward(line);
+        const matchedBonus = matchedByExplicitRule ?? this.findCampaignBonusFromParsedReward(line, parsedReward);
         if (!matchedBonus) {
             return;
         }
-        this.setCampaignBonusDone(matchedBonus.id, 'log', line);
+        const changed = this.setCampaignBonusDone(matchedBonus.id, 'log', line);
+        if (changed) {
+            this.rememberCampaignBonusLogLineKey(dedupeKey);
+        }
     }
     clearMissedWarning() {
         this.runtime.missedWarningZoneRu = null;
@@ -2923,8 +3380,33 @@ class PoeOverlayApp {
         this.scheduleLogFileInfoRefresh();
         this.broadcastState();
     }
+    startTimerVisualHeartbeat() {
+        this.stopTimerVisualHeartbeat();
+        this.timerVisualHeartbeat = setInterval(() => {
+            const overlayWindow = this.overlayWindow;
+            if (!overlayWindow || overlayWindow.isDestroyed()) {
+                return;
+            }
+            if (overlayWindow.webContents.isDestroyed()) {
+                return;
+            }
+            overlayWindow.webContents.send('timer:visual-tick', {
+                now: Date.now()
+            });
+        }, TIMER_VISUAL_HEARTBEAT_MS);
+        if (typeof this.timerVisualHeartbeat?.unref === 'function') {
+            this.timerVisualHeartbeat.unref();
+        }
+    }
+    stopTimerVisualHeartbeat() {
+        if (!this.timerVisualHeartbeat) {
+            return;
+        }
+        clearInterval(this.timerVisualHeartbeat);
+        this.timerVisualHeartbeat = null;
+    }
     emitRunTimerState() {
-        for (const win of [this.overlayWindow, this.settingsWindow, this.companionWindow, this.infoWindow]) {
+        for (const win of [this.overlayWindow, this.settingsWindow, this.companionWindow, this.infoWindow, this.communityWindow, this.supportWindow]) {
             if (win && !win.isDestroyed()) {
                 win.webContents.send('timer:state-changed', this.config.runTimer);
             }
@@ -2962,7 +3444,7 @@ class PoeOverlayApp {
         this.broadcastTimer = null;
         const snapshot = this.pendingSnapshot ?? this.getSnapshot();
         this.pendingSnapshot = null;
-        for (const win of [this.overlayWindow, this.settingsWindow, this.companionWindow, this.infoWindow]) {
+        for (const win of [this.overlayWindow, this.settingsWindow, this.companionWindow, this.infoWindow, this.communityWindow, this.supportWindow]) {
             if (win && !win.isDestroyed()) {
                 win.webContents.send('app:state-changed', snapshot);
             }

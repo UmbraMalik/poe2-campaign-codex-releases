@@ -3,15 +3,19 @@ import {
   useCallback,
   useEffect,
   useRef,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent
 } from 'react';
 import {
   useAppSnapshot,
-  useLiveRunTimerDisplay,
-  useRunTimerState
+  useLiveRunTimerText,
+  useRunTimerState,
+  type LiveRunTimerState
 } from '../hooks';
+import { useDocumentTitle, useI18n } from '../useI18n';
 import {
   getCurrentActElapsedMs,
+  getCurrentActElapsedMsForAct,
   getNearestPowerSpike,
   getRunElapsedMs,
   getSceneDisplayName,
@@ -19,8 +23,21 @@ import {
 } from '../companion-helpers';
 import { formatDuration, getLevelState } from '../utils';
 import { getOverlayMinimumSize } from '../../shared/overlay-layout';
+import { shouldStartOverlayDrag } from '../../shared/overlay-drag';
+import {
+  getOverlayLockButtonIcon,
+  getOverlayLockButtonLabel,
+  getResizeGripClassName,
+  stopOverlayControlPropagation,
+  toggleOverlayMovementLock
+} from '../overlay-lock';
 import leagueMechanicRewardsData from '../../data/league-mechanic-rewards.json';
+import { getCampaignBonusView, getGuideView, getLevelReminderView, getPowerSpikeView } from '../../i18n/data';
+import { translateSystemText } from '../../i18n/runtime';
+import { translate } from '../../i18n/translations';
 import type {
+  AppLanguage,
+  CampaignBonusDefinition,
   GuideEntry,
   GuideProfile,
   LevelReminder,
@@ -30,12 +47,14 @@ import type {
   ZoneAct
 } from '../../shared/types';
 
-function formatActTitle(act: ZoneAct | null): string {
+function formatActTitle(act: ZoneAct | null, language: AppLanguage): string {
   if (act === null) {
-    return 'ТЕКУЩАЯ ЗОНА';
+    return translate(language, 'overlay.currentZoneFallback');
   }
 
-  return act === 'interlude' ? 'ИНТЕРЛЮДИИ' : `АКТ ${act}`;
+  return act === 'interlude'
+    ? translate(language, 'route.interludes')
+    : translate(language, 'route.act', { act });
 }
 
 function formatHotkeyLabel(value: string | null | undefined, fallback: string): string {
@@ -44,6 +63,7 @@ function formatHotkeyLabel(value: string | null | undefined, fallback: string): 
 }
 
 function getTimerLeadText(
+  language: AppLanguage,
   runTimer: RunTimerState,
   now: number,
   countdownMs: number | null,
@@ -54,46 +74,67 @@ function getTimerLeadText(
   statusLabel: string
 ): string {
   if (runTimer.status === 'armed' && countdownMs !== null) {
-    return `⏳ Старт через ${formatDuration(countdownMs)}`;
+    return translate(language, 'overlay.timerStartIn', {
+      duration: formatDuration(countdownMs)
+    });
   }
 
   const total = formatDuration(getRunElapsedMs(runTimer, now));
-  const actPart = actElapsedMs === null ? null : `${currentActLabel ?? 'Акт'} ${formatDuration(actElapsedMs)}`;
-  const levelPart = `Ур: ${currentLevel ?? '?'} · Рек: ${recommendedLabel} · ${statusLabel}`;
+  const actPart = actElapsedMs === null
+    ? ''
+    : ` · ${currentActLabel ?? translate(language, 'route.interludes')} ${formatDuration(actElapsedMs)}`;
+  const levelPart = `${translate(language, 'common.level')} ${currentLevel ?? '?'} · ${translate(language, 'common.recommended')}: ${recommendedLabel} · ${statusLabel}`;
 
   if (runTimer.status === 'paused') {
-    return `⏸ ${total}${actPart ? ` · ${actPart}` : ''} · ПАУЗА · ${levelPart}`;
+    return translate(language, 'overlay.timerPaused', {
+      total,
+      actPart,
+      levelPart
+    });
   }
 
   if (runTimer.status === 'finished') {
-    return `⏱ ${total} · ФИНИШ${actPart ? ` · ${actPart}` : ''} · ${levelPart}`;
+    return translate(language, 'overlay.timerFinished', {
+      total,
+      actPart,
+      levelPart
+    });
   }
 
   if (runTimer.status === 'running') {
-    return `⏱ ${total}${actPart ? ` · ${actPart}` : ''} · ${levelPart}`;
+    return translate(language, 'overlay.timerRunning', {
+      total,
+      actPart,
+      levelPart
+    });
   }
 
-  return `⏱ 00:00 · ${levelPart}`;
+  return translate(language, 'overlay.timerIdle', {
+    levelPart
+  });
 }
 
-function formatTimerOnlyRunStatus(runTimer: RunTimerState): string {
+function formatTimerOnlyRunStatus(
+  runTimer: RunTimerState,
+  language: AppLanguage
+): string {
   if (runTimer.status === 'armed') {
-    return 'ОЖИДАЕТ СТАРТ';
+    return translate(language, 'overlay.timerOnlyArmed');
   }
 
   if (runTimer.status === 'paused') {
-    return 'ПАУЗА';
+    return translate(language, 'overlay.timerOnlyPaused');
   }
 
   if (runTimer.status === 'finished') {
-    return 'ФИНИШ';
+    return translate(language, 'overlay.timerOnlyFinished');
   }
 
   if (runTimer.status === 'running') {
-    return 'ТАЙМЕР АКТИВЕН';
+    return translate(language, 'overlay.timerOnlyRunning');
   }
 
-  return 'ГОТОВ К СТАРТУ';
+  return translate(language, 'overlay.timerOnlyReady');
 }
 
 interface OverlayUpcomingReminder {
@@ -133,6 +174,7 @@ function supportsActiveProfile(entry: PowerSpike, activeProfile: GuideProfile): 
 
 function getOverlayUpcomingReminders(
   snapshot: NonNullable<ReturnType<typeof useAppSnapshot>>,
+  language: AppLanguage,
   maxDelta = 2
 ): OverlayUpcomingReminder[] {
   const currentLevel = snapshot.config.currentLevel;
@@ -145,8 +187,8 @@ function getOverlayUpcomingReminders(
     (entry: LevelReminder) => ({
       id: `vendor-${entry.id}`,
       level: entry.level,
-      title: entry.title,
-      items: entry.items,
+      title: getLevelReminderView(entry, language)?.displayTitle ?? entry.title,
+      items: getLevelReminderView(entry, language)?.displayItems ?? entry.items,
       source: 'vendor'
     })
   );
@@ -156,8 +198,8 @@ function getOverlayUpcomingReminders(
     .map((entry) => ({
       id: `power-${entry.id}`,
       level: entry.level,
-      title: entry.title,
-      items: entry.items,
+      title: getPowerSpikeView(entry, language)?.displayTitle ?? entry.title,
+      items: getPowerSpikeView(entry, language)?.displayItems ?? entry.items,
       source: 'power' as const
     }));
 
@@ -174,10 +216,10 @@ function getOverlayUpcomingReminders(
         return left.source === 'vendor' ? -1 : 1;
       }
 
-      return left.title.localeCompare(right.title, 'ru');
+      return left.title.localeCompare(right.title, language === 'en' ? 'en' : 'ru');
     })
     .filter((entry) => {
-      const key = `${entry.level}-${entry.title.toLocaleLowerCase('ru')}`;
+      const key = `${entry.level}-${entry.title.toLocaleLowerCase(language === 'en' ? 'en' : 'ru')}`;
       if (seen.has(key)) {
         return false;
       }
@@ -188,26 +230,31 @@ function getOverlayUpcomingReminders(
     .slice(0, 4);
 }
 
-function getImportantOverlayLines(snapshot: NonNullable<ReturnType<typeof useAppSnapshot>>) {
+function getImportantOverlayLines(
+  snapshot: NonNullable<ReturnType<typeof useAppSnapshot>>,
+  language: AppLanguage
+) {
   const guide = snapshot.currentGuideEntry;
   if (!guide) {
     return [];
   }
 
+  const guideView = getGuideView(guide, language);
   const nearestPowerSpike = getNearestPowerSpike(
     snapshot.powerSpikes,
     snapshot.config.currentLevel,
     snapshot.config.guideProfile
   );
-  const xpStatus = getXpStatus(snapshot);
+  const powerSpikeView = getPowerSpikeView(nearestPowerSpike, language);
+  const xpStatus = getXpStatus(snapshot, language);
   const lines: string[] = [];
 
   if (snapshot.config.mainOverlaySettings.showOverlayCriticalImportant) {
-    lines.push(...guide.important);
+    lines.push(...(guideView?.important ?? []));
   }
 
   if (snapshot.config.mainOverlaySettings.showOverlayBossTip) {
-    lines.push(...(guide.boss_tips ?? []));
+    lines.push(...(guideView?.bossTips ?? []));
   }
 
   if (
@@ -218,7 +265,12 @@ function getImportantOverlayLines(snapshot: NonNullable<ReturnType<typeof useApp
   }
 
   if (snapshot.config.mainOverlaySettings.showOverlayPowerSpike && nearestPowerSpike) {
-    lines.push(`Скачок силы: ур. ${nearestPowerSpike.level} · ${nearestPowerSpike.title}`);
+    lines.push(
+      translate(language, 'overlay.powerSpike', {
+        level: nearestPowerSpike.level,
+        title: powerSpikeView?.displayTitle ?? nearestPowerSpike.title
+      })
+    );
   }
 
   return [...new Set(lines.filter(Boolean))].slice(0, 2);
@@ -402,8 +454,12 @@ function getCurrentZoneCampaignBonuses(snapshot: NonNullable<ReturnType<typeof u
     .sort((left, right) => Number(left.done) - Number(right.done));
 }
 
-function getDetailLines(guide: GuideEntry | null, key: string): string[] {
-  const details = guide?.details;
+function getDetailLines(
+  guide: GuideEntry | null,
+  key: string,
+  language: AppLanguage
+): string[] {
+  const details = getGuideView(guide, language)?.details;
 
   if (!details || Array.isArray(details) || typeof details !== 'object') {
     return [];
@@ -418,24 +474,91 @@ function getDetailLines(guide: GuideEntry | null, key: string): string[] {
   return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
 }
 
-function getOverlaySpeedrunLines(guide: GuideEntry | null): string[] {
+function getOverlaySpeedrunLines(
+  guide: GuideEntry | null,
+  language: AppLanguage
+): string[] {
   const groups: Array<[string, string]> = [
-    ['checkpoint', 'Чекпоинт'],
-    ['town_plan', 'Город'],
-    ['navigation', 'Навигация'],
-    ['time_saves', 'Скип времени'],
-    ['opportunistic', 'По пути'],
-    ['xp_strategy', 'XP'],
-    ['craft_plan', 'Крафт']
+    ['checkpoint', 'companion.detailsGroup.checkpoint'],
+    ['town_plan', 'companion.detailsGroup.town'],
+    ['navigation', 'companion.detailsGroup.navigation'],
+    ['time_saves', 'companion.detailsGroup.time_saves'],
+    ['opportunistic', 'companion.detailsGroup.opportunistic'],
+    ['xp_strategy', 'common.xpNotes'],
+    ['craft_plan', 'common.craftingTips']
   ];
 
   return groups
-    .flatMap(([key, label]) =>
-      getDetailLines(guide, key)
+    .flatMap(([key, labelKey]) =>
+      getDetailLines(guide, key, language)
         .slice(0, 1)
-        .map((line) => `${label}: ${line}`)
+        .map((line) => `${translate(language, labelKey)}: ${line}`)
     )
     .slice(0, 3);
+}
+
+
+function getChecklistItemTone(
+  item: GuideEntry['checklist'][number]
+): string {
+  if (
+    item.type === 'reward' ||
+    item.type === 'permanent_reward' ||
+    item.type === 'passive' ||
+    item.type === 'resistance' ||
+    item.type === 'spirit' ||
+    item.type === 'life' ||
+    item.type === 'mana' ||
+    item.type === 'crafting' ||
+    item.type === 'currency'
+  ) {
+    return ' is-reward';
+  }
+
+  if (item.type === 'boss') {
+    return ' is-boss';
+  }
+
+  if (!item.required || item.type === 'route_task') {
+    return ' is-optional';
+  }
+
+  const normalized = item.text.toLocaleLowerCase('ru');
+  const isReward =
+    normalized.includes('награ') ||
+    normalized.includes('пассив') ||
+    normalized.includes('сопротив') ||
+    normalized.includes('резист') ||
+    normalized.includes('дух') ||
+    normalized.includes('spirit') ||
+    normalized.includes('gem') ||
+    normalized.includes('камень') ||
+    normalized.includes('+');
+  const isBoss =
+    normalized.includes('босс') ||
+    normalized.includes('убить') ||
+    normalized.includes('побед') ||
+    normalized.includes('trial') ||
+    normalized.includes('испытан');
+  const isSkip =
+    normalized.includes('скип') ||
+    normalized.includes('не задерж') ||
+    normalized.includes('не чист') ||
+    normalized.includes('опционально');
+
+  if (isReward) {
+    return ' is-reward';
+  }
+
+  if (isBoss) {
+    return ' is-boss';
+  }
+
+  if (isSkip) {
+    return ' is-optional';
+  }
+
+  return '';
 }
 
 interface LiveRunTimeTextProps {
@@ -451,48 +574,80 @@ const LiveRunTimeText = memo(function LiveRunTimeText({
   snapshotNowMs,
   overlayMode
 }: LiveRunTimeTextProps) {
-  const liveRunTimer = useLiveRunTimerDisplay(
+  const textRef = useRef<HTMLSpanElement | null>(null);
+  const formatTimerText = useCallback(
+    (liveRunTimer: LiveRunTimerState) => {
+      const liveTimer = liveRunTimer.runTimer ?? runTimer;
+      const displayMs =
+        liveTimer.status === 'armed' && liveRunTimer.countdownMs !== null
+          ? liveRunTimer.countdownMs
+          : liveRunTimer.runElapsedMs;
+
+      return formatDuration(displayMs);
+    },
+    [runTimer]
+  );
+
+  useLiveRunTimerText(
+    textRef,
     runTimer,
     settings,
     snapshotNowMs,
+    formatTimerText,
     32,
     overlayMode ? { overlayMode } : undefined
   );
-  const displayMs =
-    runTimer.status === 'armed' && liveRunTimer.countdownMs !== null
-      ? liveRunTimer.countdownMs
-      : liveRunTimer.runElapsedMs;
 
-  return <>{formatDuration(displayMs)}</>;
+  return <span ref={textRef}>{formatTimerText({
+    nowMs: snapshotNowMs ?? Date.now(),
+    runTimer,
+    runElapsedMs: getRunElapsedMs(runTimer, snapshotNowMs ?? Date.now()),
+    countdownMs: null
+  })}</span>;
 });
 
 interface LiveActTimeTextProps {
   runTimer: RunTimerState;
-  guide: GuideEntry | null;
+  currentAct: number | null;
   snapshotNowMs: number | null | undefined;
 }
 
 const LiveActTimeText = memo(function LiveActTimeText({
   runTimer,
-  guide,
+  currentAct,
   snapshotNowMs
 }: LiveActTimeTextProps) {
-  const liveRunTimer = useLiveRunTimerDisplay(runTimer, null, snapshotNowMs, 32);
-  const actElapsedMs = getCurrentActElapsedMs(runTimer, guide, liveRunTimer.nowMs);
+  const textRef = useRef<HTMLSpanElement | null>(null);
+  const formatActText = useCallback(
+    (liveRunTimer: LiveRunTimerState) => {
+      const actElapsedMs = getCurrentActElapsedMsForAct(runTimer, currentAct, liveRunTimer.nowMs);
+      return actElapsedMs === null ? '' : formatDuration(actElapsedMs);
+    },
+    [currentAct, runTimer]
+  );
 
-  if (actElapsedMs === null) {
+  useLiveRunTimerText(textRef, runTimer, null, snapshotNowMs, formatActText, 32);
+
+  if (currentAct === null) {
     return null;
   }
 
-  return <>{formatDuration(actElapsedMs)}</>;
+  return <span ref={textRef}>{formatActText({
+    nowMs: snapshotNowMs ?? Date.now(),
+    runTimer,
+    runElapsedMs: getRunElapsedMs(runTimer, snapshotNowMs ?? Date.now()),
+    countdownMs: null
+  })}</span>;
 });
 
 interface LiveTimerMetaProps {
+  language: AppLanguage;
   runTimer: RunTimerState;
   settings: RunTimerSettings | null | undefined;
   snapshotNowMs: number | null | undefined;
   overlayMode: string | null | undefined;
   guide: GuideEntry | null;
+  currentAct: number | null;
   currentActLabel: string | null;
   currentLevel: number | null;
   recommendedLabel: string;
@@ -500,28 +655,25 @@ interface LiveTimerMetaProps {
 }
 
 const LiveTimerMeta = memo(function LiveTimerMeta({
+  language,
   runTimer,
   settings,
   snapshotNowMs,
   overlayMode,
   guide,
+  currentAct,
   currentActLabel,
   currentLevel,
   recommendedLabel,
   statusLabel
 }: LiveTimerMetaProps) {
-  const liveRunTimer = useLiveRunTimerDisplay(
-    runTimer,
-    settings,
-    snapshotNowMs,
-    32,
-    { overlayMode }
-  );
-  const actElapsedMs = getCurrentActElapsedMs(runTimer, guide, liveRunTimer.nowMs);
+  const textRef = useRef<HTMLSpanElement | null>(null);
+  const formatMetaText = useCallback(
+    (liveRunTimer: LiveRunTimerState) => {
+      const actElapsedMs = getCurrentActElapsedMsForAct(runTimer, currentAct, liveRunTimer.nowMs);
 
-  return (
-    <>
-      {getTimerLeadText(
+      return getTimerLeadText(
+        language,
         runTimer,
         liveRunTimer.nowMs,
         liveRunTimer.countdownMs,
@@ -530,21 +682,69 @@ const LiveTimerMeta = memo(function LiveTimerMeta({
         currentLevel,
         recommendedLabel,
         statusLabel
-      )}
-    </>
+      );
+    },
+    [
+      currentAct,
+      currentActLabel,
+      currentLevel,
+      guide,
+      language,
+      recommendedLabel,
+      runTimer,
+      statusLabel
+    ]
   );
+
+  useLiveRunTimerText(
+    textRef,
+    runTimer,
+    settings,
+    snapshotNowMs,
+    formatMetaText,
+    32,
+    { overlayMode }
+  );
+
+  return <span ref={textRef}>{formatMetaText({
+    nowMs: snapshotNowMs ?? Date.now(),
+    runTimer,
+    runElapsedMs: getRunElapsedMs(runTimer, snapshotNowMs ?? Date.now()),
+    countdownMs: null
+  })}</span>;
 });
 
 const DEFAULT_OVERLAY_MINIMUM_SIZE = getOverlayMinimumSize('full', 'normal', 90);
 
+function getRendererViewportWidth(): number {
+  return Math.round(
+    document.documentElement.clientWidth || window.innerWidth || window.outerWidth || DEFAULT_OVERLAY_MINIMUM_SIZE.width
+  );
+}
+
+function getRendererViewportHeight(): number {
+  return Math.round(
+    document.documentElement.clientHeight || window.innerHeight || window.outerHeight || DEFAULT_OVERLAY_MINIMUM_SIZE.height
+  );
+}
+
 export function OverlayPage() {
   const snapshot = useAppSnapshot();
+  const { t, language } = useI18n(snapshot?.config.appLanguage);
   const syncedRunTimer = useRunTimerState(snapshot?.config.runTimer);
   const resizeStateRef = useRef<{
     startX: number;
     startWidth: number;
     frame: number | null;
   } | null>(null);
+  const overlayDragStateRef = useRef<{
+    lastX: number;
+    lastY: number;
+    pendingX: number;
+    pendingY: number;
+    frame: number | null;
+  } | null>(null);
+  const overlayMovementLockedRef = useRef(false);
   const overlayPageRef = useRef<HTMLElement | null>(null);
   const overlayShellRef = useRef<HTMLElement | null>(null);
   const autoResizeFrameRef = useRef<number | null>(null);
@@ -555,6 +755,10 @@ export function OverlayPage() {
         snapshot.config.overlayScale
       ).height
     : DEFAULT_OVERLAY_MINIMUM_SIZE.height;
+
+  useEffect(() => {
+    overlayMovementLockedRef.current = Boolean(snapshot?.config.overlayMovementLocked);
+  }, [snapshot?.config.overlayMovementLocked]);
 
   const scheduleAdaptiveOverlayHeight = useCallback(() => {
     if (autoResizeFrameRef.current !== null) {
@@ -568,7 +772,7 @@ export function OverlayPage() {
       const shell = overlayShellRef.current;
       const api = window.poe2Overlay;
 
-      if (!page || !shell || !api) {
+      if (!page || !shell || !api || overlayDragStateRef.current || resizeStateRef.current) {
         return;
       }
 
@@ -599,14 +803,16 @@ export function OverlayPage() {
           2
       );
       const nextHeight = Math.max(autoResizeMinimumHeight, desiredHeight);
-      const currentHeight = Math.round(window.outerHeight || document.documentElement.clientHeight);
+      const currentHeight = getRendererViewportHeight();
 
       if (Math.abs(currentHeight - nextHeight) < 8) {
         return;
       }
 
-      const currentWidth = Math.round(window.outerWidth || document.documentElement.clientWidth);
-      void api.resizeOverlay(currentWidth, nextHeight);
+      // Keep width as the main-process source of truth. On high-DPI displays, renderer
+      // outerWidth can be reported in a different coordinate space and may inflate the
+      // overlay while the user is only moving it.
+      void api.resizeOverlayHeight(nextHeight);
     });
   }, [autoResizeMinimumHeight]);
 
@@ -651,6 +857,117 @@ export function OverlayPage() {
     snapshot?.config.mainOverlaySettings.showOverlayPowerSpike
   ]);
 
+  const beginOverlayDrag = useCallback((event: ReactPointerEvent<HTMLElement>) => {
+    const api = window.poe2Overlay;
+
+    if (
+      overlayMovementLockedRef.current ||
+      !api?.moveOverlayBy ||
+      !shouldStartOverlayDrag(event.target, {
+        button: event.button
+      })
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const dragElement = event.currentTarget;
+    const pointerId = event.pointerId;
+
+    try {
+      dragElement.setPointerCapture(pointerId);
+    } catch {
+      // Pointer capture is a best-effort helper; window-level listeners below are the fallback.
+    }
+
+    overlayDragStateRef.current = {
+      lastX: event.screenX,
+      lastY: event.screenY,
+      pendingX: 0,
+      pendingY: 0,
+      frame: null
+    };
+
+    const flushPendingMove = () => {
+      const state = overlayDragStateRef.current;
+      if (!state) {
+        return;
+      }
+
+      state.frame = null;
+      const deltaX = state.pendingX;
+      const deltaY = state.pendingY;
+      state.pendingX = 0;
+      state.pendingY = 0;
+
+      if (deltaX !== 0 || deltaY !== 0) {
+        void api.moveOverlayBy(deltaX, deltaY);
+      }
+    };
+
+    const scheduleMove = () => {
+      const state = overlayDragStateRef.current;
+      if (!state || state.frame !== null) {
+        return;
+      }
+
+      state.frame = window.requestAnimationFrame(flushPendingMove);
+    };
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const state = overlayDragStateRef.current;
+      if (!state) {
+        return;
+      }
+
+      moveEvent.preventDefault();
+      moveEvent.stopPropagation();
+
+      const deltaX = moveEvent.screenX - state.lastX;
+      const deltaY = moveEvent.screenY - state.lastY;
+      state.lastX = moveEvent.screenX;
+      state.lastY = moveEvent.screenY;
+
+      if (deltaX === 0 && deltaY === 0) {
+        return;
+      }
+
+      state.pendingX += deltaX;
+      state.pendingY += deltaY;
+      scheduleMove();
+    };
+
+    const stopOverlayDrag = () => {
+      const state = overlayDragStateRef.current;
+
+      if (state?.frame !== null) {
+        window.cancelAnimationFrame(state.frame);
+        flushPendingMove();
+      }
+
+      try {
+        dragElement.releasePointerCapture(pointerId);
+      } catch {
+        // Pointer capture may already be released if the window lost pointer focus.
+      }
+
+      overlayDragStateRef.current = null;
+      window.removeEventListener('pointermove', handlePointerMove, true);
+      window.removeEventListener('pointerup', stopOverlayDrag, true);
+      window.removeEventListener('pointercancel', stopOverlayDrag, true);
+      window.removeEventListener('blur', stopOverlayDrag, true);
+      document.body.classList.remove('overlay-window-dragging');
+    };
+
+    document.body.classList.add('overlay-window-dragging');
+    window.addEventListener('pointermove', handlePointerMove, true);
+    window.addEventListener('pointerup', stopOverlayDrag, true);
+    window.addEventListener('pointercancel', stopOverlayDrag, true);
+    window.addEventListener('blur', stopOverlayDrag, true);
+  }, []);
+
   const toggleTimerOnlyMode = useCallback(() => {
     const switchMode = async () => {
       const api = window.poe2Overlay;
@@ -658,50 +975,61 @@ export function OverlayPage() {
         return;
       }
 
-      await api.resizeOverlay(
-        Math.round(window.outerWidth || document.documentElement.clientWidth),
-        Math.round(window.outerHeight || document.documentElement.clientHeight)
-      );
+      await api.resizeOverlayHeight(getRendererViewportHeight());
       await api.toggleOverlayMode();
     };
 
     void switchMode();
   }, []);
 
+  useDocumentTitle(t('titles.overlay'));
+
   if (!snapshot) {
-    return <div className="overlay-shell loading-shell">Загрузка состояния…</div>;
+    return <div className="overlay-shell loading-shell">{t('common.loading')}</div>;
   }
 
   const { config, currentGuideEntry, currentZone, runtime } = snapshot;
   const displayRunTimer = syncedRunTimer ?? config.runTimer;
   const guide = currentGuideEntry;
-  const guideChecklist = guide?.checklist ?? [];
-  const sceneName = getSceneDisplayName(snapshot);
+  const guideView = getGuideView(guide, language);
+  const guideChecklist = guideView?.checklist ?? [];
+  const sceneName = getSceneDisplayName(snapshot, language);
   const levelState = getLevelState(snapshot);
-  const currentActTimerLabel =
+  const currentActTimerAct =
     guide && typeof guide.act === 'number'
-      ? `Акт ${guide.act}`
-      : guide?.act === 'interlude'
-        ? 'Интерлюдии'
+      ? guide.act
+      : typeof currentZone.actHint === 'number'
+        ? currentZone.actHint
+        : runtime.lastGameplayAct ?? null;
+  const currentActTimerLabel =
+    currentActTimerAct !== null
+      ? translate(language, 'route.act', { act: currentActTimerAct })
+      : guide?.act === 'interlude' || currentZone.actHint === 'interlude'
+        ? translate(language, 'route.interludes')
         : null;
-  const importantLines = getImportantOverlayLines(snapshot);
+  const importantLines = getImportantOverlayLines(snapshot, language);
   const zoneBonusItems = getCurrentZoneCampaignBonuses(snapshot);
   const leagueRewardItem = getCurrentZoneLeagueReward(snapshot, sceneName);
   // Always keep near-level vendor/power reminders visible in the main overlay.
   // Rule: show reminders from the current level up to +2 levels, and hide them after the target level is passed.
-  const upcomingOverlayReminders = getOverlayUpcomingReminders(snapshot);
+  const upcomingOverlayReminders = getOverlayUpcomingReminders(snapshot, language);
   const skipLines =
     config.mainOverlaySettings.showOverlaySkip && guide
-      ? guide.skip.slice(0, 3)
+      ? (guideView?.skip ?? []).slice(0, 3)
       : [];
-  const speedrunLines = getOverlaySpeedrunLines(guide);
-  const actTitle = formatActTitle(currentZone.actHint ?? guide?.act ?? null);
+  const speedrunLines = getOverlaySpeedrunLines(guide, language);
+  const actTitle = formatActTitle(currentZone.actHint ?? guide?.act ?? null, language);
   const overlayTitle = guide ? `${actTitle} · ${sceneName}` : sceneName;
+  const overlayZoneName = sceneName;
+  const overlayActLabel = guide
+    ? actTitle
+    : currentZone.actHint
+      ? formatActTitle(currentZone.actHint, language)
+      : t('overlay.currentZoneFallback');
   const isTimerOnlyMode = runtime.overlayMode === 'timer_only';
   const isCompactOverlay = config.overlayDensity === 'compact';
   const visibleChecklist = isCompactOverlay ? guideChecklist.slice(0, 3) : guideChecklist;
   const hiddenChecklistCount = Math.max(0, guideChecklist.length - visibleChecklist.length);
-  const isOverlayMovementLocked = config.overlayMovementLocked;
   const hasLogConnection = runtime.logWatcherStatus === 'ready' || Boolean(runtime.watchedLogPath);
   const hasNamedUnknownZone =
     !guide &&
@@ -712,12 +1040,12 @@ export function OverlayPage() {
       currentZone.sceneKind === 'town'
     );
   const shouldShowNoGuideForZone = hasLogConnection && hasNamedUnknownZone;
-  const unknownZoneName = currentZone.rawZoneName ?? runtime.lastSceneSource ?? runtime.lastRawZoneName ?? 'эта локация';
-  const overlayMovementHint = isOverlayMovementLocked
-    ? 'Окно закреплено. Нажми "Открепить", чтобы передвинуть.'
-    : 'Потяни верхнюю часть окна, чтобы передвинуть.';
+  const unknownZoneName =
+    currentZone.rawZoneName ??
+    runtime.lastSceneSource ??
+    runtime.lastRawZoneName ??
+    t('scene.unknownZone');
   const openCompanionHotkey = formatHotkeyLabel(config.hotkeys.openCompanion, 'F9');
-  const toggleOverlayModeHotkey = formatHotkeyLabel(config.hotkeys.toggleOverlayMode, 'F10');
   const timerOnlyShowsCountdown =
     displayRunTimer.status === 'armed' &&
     typeof config.runTimerSettings.leagueStartAt === 'number';
@@ -731,13 +1059,13 @@ export function OverlayPage() {
     event.preventDefault();
     event.stopPropagation();
 
-    if (isOverlayMovementLocked) {
+    if (overlayMovementLockedRef.current) {
       return;
     }
 
     resizeStateRef.current = {
       startX: event.screenX,
-      startWidth: window.outerWidth || document.documentElement.clientWidth,
+      startWidth: getRendererViewportWidth(),
       frame: null
     };
 
@@ -750,7 +1078,7 @@ export function OverlayPage() {
       const nextWidth = Math.max(minimumSize.width, state.startWidth + moveEvent.screenX - state.startX);
       const currentHeight = Math.max(
         minimumSize.height,
-        window.outerHeight || document.documentElement.clientHeight
+        getRendererViewportHeight()
       );
 
       if (state.frame !== null) {
@@ -781,21 +1109,16 @@ export function OverlayPage() {
   };
 
   const timerOnlyPrimaryLabel =
-    timerOnlyShowsCountdown ? 'СТАРТ ЧЕРЕЗ' : 'ОБЩЕЕ ВРЕМЯ';
-  const timerOnlyStatus = formatTimerOnlyRunStatus(displayRunTimer);
-  const timerOnlyLevelText = `Ур. ${config.currentLevel ?? '?'} · Рек: ${guide?.recommended_level_label ?? '—'} · ${levelState.label}`;
-  const timerPrimaryLabel =
-    displayRunTimer.status === 'running'
-      ? '⏸ Пауза'
-      : displayRunTimer.status === 'paused'
-        ? '▶ Продолжить'
-        : '▶ Старт';
+    timerOnlyShowsCountdown ? t('overlay.timerOnlyCountdownLabel') : t('companion.totalTime');
+  const timerOnlyLevelText = `${t('common.level')} ${config.currentLevel ?? '?'} · ${t('common.recommended')}: ${guideView?.recommendedLevelLabel ?? t('common.notAvailable')} · ${levelState.label}`;
+  const timerPrimaryIcon = displayRunTimer.status === 'running' ? '⏸' : '▶';
+  const timerPrimaryTone = displayRunTimer.status === 'running' ? 'pause' : 'start';
   const timerPrimaryTitle =
     displayRunTimer.status === 'running'
-      ? 'Поставить таймер на паузу'
+      ? t('overlay.pauseTimer')
       : displayRunTimer.status === 'paused'
-        ? 'Продолжить таймер'
-        : 'Запустить таймер прохождения';
+        ? t('overlay.resumeTimer')
+        : t('overlay.startTimer');
   const handleTimerPrimaryAction = () => {
     if (displayRunTimer.status === 'running') {
       void window.poe2Overlay?.pauseRunTimer();
@@ -818,10 +1141,7 @@ export function OverlayPage() {
       return;
     }
 
-    await api.resizeOverlay(
-      Math.round(window.outerWidth || document.documentElement.clientWidth),
-      Math.round(window.outerHeight || document.documentElement.clientHeight)
-    );
+    await api.resizeOverlayHeight(getRendererViewportHeight());
 
     await api.updateSettings({
       overlayDensity: isCompactOverlay ? 'normal' : 'compact'
@@ -836,10 +1156,7 @@ export function OverlayPage() {
       return;
     }
 
-    await api.resizeOverlay(
-      Math.round(window.outerWidth || document.documentElement.clientWidth),
-      Math.round(window.outerHeight || document.documentElement.clientHeight)
-    );
+    await api.resizeOverlayHeight(getRendererViewportHeight());
 
     if (config.overlayDensity === 'compact') {
       await api.updateSettings({ overlayDensity: 'normal' });
@@ -849,85 +1166,154 @@ export function OverlayPage() {
     window.setTimeout(scheduleAdaptiveOverlayHeight, 0);
   };
 
-  const handleOverlayMovementLockToggle = () => {
+  const handleLanguageChange = (nextLanguage: AppLanguage) => {
+    if (nextLanguage === language) {
+      return;
+    }
+
     void window.poe2Overlay?.updateSettings({
-      overlayMovementLocked: !isOverlayMovementLocked
+      appLanguage: nextLanguage
     });
   };
+
+  const handleLanguageToggle = () => {
+    handleLanguageChange(language === 'en' ? 'ru' : 'en');
+  };
+
   const handleToggleSettings = () => {
     void window.poe2Overlay?.toggleSettings();
   };
   const handleToggleCompanion = () => {
     void window.poe2Overlay?.toggleCompanionPanel();
   };
+  const handleCloseOverlay = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    stopOverlayControlPropagation(event);
+    void window.poe2Overlay?.closeOverlay();
+  };
+  const handleOverlayMovementLockToggle = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    const api = window.poe2Overlay;
+    if (!api) {
+      stopOverlayControlPropagation(event);
+      return;
+    }
+
+    void toggleOverlayMovementLock(event, api, config.overlayMovementLocked);
+  };
+  const overlayLockButtonLabel = getOverlayLockButtonLabel(config.overlayMovementLocked, language);
+  const overlayLockButton = (
+    <button
+      className={`overlay-icon-button overlay-lock-icon-button no-drag${config.overlayMovementLocked ? ' is-locked' : ''}`}
+      type="button"
+      title={overlayLockButtonLabel}
+      aria-label={overlayLockButtonLabel}
+      aria-pressed={config.overlayMovementLocked}
+      onPointerDown={stopOverlayControlPropagation}
+      onMouseDown={stopOverlayControlPropagation}
+      onClick={handleOverlayMovementLockToggle}
+    >
+      <span className={`overlay-icon-glyph overlay-icon-glyph-lock${config.overlayMovementLocked ? ' is-locked' : ' is-unlocked'}`} aria-hidden="true">
+        {getOverlayLockButtonIcon(config.overlayMovementLocked)}
+      </span>
+    </button>
+  );
   const overlayOpenCompanionButton = (
     <button
       className="overlay-icon-button no-drag"
       type="button"
-      title={`Открыть/закрыть подробную панель (${openCompanionHotkey})`}
-      aria-label={`Открыть/закрыть подробную панель (${openCompanionHotkey})`}
+      title={t('overlay.openCompanion', { hotkey: openCompanionHotkey })}
+      aria-label={t('overlay.openCompanion', { hotkey: openCompanionHotkey })}
       onClick={handleToggleCompanion}
     >
-      ☰
+      <span className="overlay-icon-glyph overlay-icon-glyph-menu" aria-hidden="true">☰</span>
     </button>
   );
   const overlayOpenSettingsButton = (
     <button
       className="overlay-icon-button no-drag"
       type="button"
-      title="Открыть/закрыть настройки"
-      aria-label="Открыть/закрыть настройки"
+      title={t('overlay.openSettings')}
+      aria-label={t('overlay.openSettings')}
       onClick={handleToggleSettings}
     >
-      ⚙
+      <span className="overlay-icon-glyph overlay-icon-glyph-settings" aria-hidden="true">⚙</span>
     </button>
   );
-  const overlayLockButton = (
+  const overlayCloseButton = (
     <button
-      className={`overlay-lock-button no-drag ${isOverlayMovementLocked ? 'is-locked' : ''}`}
+      className="overlay-icon-button overlay-close-button no-drag"
       type="button"
-      title={
-        isOverlayMovementLocked
-          ? 'Снять закрепление и снова разрешить перемещение оверлея'
-          : 'Закрепить оверлей, чтобы случайно не передвинуть его'
-      }
-      aria-pressed={isOverlayMovementLocked}
-      onClick={handleOverlayMovementLockToggle}
+      title={t('overlay.closeWindow')}
+      aria-label={t('overlay.closeWindow')}
+      onPointerDown={stopOverlayControlPropagation}
+      onMouseDown={stopOverlayControlPropagation}
+      onClick={handleCloseOverlay}
     >
-      {isOverlayMovementLocked ? '🔒 Открепить' : '🔓 Закрепить'}
+      <span className="overlay-icon-glyph overlay-icon-glyph-close" aria-hidden="true">×</span>
     </button>
+  );
+  const overlayLanguageToggle = (
+    <div
+      className={`overlay-language-toggle is-${language} no-drag`}
+      role="group"
+      aria-label={t('overlay.languageToggle')}
+      data-language={language}
+      onPointerDown={stopOverlayControlPropagation}
+      onMouseDown={stopOverlayControlPropagation}
+    >
+      <button
+        className="overlay-language-toggle-hitarea"
+        type="button"
+        title={t(language === 'ru' ? 'overlay.switchToEnglish' : 'overlay.switchToRussian')}
+        aria-label={t(language === 'ru' ? 'overlay.switchToEnglish' : 'overlay.switchToRussian')}
+        onClick={handleLanguageToggle}
+      >
+        <span className="overlay-language-toggle-indicator" aria-hidden="true" />
+        <span
+          className={`overlay-language-option${language === 'ru' ? ' is-active' : ''}`}
+          aria-hidden="true"
+        >
+          RU
+        </span>
+        <span
+          className={`overlay-language-option${language === 'en' ? ' is-active' : ''}`}
+          aria-hidden="true"
+        >
+          EN
+        </span>
+      </button>
+    </div>
   );
   const overlayQuickActions = (
-    <div className="overlay-quick-actions no-drag" aria-label="Быстрые элементы управления оверлея">
+    <div className="overlay-quick-actions no-drag" aria-label={t('overlay.quickActions')}>
+      {overlayLanguageToggle}
       {overlayLockButton}
       {overlayOpenCompanionButton}
       {overlayOpenSettingsButton}
+      {overlayCloseButton}
     </div>
   );
   const overlayNoGuideBlock = (
     <div className="overlay-onboarding-card overlay-no-guide-card">
-      <p className="overlay-onboarding-title">Инфы по этой локации нет</p>
+      <p className="overlay-onboarding-title">{t('overlay.noGuideTitle')}</p>
       <p className="overlay-onboarding-text">
-        Логи подключены, зона определена как <strong>{unknownZoneName}</strong>, но для неё пока нет подсказок в гайде.
+        {t('overlay.noGuideText', { zone: unknownZoneName })}
       </p>
-      <p className="overlay-onboarding-move-hint">
-        Можно продолжать забег: таймер и ручные панели остаются доступны.
-      </p>
+      <p className="overlay-onboarding-move-hint">{t('overlay.noGuideHint')}</p>
     </div>
   );
 
   const overlayOnboardingBlock = (
     <div className="overlay-onboarding-card">
-      <p className="overlay-onboarding-title">Зона не определена</p>
+      <p className="overlay-onboarding-title">{t('overlay.onboardingTitle')}</p>
       <ol className="overlay-onboarding-list">
         <li>
-          <strong>Выбери лог-файл игры</strong>
-          <span>Обычно он находится тут:</span>
-          <code className="overlay-onboarding-path">Path of Exile 2/logs/LatestClient.txt</code>
+          <strong>{t('overlay.onboardingStep1Title')}</strong>
+          <span>{t('overlay.onboardingStep1Body')}</span>
+          <code className="overlay-onboarding-path">{t('overlay.onboardingPath')}</code>
         </li>
         <li>
-          <strong>Запусти игру и зайди в любую зону</strong>
-          <span>Оверлей сам обновится по логам.</span>
+          <strong>{t('overlay.onboardingStep2Title')}</strong>
+          <span>{t('overlay.onboardingStep2Body')}</span>
         </li>
       </ol>
       <div className="overlay-onboarding-actions">
@@ -936,31 +1322,31 @@ export function OverlayPage() {
           type="button"
           onClick={() => { void window.poe2Overlay?.openSettings(); }}
         >
-          Настроить лог-файл
+          {t('overlay.onboardingButton')}
         </button>
       </div>
-      <p className="overlay-onboarding-move-hint">
-        Как передвинуть окно: открепи его кнопкой сверху и потяни оверлей за верхнюю часть.
-      </p>
+      <p className="overlay-onboarding-move-hint">{t('overlay.onboardingMoveHint')}</p>
     </div>
   );
   const timerControls = (
-    <div className="overlay-timer-controls no-drag" aria-label="Управление таймером">
+    <div className="overlay-timer-controls no-drag" aria-label={t('overlay.timerControls')}>
       <button
-        className="overlay-timer-control overlay-timer-control-primary"
+        className={`overlay-timer-control overlay-timer-icon-control overlay-timer-control-${timerPrimaryTone} no-drag`}
         type="button"
         title={timerPrimaryTitle}
+        aria-label={timerPrimaryTitle}
         onClick={handleTimerPrimaryAction}
       >
-        {timerPrimaryLabel}
+        <span className="timer-button-glyph" aria-hidden="true">{timerPrimaryIcon}</span>
       </button>
       <button
-        className="overlay-timer-control"
+        className="overlay-timer-control overlay-timer-icon-control overlay-timer-control-reset no-drag"
         type="button"
-        title="Сбросить таймер"
+        title={t('overlay.resetTimer')}
+        aria-label={t('overlay.resetTimer')}
         onClick={handleTimerReset}
       >
-        ↺ Сброс
+        <span className="timer-button-glyph" aria-hidden="true">↻</span>
       </button>
     </div>
   );
@@ -969,37 +1355,32 @@ export function OverlayPage() {
     return (
       <main
         ref={overlayPageRef}
-        className={`overlay-page overlay-page-timer-only density-${config.overlayDensity} scale-${config.overlayScale} ${
-          isOverlayMovementLocked ? 'is-movement-locked' : ''
-        }`}
+        className={`overlay-page overlay-page-timer-only density-${config.overlayDensity} scale-${config.overlayScale}`}
+        onPointerDownCapture={beginOverlayDrag}
       >
-        <div className={`window-drag-strip ${isOverlayMovementLocked ? 'is-locked no-drag' : ''}`}>
-          {isOverlayMovementLocked ? 'PoE2 Campaign Codex Overlay · закреплено' : 'PoE2 Campaign Codex Overlay'}
-        </div>
         <section ref={overlayShellRef} className="overlay-shell overlay-hud overlay-timer-only-card">
           <header className="timer-only-header">
             <div className="timer-only-heading">
               <p className="timer-only-kicker">{overlayTitle}</p>
-              <div className="timer-only-state-row">
-                <span className={`timer-only-status status-${displayRunTimer.status}`}>{timerOnlyStatus}</span>
-                {guide && typeof guide.act === 'number' && (
+              {currentActTimerAct !== null && (
+                <div className="timer-only-state-row">
                   <span className="timer-only-actline">
                     {currentActTimerLabel} ·{' '}
                     <LiveActTimeText
                       runTimer={displayRunTimer}
-                      guide={guide}
+                      currentAct={currentActTimerAct}
                       snapshotNowMs={runtime.timerNowMs}
                     />
                   </span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
             <div className="overlay-top-control-row timer-only-top-control-row no-drag">
               {overlayQuickActions}
             </div>
           </header>
 
-          <section className="timer-only-main-panel" aria-label="Основной таймер">
+          <section className="timer-only-main-panel" aria-label={t('overlay.mainTimer')}>
             <p className="timer-only-main-label">{timerOnlyPrimaryLabel}</p>
             <div className="timer-only-time">
               <LiveRunTimeText
@@ -1014,26 +1395,23 @@ export function OverlayPage() {
 
           <div className="timer-only-info-grid">
             <p className={`timer-only-meta level-${levelState.state}`}>{timerOnlyLevelText}</p>
-            <p className="timer-only-next">Дальше: {guide?.next_zone_ru || '—'}</p>
+            <p className="timer-only-next">
+              {t('overlay.nextLabel', { zone: guideView?.nextZoneName ?? t('common.notAvailable') })}
+            </p>
           </div>
-          <p className="overlay-movement-hint timer-only-movement-hint">{overlayMovementHint}</p>
-
           <footer className="timer-only-footer">
             <button className="timer-only-expand-button no-drag" type="button" onClick={handleTimerOnlyExpand}>
-              Развернуть
+              {t('overlay.expand')}
             </button>
-            <span>{toggleOverlayModeHotkey} — развернуть · {openCompanionHotkey} — подробности</span>
           </footer>
 
-          {!isOverlayMovementLocked && (
-            <div
-              className="resize-grip no-drag"
-              aria-label="Изменить размер оверлея"
-              role="button"
-              tabIndex={-1}
-              onPointerDown={beginResize}
-            />
-          )}
+          <div
+            className={getResizeGripClassName(config.overlayMovementLocked)}
+            aria-label={config.overlayMovementLocked ? t('overlay.resizeLocked') : t('overlay.resize')}
+            role="button"
+            tabIndex={-1}
+            onPointerDown={beginResize}
+          />
         </section>
       </main>
     );
@@ -1042,33 +1420,38 @@ export function OverlayPage() {
   return (
     <main
       ref={overlayPageRef}
-      className={`overlay-page density-${config.overlayDensity} scale-${config.overlayScale} ${
-        isOverlayMovementLocked ? 'is-movement-locked' : ''
-      }`}
+      className={`overlay-page density-${config.overlayDensity} scale-${config.overlayScale}`}
+      onPointerDownCapture={beginOverlayDrag}
     >
-      <div className={`window-drag-strip ${isOverlayMovementLocked ? 'is-locked no-drag' : ''}`}>
-        {isOverlayMovementLocked ? 'PoE2 Campaign Codex Overlay · закреплено' : 'PoE2 Campaign Codex Overlay'}
-      </div>
       <section ref={overlayShellRef} className="overlay-shell overlay-hud overlay-main-compact">
         <header className="hud-header">
           <div className="hud-title-row">
-            <h1>{overlayTitle}</h1>
+            <div className="hud-zone-title-card">
+              <div className="hud-zone-kicker-row">
+                <span className="hud-zone-act-pill">{overlayActLabel}</span>
+              </div>
+              <h1 className="hud-zone-name">{overlayZoneName}</h1>
+            </div>
+            <div className="hud-title-actions no-drag">
+              {overlayQuickActions}
+            </div>
           </div>
+          <div className="hud-header-divider" aria-hidden="true" />
           <div className="overlay-top-control-row no-drag">
-            {overlayQuickActions}
             {timerControls}
           </div>
-          {!isCompactOverlay && <p className="overlay-movement-hint">{overlayMovementHint}</p>}
           <p className={`hud-meta level-${levelState.state}`}>
             <LiveTimerMeta
               runTimer={displayRunTimer}
               settings={config.runTimerSettings}
               snapshotNowMs={runtime.timerNowMs}
               overlayMode={runtime.overlayMode}
+              language={language}
               guide={guide}
+              currentAct={currentActTimerAct}
               currentActLabel={currentActTimerLabel}
               currentLevel={config.currentLevel}
-              recommendedLabel={guide?.recommended_level_label ?? '—'}
+              recommendedLabel={guideView?.recommendedLevelLabel ?? t('common.notAvailable')}
               statusLabel={levelState.label}
             />
           </p>
@@ -1076,15 +1459,15 @@ export function OverlayPage() {
 
         {runtime.logWatcherStatus !== 'ready' && (
           <section className="hud-banner">
-            <strong>{runtime.logWatcherMessage}</strong>
+            <strong>{translateSystemText(runtime.logWatcherMessage, language)}</strong>
           </section>
         )}
 
         {!isCompactOverlay && upcomingOverlayReminders.length > 0 && (
           <section className="hud-block reminder-section upcoming-overlay-section">
             <div className="reminder-header-row">
-              <h2>Ближайшее</h2>
-              <span className="overlay-upcoming-range">следующие 1–2 уровня</span>
+              <h2>{t('overlay.nearby')}</h2>
+              <span className="overlay-upcoming-range">{t('overlay.upcomingRange')}</span>
             </div>
             <ul className="overlay-upcoming-list">
               {upcomingOverlayReminders.map((entry) => (
@@ -1093,10 +1476,10 @@ export function OverlayPage() {
                   className={`overlay-upcoming-item ${entry.level === config.currentLevel ? 'is-current-level' : ''}`}
                 >
                   <div className="overlay-upcoming-line">
-                    <span className="overlay-upcoming-level">Ур. {entry.level}</span>
+                    <span className="overlay-upcoming-level">{t('common.level')} {entry.level}</span>
                     <span className="overlay-upcoming-title">{entry.title}</span>
                     {entry.level === config.currentLevel && (
-                      <span className="overlay-upcoming-badge">сейчас</span>
+                      <span className="overlay-upcoming-badge">{t('overlay.currentBadge')}</span>
                     )}
                   </div>
                   {entry.items.length > 0 && (
@@ -1109,25 +1492,25 @@ export function OverlayPage() {
         )}
 
         <section className="hud-block checklist-section">
-          <h2>Что в локации</h2>
+          <h2>{t('overlay.inThisZone')}</h2>
           {guide ? (
             guideChecklist.length > 0 ? (
               <>
                 <ul className="checklist-list overlay-checklist-list">
                   {visibleChecklist.map((item) => (
-                    <li key={item.id} className="checklist-item">
+                    <li key={item.id} className={`checklist-item${getChecklistItemTone(item)}`}>
                       {item.text}
                     </li>
                   ))}
                 </ul>
                 {hiddenChecklistCount > 0 && (
                   <p className="helper-text checklist-more-note">
-                    Ещё {hiddenChecklistCount} пункт(а) в полном режиме.
+                    {t('overlay.compactMore', { count: hiddenChecklistCount })}
                   </p>
                 )}
               </>
             ) : (
-              <p className="hud-empty">Для этой зоны пока нет заметок.</p>
+              <p className="hud-empty">{t('overlay.emptyZoneNotes')}</p>
             )
           ) : (
             shouldShowNoGuideForZone ? overlayNoGuideBlock : overlayOnboardingBlock
@@ -1136,41 +1519,47 @@ export function OverlayPage() {
 
         {!isCompactOverlay && zoneBonusItems.length > 0 && (
           <section className="hud-block zone-bonuses-section">
-            <h2>Бонусы зоны</h2>
+            <h2>{t('overlay.zoneBonuses')}</h2>
             <ul className="section-list compact-list overlay-bonus-list">
-              {zoneBonusItems.map(({ bonus, done }) => (
-                <li key={bonus.id} className={done ? 'bonus-line is-done' : 'bonus-line'}>
-                  <span className="bonus-state-marker">{done ? '✓' : '○'}</span>
-                  <span>{bonus.title}</span>
-                </li>
-              ))}
+              {zoneBonusItems.map(({ bonus, done }) => {
+                const bonusView = getCampaignBonusView(bonus, language) ?? bonus;
+
+                return (
+                  <li key={bonus.id} className={done ? 'bonus-line is-done' : 'bonus-line'}>
+                    <span className="bonus-state-marker">{done ? '✓' : '○'}</span>
+                    <span>{'displayTitle' in bonusView ? bonusView.displayTitle : bonus.title}</span>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         )}
         {!isCompactOverlay && leagueRewardItem && (
           <section className="hud-block league-reward-section">
-            <h2>Лига</h2>
+            <h2>{t('overlay.league')}</h2>
             <div className="league-reward-line">
               <span className="league-reward-marker">◆</span>
               <span>
-                Гарант: {leagueRewardItem.reward_ru}
-                {leagueRewardItem.uncertain ? ' · проверить' : ''}
+                {t('overlay.guaranteedReward', {
+                  reward: language === 'en' ? leagueRewardItem.reward_en : leagueRewardItem.reward_ru
+                })}
+                {leagueRewardItem.uncertain ? ` · ${t('overlay.verify')}` : ''}
               </span>
             </div>
             {leagueRewardItem.oneTimeGuaranteed && (
-              <p className="league-reward-note">Одноразовая награда за механику в этой зоне</p>
+              <p className="league-reward-note">{t('overlay.oneTimeLeagueReward')}</p>
             )}
           </section>
         )}
 
         <section className="hud-block hud-next-block">
-          <h2>Дальше</h2>
-          <p className="hud-next-zone">{guide?.next_zone_ru || '—'}</p>
+          <h2>{t('overlay.next')}</h2>
+          <p className="hud-next-zone">{guideView?.nextZoneName || t('common.notAvailable')}</p>
         </section>
 
         {!isCompactOverlay && skipLines.length > 0 && (
           <section className="hud-block skip-section">
-            <h2>Скип</h2>
+            <h2>{t('common.skip')}</h2>
             <ul className="section-list compact-list">
               {skipLines.map((item) => (
                 <li key={item}>{item}</li>
@@ -1181,7 +1570,7 @@ export function OverlayPage() {
 
         {!isCompactOverlay && speedrunLines.length > 0 && (
           <section className="hud-block speedrun-section">
-            <h2>Спидран</h2>
+            <h2>{t('overlay.speedrun')}</h2>
             <ul className="section-list compact-list">
               {speedrunLines.map((item) => (
                 <li key={item}>{item}</li>
@@ -1192,7 +1581,7 @@ export function OverlayPage() {
 
         {!isCompactOverlay && importantLines.length > 0 && (
           <section className="hud-block info-section">
-            <h2>Сейчас важно</h2>
+            <h2>{t('common.important')}</h2>
             <ul className="section-list compact-list">
               {importantLines.map((item) => (
                 <li key={item}>{item}</li>
@@ -1204,24 +1593,21 @@ export function OverlayPage() {
         <div className="hud-footer-row">
           <div className="hud-footer-actions">
             <button className="timer-only-collapse-button compact-mode-button no-drag" type="button" onClick={handleCompactOverlayToggle}>
-              {isCompactOverlay ? 'Развернуть' : 'Компактно'}
+              {isCompactOverlay ? t('overlay.expand') : t('overlay.compact')}
             </button>
             <button className="timer-only-collapse-button no-drag" type="button" onClick={toggleTimerOnlyMode}>
-              Только таймер
+              {t('overlay.timerOnly')}
             </button>
           </div>
-          <p className="hud-footnote">Подробности: {openCompanionHotkey} · {toggleOverlayModeHotkey} свернуть</p>
         </div>
 
-        {!isOverlayMovementLocked && (
-          <div
-            className="resize-grip no-drag"
-            aria-label="Изменить размер оверлея"
+        <div
+            className={getResizeGripClassName(config.overlayMovementLocked)}
+            aria-label={config.overlayMovementLocked ? t('overlay.resizeLocked') : t('overlay.resize')}
             role="button"
             tabIndex={-1}
             onPointerDown={beginResize}
           />
-        )}
       </section>
     </main>
   );

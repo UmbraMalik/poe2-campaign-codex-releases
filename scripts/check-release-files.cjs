@@ -1,27 +1,33 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const rootDir = path.resolve(__dirname, '..');
-const releaseDir = path.join(rootDir, 'release');
-const packageJson = require(path.join(rootDir, 'package.json'));
-const version = packageJson.version;
+const releaseDir = path.join(__dirname, '..', 'release');
+const latestPath = path.join(releaseDir, 'latest.yml');
 
-if (!fs.existsSync(releaseDir)) {
-  console.error('release directory not found');
-  process.exit(1);
+if (!fs.existsSync(latestPath)) {
+  throw new Error('release/latest.yml not found');
 }
 
-const files = fs.readdirSync(releaseDir);
-const setupName = `PoE2-Campaign-Codex-Overlay-Setup-${version}.exe`;
-const blockmapName = `${setupName}.blockmap`;
-const required = [setupName, blockmapName, 'latest.yml'];
-const missing = required.filter((file) => !files.includes(file));
+const latest = fs.readFileSync(latestPath, 'utf8');
+const match = latest.match(/^path:\s*(.+)$/m);
 
-if (missing.length > 0) {
-  console.error('Missing release files:');
-  for (const file of missing) console.error(`- ${file}`);
-  process.exit(1);
+if (!match) {
+  throw new Error('Cannot find path in latest.yml');
+}
+
+const exeName = match[1].trim();
+const exePath = path.join(releaseDir, exeName);
+const blockmapPath = path.join(releaseDir, `${exeName}.blockmap`);
+
+if (!fs.existsSync(exePath)) {
+  throw new Error(`Missing installer from latest.yml: ${exeName}`);
+}
+
+if (!fs.existsSync(blockmapPath)) {
+  throw new Error(`Missing blockmap: ${exeName}.blockmap`);
 }
 
 console.log('Release files OK:');
-for (const file of required) console.log(`- ${file}`);
+console.log(`- ${exeName}`);
+console.log(`- ${exeName}.blockmap`);
+console.log('- latest.yml');

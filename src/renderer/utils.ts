@@ -1,4 +1,6 @@
-import type { AppSnapshot, GuideEntry } from '../shared/types';
+import type { AppLanguage, AppSnapshot, GuideEntry } from '../shared/types';
+import { getGuideView, translateDataText } from '../i18n/data';
+import { translate } from '../i18n/translations';
 
 export { formatDuration } from '../shared/timers';
 
@@ -14,10 +16,12 @@ export function getLevelState(snapshot: AppSnapshot | null): {
   state: LevelState;
   label: string;
 } {
+  const language = snapshot?.config.appLanguage === 'en' ? 'en' : 'ru';
+
   if (!snapshot) {
     return {
       state: 'unknown',
-      label: 'НЕИЗВЕСТНО'
+      label: translate(language, 'states.unknown')
     };
   }
 
@@ -29,29 +33,36 @@ export function getLevelState(snapshot: AppSnapshot | null): {
   if (currentLevel === null || recommendedMinLevel === null) {
     return {
       state: 'unknown',
-      label: 'НЕИЗВЕСТНО'
+      label: translate(language, 'states.unknown')
     };
   }
 
   if (currentLevel < recommendedMinLevel) {
     return {
       state: 'low',
-      label: 'НИЗКИЙ УРОВЕНЬ'
+      label: translate(language, 'states.lowLevel')
     };
   }
 
   return {
     state: 'ok',
-    label: 'ОК'
+    label: translate(language, 'states.ok')
   };
 }
 
-export function formatZoneOption(entry: GuideEntry): string {
-  return `${formatActLabel(entry)} · ${entry.zone_ru} (${entry.zone_en})`;
+export function formatZoneOption(entry: GuideEntry, language: AppLanguage): string {
+  const guideView = getGuideView(entry, language);
+  const zoneName = guideView?.zoneName ?? entry.zone_ru;
+  return `${formatActLabel(entry, language)} · ${zoneName}`;
 }
 
-export function formatActLabel(entry: Pick<GuideEntry, 'act'>): string {
-  return entry.act === 'interlude' ? 'ИНТЕРЛЮДИИ' : `АКТ ${entry.act}`;
+export function formatActLabel(
+  entry: Pick<GuideEntry, 'act'>,
+  language: AppLanguage = 'ru'
+): string {
+  return entry.act === 'interlude'
+    ? translate(language, 'route.interludes')
+    : translate(language, 'route.act', { act: entry.act });
 }
 
 export function formatFileSize(size: number | null): string {
@@ -70,15 +81,18 @@ export function formatFileSize(size: number | null): string {
   return `${(size / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-export function formatTimestamp(timestamp: string | null): string {
+export function formatTimestamp(
+  timestamp: string | null,
+  language: AppLanguage = 'ru'
+): string {
   if (!timestamp) {
-    return '—';
+    return translate(language, 'common.notAvailable');
   }
 
   const parsed = new Date(timestamp);
   return Number.isNaN(parsed.getTime())
     ? timestamp
-    : parsed.toLocaleString('ru-RU');
+    : parsed.toLocaleString(language === 'en' ? 'en-US' : 'ru-RU');
 }
 
 export type ReleaseNoteItem = {
@@ -144,4 +158,38 @@ export function getReleaseNotesLines(body: unknown): string[] {
   return getReleaseNoteItems(body).map((item) =>
     item.kind === 'item' ? `— ${item.text}` : item.text
   );
+}
+
+export function formatGuideLabel(
+  guide: GuideEntry | null | undefined,
+  language: AppLanguage
+): string {
+  if (!guide) {
+    return translate(language, 'common.notAvailable');
+  }
+
+  const guideView = getGuideView(guide, language);
+  return `${formatActLabel(guide, language)} · ${guideView?.zoneName ?? guide.zone_ru}`;
+}
+
+export function formatGuideZoneName(
+  guide: GuideEntry | null | undefined,
+  language: AppLanguage
+): string {
+  if (!guide) {
+    return translate(language, 'scene.unknownZone');
+  }
+
+  return getGuideView(guide, language)?.zoneName ?? guide.zone_ru;
+}
+
+export function formatRecommendedLevelLabel(
+  guide: GuideEntry | null | undefined,
+  language: AppLanguage
+): string {
+  if (!guide) {
+    return translate(language, 'common.notAvailable');
+  }
+
+  return translateDataText(guide.recommended_level_label, language);
 }

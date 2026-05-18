@@ -1,3 +1,5 @@
+import { useI18n } from '../useI18n';
+
 interface SectionListProps {
   title: string;
   items: string[];
@@ -9,6 +11,8 @@ export function SectionList({
   items,
   mutedItems = []
 }: SectionListProps) {
+  const { t } = useI18n();
+
   if (items.length === 0) {
     return null;
   }
@@ -21,7 +25,7 @@ export function SectionList({
           <li key={item} className={mutedItems.includes(item) ? 'muted-list-item' : undefined}>
             <span>{item}</span>
             {mutedItems.includes(item) && (
-              <em className="likely-done-badge">похоже, выполнено</em>
+              <em className="likely-done-badge">{t('common.likelyDone')}</em>
             )}
           </li>
         ))}

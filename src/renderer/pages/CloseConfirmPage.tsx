@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react';
+import { useDocumentTitle, useI18n } from '../useI18n';
 
 export function CloseConfirmPage() {
   const stayButtonRef = useRef<HTMLButtonElement | null>(null);
+  const { t } = useI18n();
+
+  useDocumentTitle(t('titles.closeConfirm'));
 
   useEffect(() => {
     stayButtonRef.current?.focus();
@@ -24,14 +28,14 @@ export function CloseConfirmPage() {
       <section className="close-confirm-shell">
         <header className="close-confirm-header">
           <div className="close-confirm-header-copy">
-            <p className="eyebrow">PoE2 Campaign Codex</p>
-            <h1>Таймер запущен</h1>
+            <p className="eyebrow">{t('common.appName')}</p>
+            <h1>{t('closeConfirm.title')}</h1>
           </div>
           <button
             className="button-secondary close-confirm-close no-drag"
             type="button"
-            aria-label="Остаться и закрыть окно подтверждения"
-            title="Остаться"
+            aria-label={t('closeConfirm.closeLabel')}
+            title={t('closeConfirm.stay')}
             onClick={() => void window.poe2Overlay.cancelCloseConfirm()}
           >
             ×
@@ -39,13 +43,8 @@ export function CloseConfirmPage() {
         </header>
 
         <div className="close-confirm-content">
-          <p className="close-confirm-message">
-            Таймер забега сейчас работает. Если закрыть приложение, таймер будет поставлен на
-            паузу, а текущее время сохранится.
-          </p>
-          <p className="close-confirm-note">
-            После следующего запуска можно будет продолжить с этого момента.
-          </p>
+          <p className="close-confirm-message">{t('closeConfirm.message')}</p>
+          <p className="close-confirm-note">{t('closeConfirm.note')}</p>
         </div>
 
         <div className="button-row close-confirm-actions no-drag">
@@ -55,14 +54,14 @@ export function CloseConfirmPage() {
             type="button"
             onClick={() => void window.poe2Overlay.cancelCloseConfirm()}
           >
-            Остаться
+            {t('closeConfirm.stay')}
           </button>
           <button
             className="button-primary"
             type="button"
             onClick={() => void window.poe2Overlay.confirmCloseAndSave()}
           >
-            Закрыть и сохранить
+            {t('closeConfirm.closeAndSave')}
           </button>
         </div>
       </section>

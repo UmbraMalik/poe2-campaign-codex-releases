@@ -199,6 +199,94 @@
       ]
     },
     {
+      "id": "a1_mud_burrow",
+      "act": 1,
+      "zone_en": "Mud Burrow",
+      "zone_ru": "Грязевая нора",
+      "aliases": [],
+      "recommended_level": 3,
+      "recommended_level_label": "3+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "a1_mud_burrow_task_1",
+          "text": "Опционально: зайти из Клирфелла, если нужен ранний камень поддержки",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a1_mud_burrow_task_2",
+          "text": "Убить Пожирателя",
+          "type": "boss",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a1_mud_burrow_task_3",
+          "text": "Забрать награду за Treacherous Ground",
+          "type": "reward",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Uncut Support Gem и золото за квест Treacherous Ground"
+      ],
+      "skip": [
+        "Для быстрого прохождения можно пропустить, если камень поддержки не нужен"
+      ],
+      "important": [
+        "Хорошая ранняя опционалка, но не обязательный прогресс кампании"
+      ],
+      "after": [],
+      "boss_tips": [
+        "Пожирателя удобнее держать в движении и не стоять в земле/ядах."
+      ],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Грельвуд",
+      "details": {
+        "route": [
+          "Опционально: зайти из Клирфелла, если нужен ранний камень поддержки",
+          "Убить Пожирателя",
+          "Забрать награду за Treacherous Ground"
+        ],
+        "rewards": [
+          "Uncut Support Gem и золото за квест Treacherous Ground"
+        ],
+        "skip": [
+          "Для быстрого прохождения можно пропустить, если камень поддержки не нужен"
+        ],
+        "important": [
+          "Хорошая ранняя опционалка, но не обязательный прогресс кампании"
+        ],
+        "after": [],
+        "boss_tips": [
+          "Пожирателя удобнее держать в движении и не стоять в земле/ядах."
+        ],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "opportunistic": [
+          "Зайти, если нужен саппорт-гем или немного раннего опыта; иначе держать темп."
+        ],
+        "navigation": [
+          "Вход находится в Клирфелле; после босса вернуться в основной маршрут."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_G1_3",
+        "G1_3"
+      ]
+    },
+    {
       "id": "a1_grelwood",
       "act": 1,
       "zone_en": "Grelwood",
@@ -410,8 +498,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G1_6",
-        "G1_6"
+        "C_G1_5",
+        "G1_5"
       ]
     },
     {
@@ -516,8 +604,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G1_5",
-        "G1_5"
+        "C_G1_6",
+        "G1_6"
       ]
     },
     {
@@ -698,8 +786,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G1_8",
-        "G1_8"
+        "C_G1_9",
+        "G1_9"
       ]
     },
     {
@@ -784,8 +872,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G1_9",
-        "G1_9"
+        "C_G1_8",
+        "G1_8"
       ]
     },
     {
@@ -892,7 +980,11 @@
       "display": {
         "wideModeRecommended": true,
         "showAllChecklist": true
-      }
+      },
+      "area_ids": [
+        "C_G1_11",
+        "G1_11"
+      ]
     },
     {
       "id": "a1_freythorn",
@@ -975,7 +1067,11 @@
       "display": {
         "wideModeRecommended": true,
         "showAllChecklist": true
-      }
+      },
+      "area_ids": [
+        "C_G1_12",
+        "G1_12"
+      ]
     },
     {
       "id": "a1_ogham_farmlands",
@@ -1058,8 +1154,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G1_11",
-        "G1_11"
+        "C_G1_13_1",
+        "G1_13_1"
       ]
     },
     {
@@ -1145,8 +1241,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G1_12",
-        "G1_12"
+        "C_G1_13_2",
+        "G1_13_2"
       ]
     },
     {
@@ -1218,8 +1314,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G1_13_1",
-        "G1_13_1"
+        "C_G1_14",
+        "G1_14"
       ]
     },
     {
@@ -1314,11 +1410,7 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G1_13_2",
-        "C_G1_14",
         "C_G1_15",
-        "G1_13_2",
-        "G1_14",
         "G1_15"
       ]
     },
@@ -1808,6 +1900,166 @@
       ]
     },
     {
+      "id": "a2_lightless_passage",
+      "act": 2,
+      "zone_en": "Lightless Passage",
+      "zone_ru": "Бессветный проход",
+      "aliases": [],
+      "recommended_level": 22,
+      "recommended_level_label": "22+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "a2_lightless_passage_task_1",
+          "text": "Пройти к Колодцу душ, если нужна Abyss-ветка",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a2_lightless_passage_task_2",
+          "text": "Не задерживаться на зачистке, если механика не нужна",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Доступ к Колодцу душ / Abyss-ветке"
+      ],
+      "skip": [
+        "Скипать, если не нужен Abyss, осквернение вещей или дополнительный опыт"
+      ],
+      "important": [
+        "Это боковой заход из Бесплодных земель мастодонтов, не основной маршрут акта"
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Колодец душ / Костяные ямы",
+      "details": {
+        "route": [
+          "Пройти к Колодцу душ, если нужна Abyss-ветка",
+          "Не задерживаться на зачистке, если механика не нужна"
+        ],
+        "rewards": [
+          "Доступ к Колодцу душ / Abyss-ветке"
+        ],
+        "skip": [
+          "Скипать, если не нужен Abyss, осквернение вещей или дополнительный опыт"
+        ],
+        "important": [
+          "Это боковой заход из Бесплодных земель мастодонтов, не основной маршрут акта"
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "opportunistic": [
+          "Можно использовать как догон по опыту/луту, если отстал."
+        ],
+        "navigation": [
+          "Зона ведёт к Колодцу душ; после проверки возвращаться в основной маршрут Акта 2."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "Abyss_Intro"
+      ]
+    },
+    {
+      "id": "a2_trial_of_the_sekhemas",
+      "act": 2,
+      "zone_en": "Trial of the Sekhemas",
+      "zone_ru": "Испытание Сехем",
+      "aliases": [
+        "Trial of Sekhemas",
+        "The Trial of the Sekhemas"
+      ],
+      "recommended_level": 22,
+      "recommended_level_label": "22+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "a2_trial_sekhemas_task_1",
+          "text": "Опционально: идти, если готов закрывать Trial of the Sekhemas / восхождение",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a2_trial_sekhemas_task_2",
+          "text": "Если билд слабый или мало выживаемости — лучше вернуться позже",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a2_trial_sekhemas_task_3",
+          "text": "Для быстрого прохождения не задерживаться, если испытание сейчас не закрываешь",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Прогресс восхождения через Trial of the Sekhemas"
+      ],
+      "skip": [
+        "Можно отложить, если на старте кампании важнее темп или билд ещё слабый"
+      ],
+      "important": [
+        "Это опциональное испытание, а не обязательный маршрут Акта 2",
+        "Лучше заходить, когда хватает урона, контроля и выживаемости"
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Костяные ямы",
+      "details": {
+        "route": [
+          "Опционально: идти, если готов закрывать Trial of the Sekhemas / восхождение",
+          "Если билд слабый или мало выживаемости — лучше вернуться позже",
+          "Для быстрого прохождения не задерживаться, если испытание сейчас не закрываешь"
+        ],
+        "rewards": [
+          "Прогресс восхождения через Trial of the Sekhemas"
+        ],
+        "skip": [
+          "Можно отложить, если на старте кампании важнее темп или билд ещё слабый"
+        ],
+        "important": [
+          "Это опциональное испытание, а не обязательный маршрут Акта 2",
+          "Лучше заходить, когда хватает урона, контроля и выживаемости"
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "navigation": [
+          "После проверки/попытки возвращаться в основной маршрут Акта 2."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_G2_13",
+        "G2_13"
+      ]
+    },
+    {
       "id": "a2_bone_pits",
       "act": 2,
       "zone_en": "Bone Pits",
@@ -1969,8 +2221,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G2_6",
-        "G2_6"
+        "C_G2_4_1",
+        "G2_4_1"
       ]
     },
     {
@@ -2040,8 +2292,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G2_7",
-        "G2_7"
+        "C_G2_4_2",
+        "G2_4_2"
       ]
     },
     {
@@ -2127,8 +2379,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G2_4_1",
-        "G2_4_1"
+        "C_G2_4_3",
+        "G2_4_3"
       ]
     },
     {
@@ -2214,8 +2466,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G2_4_2",
-        "G2_4_2"
+        "C_G2_6",
+        "G2_6"
       ]
     },
     {
@@ -2286,8 +2538,8 @@
         "showAllChecklist": true
       },
       "area_ids": [
-        "C_G2_4_3",
-        "G2_4_3"
+        "C_G2_7",
+        "G2_7"
       ]
     },
     {
@@ -3209,6 +3461,81 @@
       ]
     },
     {
+      "id": "a3_temple_of_chaos",
+      "act": 3,
+      "zone_en": "The Temple of Chaos",
+      "zone_ru": "Храм Хаоса",
+      "aliases": [],
+      "recommended_level": null,
+      "recommended_level_label": "опционально",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "a3_temple_of_chaos_task_1",
+          "text": "Идти только если нужен Trial of Chaos / восхождение / испытание",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a3_temple_of_chaos_task_2",
+          "text": "Для быстрого маршрута кампании обычно не задерживаться",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Доступ к Trial of Chaos / Ultimatum-испытанию"
+      ],
+      "skip": [
+        "Обычно скипается во время быстрого прохождения кампании"
+      ],
+      "important": [
+        "Служебная зона из Топей химеридов; не основной прогресс маршрута"
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Топи химеридов / Машинариум Джиквани",
+      "details": {
+        "route": [
+          "Идти только если нужен Trial of Chaos / восхождение / испытание",
+          "Для быстрого маршрута кампании обычно не задерживаться"
+        ],
+        "rewards": [
+          "Доступ к Trial of Chaos / Ultimatum-испытанию"
+        ],
+        "skip": [
+          "Обычно скипается во время быстрого прохождения кампании"
+        ],
+        "important": [
+          "Служебная зона из Топей химеридов; не основной прогресс маршрута"
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "navigation": [
+          "Вход из Топей химеридов; после проверки возвращаться к основному маршруту Акта 3."
+        ],
+        "time_saves": [
+          "Не разворачивать забег ради испытания, если цель — быстро закрыть акты."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_G3_10_Airlock",
+        "G3_10_Airlock"
+      ]
+    },
+    {
       "id": "a3_jiquani_machinarium",
       "act": 3,
       "zone_en": "Jiquani's Machinarium",
@@ -4033,7 +4360,9 @@
       "act": 4,
       "zone_en": "Journey's End",
       "zone_ru": "Конец пути",
-      "aliases": [],
+      "aliases": [
+        "Конец странствия"
+      ],
       "recommended_level": 40,
       "recommended_level_label": "40+",
       "is_good_xp_zone": false,
@@ -4728,9 +5057,7 @@
       "act": 4,
       "zone_en": "Halls of the Dead",
       "zone_ru": "Залы мёртвых",
-      "aliases": [
-        "Trial of the Ancestors"
-      ],
+      "aliases": [],
       "recommended_level": 44,
       "recommended_level_label": "44+",
       "is_good_xp_zone": false,
@@ -4817,6 +5144,96 @@
       "area_ids": [
         "C_G4_4_2",
         "G4_4_2"
+      ]
+    },
+    {
+      "id": "a4_trial_of_ancestors",
+      "act": 4,
+      "zone_en": "Trial of the Ancestors",
+      "zone_ru": "Испытание предков",
+      "aliases": [],
+      "recommended_level": 51,
+      "recommended_level_label": "51+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "a4_trial_ancestors_task_1",
+          "text": "Закрыть финальное испытание цепочки предков",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a4_trial_ancestors_task_2",
+          "text": "Убить Яму Белую",
+          "type": "boss",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a4_trial_ancestors_task_3",
+          "text": "Проверить награды/татуировки перед выходом",
+          "type": "reward",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Финал цепочки предков",
+        "Татуировки / постоянные бонусы по ветке"
+      ],
+      "skip": [
+        "Не задерживаться после закрытия испытания и наград"
+      ],
+      "important": [
+        "Выбор татуировок чаще выгоднее заранее держать под резисты/атрибуты билда"
+      ],
+      "after": [],
+      "boss_tips": [
+        "На Яме Белой играть аккуратно вокруг опасных телеграфов и добивать в безопасное окно."
+      ],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Арастас / основной маршрут Акта 4",
+      "details": {
+        "route": [
+          "Закрыть финальное испытание цепочки предков",
+          "Убить Яму Белую",
+          "Проверить награды/татуировки перед выходом"
+        ],
+        "rewards": [
+          "Финал цепочки предков",
+          "Татуировки / постоянные бонусы по ветке"
+        ],
+        "skip": [
+          "Не задерживаться после закрытия испытания и наград"
+        ],
+        "important": [
+          "Выбор татуировок чаще выгоднее заранее держать под резисты/атрибуты билда"
+        ],
+        "after": [],
+        "boss_tips": [
+          "На Яме Белой играть аккуратно вокруг опасных телеграфов и добивать в безопасное окно."
+        ],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "opportunistic": [
+          "Если резисты проседают — приоритетнее смотреть татуировки на сопротивления."
+        ],
+        "time_saves": [
+          "После финального боя и наград сразу возвращаться в маршрут, не чистить лишнее."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_G4_4_3",
+        "G4_4_3"
       ]
     },
     {
@@ -5003,6 +5420,90 @@
       "area_ids": [
         "C_G4_10",
         "G4_10"
+      ]
+    },
+    {
+      "id": "a4_plunders_point",
+      "act": 4,
+      "zone_en": "Plunder's Point",
+      "zone_ru": "Мыс грабителя",
+      "aliases": [],
+      "recommended_level": 53,
+      "recommended_level_label": "53+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "a4_plunders_point_task_1",
+          "text": "Идти сюда после сбора Torn Map Pieces / карты сокровищ",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a4_plunders_point_task_2",
+          "text": "Поговорить с Деннигом и расставить взрывчатку",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a4_plunders_point_task_3",
+          "text": "Зачистить появившихся врагов и забрать добычу",
+          "type": "reward",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Квест Forgotten Bounty / дополнительная добыча"
+      ],
+      "skip": [
+        "Опциональная зона: можно пропустить, если цель — только быстрый прогресс кампании"
+      ],
+      "important": [
+        "Это боковая Expedition-награда, не обязательная линия прохождения"
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Нгакану",
+      "details": {
+        "route": [
+          "Идти сюда после сбора Torn Map Pieces / карты сокровищ",
+          "Поговорить с Деннигом и расставить взрывчатку",
+          "Зачистить появившихся врагов и забрать добычу"
+        ],
+        "rewards": [
+          "Квест Forgotten Bounty / дополнительная добыча"
+        ],
+        "skip": [
+          "Опциональная зона: можно пропустить, если цель — только быстрый прогресс кампании"
+        ],
+        "important": [
+          "Это боковая Expedition-награда, не обязательная линия прохождения"
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "opportunistic": [
+          "Есть смысл заходить, если карта уже собрана и зона не ломает темп."
+        ],
+        "navigation": [
+          "После взрывчатки и лута возвращаться в основной маршрут через waypoint/портал."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_G4_13",
+        "G4_13"
       ]
     },
     {
@@ -5231,6 +5732,81 @@
       ]
     },
     {
+      "id": "interlude_pools_of_khatal",
+      "act": 5,
+      "zone_en": "Pools of Khatal",
+      "zone_ru": "Воды Хаталя",
+      "aliases": [],
+      "recommended_level": 55,
+      "recommended_level_label": "55+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "interlude_pools_khatal_task_1",
+          "text": "Пройти транзитом между Кхарийским перевалом и Храмом Селхари",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_pools_khatal_task_2",
+          "text": "Не чистить полностью, если нет просадки по опыту",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Переход по ветке Хаталя / Селхари"
+      ],
+      "skip": [
+        "Не разворачивать карту ради полной зачистки"
+      ],
+      "important": [
+        "Проходная зона: главная задача — быстро найти следующий переход"
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Храм Селхари",
+      "details": {
+        "route": [
+          "Пройти транзитом между Кхарийским перевалом и Храмом Селхари",
+          "Не чистить полностью, если нет просадки по опыту"
+        ],
+        "rewards": [
+          "Переход по ветке Хаталя / Селхари"
+        ],
+        "skip": [
+          "Не разворачивать карту ради полной зачистки"
+        ],
+        "important": [
+          "Проходная зона: главная задача — быстро найти следующий переход"
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "navigation": [
+          "Держать темп и искать переход дальше по ветке."
+        ],
+        "time_saves": [
+          "Если XP в норме — не стопориться на боковых карманах."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_P2_2",
+        "P2_2"
+      ]
+    },
+    {
       "id": "interlude_selvari_sanctuary",
       "act": 5,
       "zone_en": "Sel Khari Sanctuary",
@@ -5312,6 +5888,96 @@
       "area_ids": [
         "C_P2_3",
         "P2_3"
+      ]
+    },
+    {
+      "id": "interlude_galai_gates",
+      "act": 5,
+      "zone_en": "The Galai Gates",
+      "zone_ru": "Ворота Галаи",
+      "aliases": [
+        "Galai Gates"
+      ],
+      "recommended_level": 56,
+      "recommended_level_label": "56+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "interlude_galai_gates_task_1",
+          "text": "Пройти через ворота по ветке к Киме",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_galai_gates_task_2",
+          "text": "Убить Ворнаса, Падшее пламя",
+          "type": "boss",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_galai_gates_task_3",
+          "text": "Проверить Abyss objective только если он по пути",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Босс Ворнас и дополнительная добыча / Abyss objective по пути"
+      ],
+      "skip": [
+        "Abyss objective можно пропустить, если он уводит с маршрута"
+      ],
+      "important": [
+        "Не путать с Кхарийским перевалом: бонусы Кхарийского перевала здесь не закрываются"
+      ],
+      "after": [],
+      "boss_tips": [
+        "На Ворнасе держать дистанцию от опасных огненных окон и не стоять в земле."
+      ],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Кима",
+      "details": {
+        "route": [
+          "Пройти через ворота по ветке к Киме",
+          "Убить Ворнаса, Падшее пламя",
+          "Проверить Abyss objective только если он по пути"
+        ],
+        "rewards": [
+          "Босс Ворнас и дополнительная добыча / Abyss objective по пути"
+        ],
+        "skip": [
+          "Abyss objective можно пропустить, если он уводит с маршрута"
+        ],
+        "important": [
+          "Не путать с Кхарийским перевалом: бонусы Кхарийского перевала здесь не закрываются"
+        ],
+        "after": [],
+        "boss_tips": [
+          "На Ворнасе держать дистанцию от опасных огненных окон и не стоять в земле."
+        ],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "navigation": [
+          "После ворот двигаться к Киме."
+        ],
+        "opportunistic": [
+          "Abyss брать только если он рядом и не ломает темп."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_P2_5",
+        "P2_5"
       ]
     },
     {
@@ -5620,6 +6286,94 @@
       ]
     },
     {
+      "id": "interlude_glacial_tarn",
+      "act": 5,
+      "zone_en": "Glacial Tarn",
+      "zone_ru": "Ледниковое озеро",
+      "aliases": [],
+      "recommended_level": 55,
+      "recommended_level_label": "55+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "interlude_glacial_tarn_task_1",
+          "text": "Забрать waypoint/переходы, если попал сюда по ветке Криар",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_glacial_tarn_task_2",
+          "text": "Убить Раккара, Ледяной коготь, если идёшь закрывать зону",
+          "type": "boss",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_glacial_tarn_task_3",
+          "text": "Не чистить озеро полностью без причины",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Босс Раккар и дополнительная добыча"
+      ],
+      "skip": [
+        "Не полная зачистка, если нужен только переход дальше"
+      ],
+      "important": [
+        "Центральная ледяная зона ветки Криар: важнее навигация, чем зачистка"
+      ],
+      "after": [],
+      "boss_tips": [
+        "Против ледяных атак держать движение и не ловить серии в упор."
+      ],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Воющие пещеры / Пики Криар",
+      "details": {
+        "route": [
+          "Забрать waypoint/переходы, если попал сюда по ветке Криар",
+          "Убить Раккара, Ледяной коготь, если идёшь закрывать зону",
+          "Не чистить озеро полностью без причины"
+        ],
+        "rewards": [
+          "Босс Раккар и дополнительная добыча"
+        ],
+        "skip": [
+          "Не полная зачистка, если нужен только переход дальше"
+        ],
+        "important": [
+          "Центральная ледяная зона ветки Криар: важнее навигация, чем зачистка"
+        ],
+        "after": [],
+        "boss_tips": [
+          "Против ледяных атак держать движение и не ловить серии в упор."
+        ],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "navigation": [
+          "Использовать как развилку к Воющим пещерам и Пикам Криар."
+        ],
+        "time_saves": [
+          "Если нужный переход найден — не добирать лишние круги по озеру."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_P3_3",
+        "P3_3"
+      ]
+    },
+    {
       "id": "i2_glacial_tarn",
       "act": 5,
       "zone_en": "Howling Caves",
@@ -5762,6 +6516,186 @@
       ]
     },
     {
+      "id": "interlude_etched_ravine",
+      "act": 5,
+      "zone_en": "Etched Ravine",
+      "zone_ru": "Высеченное ущелье",
+      "aliases": [],
+      "recommended_level": 56,
+      "recommended_level_label": "56+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "interlude_etched_ravine_task_1",
+          "text": "Пройти от Пиков Криар к Убежищу Куачик",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_etched_ravine_task_2",
+          "text": "Убить Штормгора, Стража, если он на маршруте",
+          "type": "boss",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_etched_ravine_task_3",
+          "text": "Открыть путь в Убежище Куачик",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Переход к Убежищу Куачик",
+        "Босс и дополнительная добыча"
+      ],
+      "skip": [
+        "Не чистить боковые тупики, если переход уже найден"
+      ],
+      "important": [
+        "Проходная зона к финальной Vaal-ветке"
+      ],
+      "after": [],
+      "boss_tips": [
+        "На Штормгоре избегать стояния в телеграфах и добивать после тяжёлых атак."
+      ],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Убежище Куачик",
+      "details": {
+        "route": [
+          "Пройти от Пиков Криар к Убежищу Куачик",
+          "Убить Штормгора, Стража, если он на маршруте",
+          "Открыть путь в Убежище Куачик"
+        ],
+        "rewards": [
+          "Переход к Убежищу Куачик",
+          "Босс и дополнительная добыча"
+        ],
+        "skip": [
+          "Не чистить боковые тупики, если переход уже найден"
+        ],
+        "important": [
+          "Проходная зона к финальной Vaal-ветке"
+        ],
+        "after": [],
+        "boss_tips": [
+          "На Штормгоре избегать стояния в телеграфах и добивать после тяжёлых атак."
+        ],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "navigation": [
+          "Главная цель — найти переход в Убежище Куачик."
+        ],
+        "time_saves": [
+          "Если XP в норме — не делать полную зачистку ущелья."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_P3_6",
+        "P3_6"
+      ]
+    },
+    {
+      "id": "interlude_cuachic_vault",
+      "act": 5,
+      "zone_en": "The Cuachic Vault",
+      "zone_ru": "Убежище Куачик",
+      "aliases": [],
+      "recommended_level": 56,
+      "recommended_level_label": "56+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "interlude_cuachic_vault_task_1",
+          "text": "Забрать Ancient Treasures / сокровища",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_cuachic_vault_task_2",
+          "text": "Убить Зелину и Золина",
+          "type": "boss",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_cuachic_vault_task_3",
+          "text": "После наград закрыть ветку и вернуться в маршрут",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Ancient Treasures",
+        "Боссы Зелина и Золин"
+      ],
+      "skip": [
+        "После сокровищ и боссов не задерживаться на полной зачистке"
+      ],
+      "important": [
+        "Финальная зона этой Vaal-ветки интерлюдии"
+      ],
+      "after": [],
+      "boss_tips": [
+        "На парном боссе не зажиматься между ними: держать пространство и фокусить безопасные окна."
+      ],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Финальная интерлюдия / Тьма",
+      "details": {
+        "route": [
+          "Забрать Ancient Treasures / сокровища",
+          "Убить Зелину и Золина",
+          "После наград закрыть ветку и вернуться в маршрут"
+        ],
+        "rewards": [
+          "Ancient Treasures",
+          "Боссы Зелина и Золин"
+        ],
+        "skip": [
+          "После сокровищ и боссов не задерживаться на полной зачистке"
+        ],
+        "important": [
+          "Финальная зона этой Vaal-ветки интерлюдии"
+        ],
+        "after": [],
+        "boss_tips": [
+          "На парном боссе не зажиматься между ними: держать пространство и фокусить безопасные окна."
+        ],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "navigation": [
+          "Забрать сокровища, закрыть боссов и возвращаться к основной линии."
+        ],
+        "time_saves": [
+          "Это не зона для долгой зачистки: цель — награды и выход."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_P3_7",
+        "P3_7"
+      ]
+    },
+    {
       "id": "i_final_darkness",
       "act": 5,
       "zone_en": "Final Interlude",
@@ -5844,6 +6778,90 @@
         "wideModeRecommended": true,
         "showAllChecklist": true
       }
+    },
+    {
+      "id": "interlude_stones_of_serle",
+      "act": 5,
+      "zone_en": "Stones of Serle",
+      "zone_ru": "Камни Серли",
+      "aliases": [],
+      "recommended_level": 54,
+      "recommended_level_label": "54+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "interlude_stones_serle_task_1",
+          "text": "Опционально: пройти боковую зону от Пристанища",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_stones_serle_task_2",
+          "text": "Убить Сиору, Клинок туманов",
+          "type": "boss",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_stones_serle_task_3",
+          "text": "После босса вернуться к основной ветке интерлюдии",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Босс и дополнительная добыча"
+      ],
+      "skip": [
+        "Можно пропустить, если не нужен лут/опыт и важен темп"
+      ],
+      "important": [
+        "Боковая зона интерлюдии, не обязательный прогресс"
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Чернолесье / основная ветка",
+      "details": {
+        "route": [
+          "Опционально: пройти боковую зону от Пристанища",
+          "Убить Сиору, Клинок туманов",
+          "После босса вернуться к основной ветке интерлюдии"
+        ],
+        "rewards": [
+          "Босс и дополнительная добыча"
+        ],
+        "skip": [
+          "Можно пропустить, если не нужен лут/опыт и важен темп"
+        ],
+        "important": [
+          "Боковая зона интерлюдии, не обязательный прогресс"
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "opportunistic": [
+          "Зайти, если нужен опыт/лут; иначе не разворачивать маршрут."
+        ],
+        "navigation": [
+          "После Сиоры возвращаться к основной линии интерлюдии."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_P1_2",
+        "P1_2"
+      ]
     },
     {
       "id": "i_final_blackwood",
