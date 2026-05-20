@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const RELEASES_REPO = process.env.RELEASES_REPO || 'UmbraMalik/poe2-act-companion-overlay';
 const API_ROOT = 'https://api.github.com';
-const STATS_DIR = path.join(process.cwd(), 'stats');
+const STATS_DIR = path.resolve(process.cwd(), process.env.STATS_DIR || 'docs/stats');
 const PUBLIC_STATS_PATH = path.join(STATS_DIR, 'downloads.json');
 const STATE_PATH = path.join(STATS_DIR, 'downloads-state.json');
 
