@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "totalDownloads": 149,
+  "latestVersion": "0.2.10",
+  "updatedAt": "2026-05-20T10:53:36Z",
+  "source": "monotonic-github-releases-snapshot",
+  "countsOnly": "installer .exe assets; latest.yml, .blockmap and source archives are excluded",
+  "currentInstallerDownloads": 0,
+  "githubCurrentInstallerDownloads": 0,
+  "manualAdjustmentDownloads": 149,
+  "installerDownloadsByVersion": {},
+  "trackedInstallerAssets": 0,
+  "visibleInstallerAssets": 0,
+  "counterDropDetected": false,
+  "missingAssetDetected": false,
+  "warnings": []
+}
