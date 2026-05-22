@@ -1,0 +1,93 @@
+name: Update download stats
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'scripts/update-download-stats.mjs'
+      - '.github/workflows/update-download-stats.yml'
+
+  release:
+    types:
+      - published
+
+  schedule:
+    # Раз в 10 минут. Проверяем GitHub download_count,
+    # но stats коммитим только если цифры реально изменились.
+    - cron: '3,13,23,33,43,53 * * * *'
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update-download-stats
+  cancel-in-progress: false
+
+jobs:
+  update-download-stats:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Update stats files
+        run: node scripts/update-download-stats.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASES_REPO: UmbraMalik/poe2-act-companion-overlay
+          STATS_DIR: docs/stats
+
+      - name: Detect stats changes
+        id: stats_changes
+        shell: bash
+        run: |
+          if git diff --quiet -- docs/stats/downloads.json docs/stats/downloads-state.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Download stats are already up to date."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Download stats changed."
+          fi
+
+      - name: Commit updated stats
+        if: steps.stats_changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/stats/downloads.json docs/stats/downloads-state.json
+          git commit -m "chore(stats): update download counters"
+          git push origin HEAD:main
+
+      - name: Configure GitHub Pages
+        if: steps.stats_changes.outputs.changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event_name == 'release'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: steps.stats_changes.outputs.changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event_name == 'release'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        if: steps.stats_changes.outputs.changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event_name == 'release'
+        uses: actions/deploy-pages@v4
