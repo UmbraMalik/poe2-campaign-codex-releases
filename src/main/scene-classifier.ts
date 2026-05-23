@@ -50,6 +50,12 @@ const PENDING_AREA_ID_HOLD_SCENES = new Set([
   'интерлюдия'
 ]);
 
+const TOWN_ACT_HINTS = new Map<string, number>([
+  ['kingsmarch', 4],
+  ['кингсмарк', 4],
+  ['кингсмарш', 4]
+]);
+
 const TOWN_SCENES = new Set(
   (Array.isArray(townScenes) ? townScenes : [])
     .map((entry) => normalizeSceneText(String(entry ?? '')))
@@ -102,6 +108,10 @@ export function isActLabelScene(rawSceneSource: unknown): boolean {
 export function isLoginLikeScene(rawSceneSource: unknown): boolean {
   const normalized = normalizeSceneText(rawSceneSource);
   return Boolean(normalized) && LOGIN_SCENE_HINTS.some((hint) => normalized.includes(hint));
+}
+
+export function inferActHintFromTownScene(rawSceneSource: unknown): number | null {
+  return TOWN_ACT_HINTS.get(normalizeSceneText(rawSceneSource)) ?? null;
 }
 
 export function isTownSceneWithGuide(rawSceneSource: unknown, guide: GuideEntry | null | undefined): boolean {

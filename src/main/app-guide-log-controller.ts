@@ -57,6 +57,7 @@ import {
 } from './hotkey-utils';
 import {
   inferActHintFromInternalAreaId as inferActHintFromInternalAreaIdFromScene,
+  inferActHintFromTownScene,
   isActLabelScene,
   isLoginLikeScene,
   isTownSceneWithGuide,
@@ -349,21 +350,28 @@ export function runSetSceneWithoutGuide(this: any, rawZoneName: any, source: any
 
 export function runSetTownScene(this: any, rawZoneName: any, source: any) {
         const now = Date.now();
+        const previousActHint = this.currentZone.guide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null;
         const sceneChanged = this.currentZone.rawZoneName !== rawZoneName ||
             this.currentZone.sceneKind !== 'town';
         const matchedTownGuide = rawZoneName ? this.guideService.findByZoneName(rawZoneName) : null;
+        const townActHint = inferActHintFromTownScene(rawZoneName);
         const nextTownGuide = matchedTownGuide ??
             (this.normalizeSceneSource(rawZoneName) === 'clearfell encampment'
                 ? null
                 : this.currentZone.guide);
+        const nextActHint = nextTownGuide?.act ?? townActHint ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null;
         // Town/hub scenes are part of the run. Do not pause timers and do not
         // start separate town tracking.
         this.currentZone = {
             rawZoneName,
             guide: nextTownGuide,
             sceneKind: 'town',
-            actHint: nextTownGuide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null
+            actHint: nextActHint
         };
+        if (typeof townActHint === 'number') {
+            this.runtime.lastGameplayAct = townActHint;
+            this.recordActTransitionByHint(previousActHint, townActHint, now);
+        }
         this.syncRuntimeZoneFields(rawZoneName, this.currentZone.guide);
         this.runtime.lastZoneSource = source;
         this.updateZoneProgress(this.currentZone.guide);

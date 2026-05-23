@@ -133,6 +133,28 @@ test('act splits survive transitions from Act 1 through Act 5 and finalise corre
   assert.equal(runTimer.elapsedMs, 8_000);
 });
 
+test('Kingsmarch town scene starts Act 4 timer after Act 3', () => {
+  const app = createTestAppInstance();
+
+  withMockedNow(1_000, () => {
+    applyAppLogLine(app as never, '2026/05/22 22:59:00 123 [DEBUG Client] Generating level 45 area "G3_17" with seed 1');
+    applyAppLogLine(app as never, '[SCENE] Set Source [Black Chambers]');
+    (app as any).startRunTimerFromAnchor(1_000);
+  });
+
+  withMockedNow(2_000, () => {
+    applyAppLogLine(app as never, '[SCENE] Set Source [Kingsmarch]');
+  });
+
+  const runTimer = (app as any).config.runTimer;
+  assert.equal((app as any).currentZone.sceneKind, 'town');
+  assert.equal((app as any).currentZone.rawZoneName, 'Kingsmarch');
+  assert.equal((app as any).currentZone.actHint, 4);
+  assert.equal((app as any).runtime.lastGameplayAct, 4);
+  assert.deepEqual(runTimer.actSplits.map((split: { act: number }) => split.act), [3]);
+  assert.equal(getCurrentActElapsedMsForAct(runTimer, 4, 2_000), 0);
+});
+
 test('no-guide gameplay zones preserve current act timer and do not create false act splits', () => {
   const app = createTestAppInstance();
 
