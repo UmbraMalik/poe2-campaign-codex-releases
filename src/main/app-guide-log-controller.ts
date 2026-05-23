@@ -359,7 +359,7 @@ export function runSetTownScene(this: any, rawZoneName: any, source: any) {
             (this.normalizeSceneSource(rawZoneName) === 'clearfell encampment'
                 ? null
                 : this.currentZone.guide);
-        const nextActHint = nextTownGuide?.act ?? townActHint ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null;
+        const nextActHint = townActHint ?? nextTownGuide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null;
         // Town/hub scenes are part of the run. Do not pause timers and do not
         // start separate town tracking.
         this.currentZone = {

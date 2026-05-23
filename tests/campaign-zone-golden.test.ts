@@ -527,7 +527,7 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
   {
     "id": "a4_journeys_end",
     "act": 4,
-    "zoneRu": "Конец пути",
+    "zoneRu": "Конец странствия",
     "zoneEn": "Journey's End",
     "areaIds": [
       "C_G4_2_2",

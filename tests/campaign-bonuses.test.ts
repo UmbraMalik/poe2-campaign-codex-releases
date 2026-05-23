@@ -116,7 +116,7 @@ test('EN campaign bonus fixture marks the correct act-specific bonuses only', ()
   applyAppLogLines(app as never, loadLogFixtureLines('campaign-bonuses-en.txt'));
 
   assert.deepEqual(getDoneBonusIds(app), [
-    'act4_kids_bay_freya_tujen_weapon_points',
+    'act4_journeys_end_freya_tujen_weapon_points',
     'int3_mount_cryer_lythara_spirit'
   ]);
 });
