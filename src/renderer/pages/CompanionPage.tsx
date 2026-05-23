@@ -23,6 +23,11 @@ import { getGuideUpdateClassName } from '../guide-update-highlights';
 import type { AppLanguage, CampaignBonusDefinition, CampaignBonusProgress, GuideEntry, RunSummary, SavedRunHistoryEntry, ZoneAct } from '../../shared/types';
 
 type CompanionTab = 'zone' | 'route' | 'timer' | 'actTimes' | 'reminders' | 'bonuses' | 'summary';
+type RunConfirmDialog =
+  | { type: 'reset' }
+  | { type: 'restore'; runId: string }
+  | { type: 'delete'; runId: string }
+  | null;
 
 const ROUTE_OVERVIEW_VISIBLE_ITEMS = 2;
 const TOTAL_CAMPAIGN_ACTS = 5;
@@ -863,6 +868,7 @@ export function CompanionPage() {
   const [selectedAct, setSelectedAct] = useState<ZoneAct | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [runSaveNotice, setRunSaveNotice] = useState<string | null>(null);
+  const [runConfirmDialog, setRunConfirmDialog] = useState<RunConfirmDialog>(null);
 
   useDocumentTitle(t('titles.companion'));
 
@@ -971,45 +977,47 @@ export function CompanionPage() {
     setRunSaveNotice(t('companion.runSavedNotice'));
   };
 
-  const resetRunWithOptionalSave = async () => {
-    if (hasRunDataToSave) {
-      const shouldSave = window.confirm(t('companion.resetSavePrompt'));
-      if (shouldSave) {
-        const defaultLabel = createDefaultRunLabel();
-        await runTask('save-and-reset-run', async () => {
-          await window.poe2Overlay.saveCurrentRunToHistory(defaultLabel);
-          await window.poe2Overlay.resetRunTimer();
-        });
-        setRunSaveNotice(t('companion.runSavedAndResetNotice'));
-        return;
-      }
-
-      const shouldResetWithoutSave = window.confirm(t('companion.resetWithoutSavePrompt'));
-      if (!shouldResetWithoutSave) {
-        return;
-      }
-    }
-
+  const resetRunWithoutSaving = async () => {
     await runTask('reset-run', async () => {
       await window.poe2Overlay.resetRunTimer();
     });
   };
 
-  const restoreSavedRun = async (runId: string) => {
-    if (!window.confirm(t('companion.restoreRunPrompt'))) {
+  const saveAndResetRun = async () => {
+    const defaultLabel = createDefaultRunLabel();
+    await runTask('save-and-reset-run', async () => {
+      await window.poe2Overlay.saveCurrentRunToHistory(defaultLabel);
+      await window.poe2Overlay.resetRunTimer();
+    });
+    setRunSaveNotice(t('companion.runSavedAndResetNotice'));
+  };
+
+  const resetRunWithOptionalSave = async () => {
+    if (!hasRunDataToSave) {
+      await resetRunWithoutSaving();
       return;
     }
 
+    setRunConfirmDialog({ type: 'reset' });
+  };
+
+  const restoreSavedRun = async (runId: string) => {
+    setRunConfirmDialog({ type: 'restore', runId });
+  };
+
+  const deleteSavedRun = async (runId: string) => {
+    setRunConfirmDialog({ type: 'delete', runId });
+  };
+
+  const closeRunConfirmDialog = () => setRunConfirmDialog(null);
+
+  const confirmRestoreSavedRun = async (runId: string) => {
     await runTask('restore-run', async () => {
       await window.poe2Overlay.restoreSavedRun(runId);
     });
   };
 
-  const deleteSavedRun = async (runId: string) => {
-    if (!window.confirm(t('companion.deleteRunPrompt'))) {
-      return;
-    }
-
+  const confirmDeleteSavedRun = async (runId: string) => {
     await runTask('delete-run', async () => {
       await window.poe2Overlay.deleteSavedRun(runId);
     });
@@ -1573,6 +1581,107 @@ export function CompanionPage() {
     </div>
   );
 
+
+  const renderRunConfirmDialog = () => {
+    if (!runConfirmDialog) {
+      return null;
+    }
+
+    const dialogTitle = runConfirmDialog.type === 'reset'
+      ? t('companion.resetDialogTitle')
+      : runConfirmDialog.type === 'restore'
+        ? t('companion.restoreDialogTitle')
+        : t('companion.deleteDialogTitle');
+    const dialogMessage = runConfirmDialog.type === 'reset'
+      ? t('companion.resetDialogMessage')
+      : runConfirmDialog.type === 'restore'
+        ? t('companion.restoreDialogMessage')
+        : t('companion.deleteDialogMessage');
+
+    return (
+      <div className="companion-modal-backdrop no-drag" role="presentation">
+        <section className="companion-modal-card" role="dialog" aria-modal="true" aria-labelledby="run-confirm-title">
+          <div className="companion-modal-header">
+            <div>
+              <p className="eyebrow">{t('companion.runDialogEyebrow')}</p>
+              <h3 id="run-confirm-title">{dialogTitle}</h3>
+            </div>
+            <button className="button-secondary companion-modal-close" type="button" onClick={closeRunConfirmDialog}>
+              ×
+            </button>
+          </div>
+          <p className="helper-text companion-modal-message">{dialogMessage}</p>
+
+          {runConfirmDialog.type === 'reset' ? (
+            <div className="button-row companion-modal-actions">
+              <button
+                className="button-primary"
+                type="button"
+                disabled={busy !== null}
+                onClick={() => {
+                  closeRunConfirmDialog();
+                  void saveAndResetRun();
+                }}
+              >
+                {t('companion.saveAndResetRun')}
+              </button>
+              <button
+                className="button-danger"
+                type="button"
+                disabled={busy !== null}
+                onClick={() => {
+                  closeRunConfirmDialog();
+                  void resetRunWithoutSaving();
+                }}
+              >
+                {t('companion.resetWithoutSaving')}
+              </button>
+              <button className="button-secondary" type="button" onClick={closeRunConfirmDialog}>
+                {t('common.cancel')}
+              </button>
+            </div>
+          ) : runConfirmDialog.type === 'restore' ? (
+            <div className="button-row companion-modal-actions">
+              <button
+                className="button-primary"
+                type="button"
+                disabled={busy !== null}
+                onClick={() => {
+                  const { runId } = runConfirmDialog;
+                  closeRunConfirmDialog();
+                  void confirmRestoreSavedRun(runId);
+                }}
+              >
+                {t('companion.continueSavedRun')}
+              </button>
+              <button className="button-secondary" type="button" onClick={closeRunConfirmDialog}>
+                {t('common.cancel')}
+              </button>
+            </div>
+          ) : (
+            <div className="button-row companion-modal-actions">
+              <button
+                className="button-danger"
+                type="button"
+                disabled={busy !== null}
+                onClick={() => {
+                  const { runId } = runConfirmDialog;
+                  closeRunConfirmDialog();
+                  void confirmDeleteSavedRun(runId);
+                }}
+              >
+                {t('companion.deleteSavedRun')}
+              </button>
+              <button className="button-secondary" type="button" onClick={closeRunConfirmDialog}>
+                {t('common.cancel')}
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
+    );
+  };
+
   const tabContent = {
     zone: zoneTab,
     route: routeTab,
@@ -1682,6 +1791,7 @@ export function CompanionPage() {
           <div className="companion-tab-body">{tabContent[activeTab]}</div>
         </section>
       </section>
+      {renderRunConfirmDialog()}
     </main>
   );
 }

@@ -423,7 +423,7 @@ function normalizeSavedRunHistoryEntry(value: unknown): SavedRunHistoryEntry | n
   };
 }
 
-function normalizeAppConfig(config: Partial<AppConfig> = {}): AppConfig {
+export function normalizeAppConfig(config: Partial<AppConfig> = {}): AppConfig {
   const rawConfig = isRecord(config) ? config : {};
   const rawZoneProgress = isRecord(rawConfig.zoneProgress) ? rawConfig.zoneProgress : DEFAULT_CONFIG.zoneProgress;
   const mergedZoneProgress = Object.fromEntries(

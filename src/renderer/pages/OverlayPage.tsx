@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useState,
   type ReactNode,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent
@@ -852,6 +853,7 @@ export function OverlayPage() {
   const overlayShellRef = useRef<HTMLElement | null>(null);
   const autoResizeFrameRef = useRef<OverlayRenderTask | null>(null);
   const adaptiveOverlayHeightSuspendedUntilRef = useRef(0);
+  const [showResetRunDialog, setShowResetRunDialog] = useState(false);
   const autoResizeMinimumHeight = snapshot
     ? getOverlayMinimumSize(
         snapshot.runtime.overlayMode,
@@ -1298,6 +1300,22 @@ export function OverlayPage() {
 
     void window.poe2Overlay?.startRunTimer();
   };
+  const resetRunWithoutSaving = () => {
+    setShowResetRunDialog(false);
+    void window.poe2Overlay?.resetRunTimer();
+  };
+
+  const saveAndResetRun = () => {
+    const api = window.poe2Overlay;
+    if (!api) {
+      return;
+    }
+
+    setShowResetRunDialog(false);
+    const label = `${t('companion.savedRunFallback')} · ${new Date().toLocaleString(language === 'en' ? 'en-US' : 'ru-RU')}`;
+    void api.saveCurrentRunToHistory(label).then(() => api.resetRunTimer());
+  };
+
   const handleTimerReset = () => {
     const api = window.poe2Overlay;
     if (!api) {
@@ -1310,16 +1328,7 @@ export function OverlayPage() {
       return;
     }
 
-    const shouldSave = window.confirm(t('companion.resetSavePrompt'));
-    if (shouldSave) {
-      const label = `${t('companion.savedRunFallback')} · ${new Date().toLocaleString(language === 'en' ? 'en-US' : 'ru-RU')}`;
-      void api.saveCurrentRunToHistory(label).then(() => api.resetRunTimer());
-      return;
-    }
-
-    if (window.confirm(t('companion.resetWithoutSavePrompt'))) {
-      void api.resetRunTimer();
-    }
+    setShowResetRunDialog(true);
   };
   const handleCompactOverlayToggle = async () => {
     const api = window.poe2Overlay;
@@ -1788,6 +1797,35 @@ export function OverlayPage() {
             </button>
           </div>
         </div>
+
+
+        {showResetRunDialog && (
+          <div className="overlay-confirm-backdrop no-drag" role="presentation">
+            <section className="overlay-confirm-card" role="dialog" aria-modal="true" aria-labelledby="overlay-reset-dialog-title">
+              <div className="overlay-confirm-header">
+                <div>
+                  <p className="eyebrow">{t('companion.runDialogEyebrow')}</p>
+                  <h2 id="overlay-reset-dialog-title">{t('companion.resetDialogTitle')}</h2>
+                </div>
+                <button className="overlay-icon-button" type="button" onClick={() => setShowResetRunDialog(false)}>
+                  ×
+                </button>
+              </div>
+              <p>{t('companion.resetDialogMessage')}</p>
+              <div className="overlay-confirm-actions">
+                <button className="button-primary" type="button" onClick={saveAndResetRun}>
+                  {t('companion.saveAndResetRun')}
+                </button>
+                <button className="button-danger" type="button" onClick={resetRunWithoutSaving}>
+                  {t('companion.resetWithoutSaving')}
+                </button>
+                <button className="button-secondary" type="button" onClick={() => setShowResetRunDialog(false)}>
+                  {t('common.cancel')}
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
 
         <div
             className={getResizeGripClassName(config.overlayMovementLocked)}
