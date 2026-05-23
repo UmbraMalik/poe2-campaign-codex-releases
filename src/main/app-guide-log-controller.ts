@@ -493,7 +493,12 @@ export function runBuildRunSummary(this: any, runTimer: any, totalElapsedMs: any
     }
 
 export function runGetActiveLevelReminder(this: any) {
-        return this.guideService.findVendorCheckpointById(this.config.levelRemindersState.activeLevelReminderId);
+        const reminder = this.guideService.findVendorCheckpointById(this.config.levelRemindersState.activeLevelReminderId);
+        const currentLevel = this.config.currentLevel;
+        if (!reminder || (typeof currentLevel === 'number' && reminder.level < currentLevel)) {
+            return null;
+        }
+        return reminder;
     }
 
 export function runNormalizeSceneSource(this: any, rawSceneSource: any) {

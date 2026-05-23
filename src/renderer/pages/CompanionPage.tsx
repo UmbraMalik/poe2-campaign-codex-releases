@@ -469,7 +469,8 @@ function renderStringSection(
 function renderCompactReminderList(
   items: { id: string; level: number; title: string; items?: string[] }[],
   language: AppLanguage,
-  limit?: number
+  limit?: number,
+  highlightedId?: string | null
 ) {
   const visible = typeof limit === 'number' ? items.slice(0, limit) : items;
 
@@ -479,22 +480,26 @@ function renderCompactReminderList(
 
   return (
     <ul className="reminder-list">
-      {visible.map((entry, index) => (
-        <li key={entry.id} className={`reminder-item ${index === 0 ? 'is-nearest' : ''}`}>
-          <div className="reminder-line">
-            <span className="reminder-level">{translate(language, 'common.level')} {entry.level}</span>
-            <span className="reminder-title">{translateDataText(entry.title, language)}</span>
-            {index === 0 && <span className="reminder-badge">{translate(language, 'overlay.currentBadge')}</span>}
-          </div>
-          {entry.items && entry.items.length > 0 && (
-            <ul className="reminder-sublist">
-              {entry.items.slice(0, 3).map((item) => (
-                <li key={`${entry.id}-${item}`}>{translateDataText(item, language)}</li>
-              ))}
-            </ul>
-          )}
-        </li>
-      ))}
+      {visible.map((entry) => {
+        const isHighlighted = highlightedId === entry.id;
+
+        return (
+          <li key={entry.id} className={`reminder-item ${isHighlighted ? 'is-nearest' : ''}`}>
+            <div className="reminder-line">
+              <span className="reminder-level">{translate(language, 'common.level')} {entry.level}</span>
+              <span className="reminder-title">{translateDataText(entry.title, language)}</span>
+              {isHighlighted && <span className="reminder-badge">{translate(language, 'overlay.currentBadge')}</span>}
+            </div>
+            {entry.items && entry.items.length > 0 && (
+              <ul className="reminder-sublist">
+                {entry.items.slice(0, 3).map((item) => (
+                  <li key={`${entry.id}-${item}`}>{translateDataText(item, language)}</li>
+                ))}
+              </ul>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -901,6 +906,10 @@ export function CompanionPage() {
     config.guideProfile,
     99
   );
+  const visibleActiveLevelReminder =
+    activeLevelReminder && (config.currentLevel === null || activeLevelReminder.level >= config.currentLevel)
+      ? activeLevelReminder
+      : null;
   const upcomingVendorReminders = getUpcomingVendorReminders(
     snapshot.vendorCheckpoints,
     config.currentLevel
@@ -1326,10 +1335,10 @@ export function CompanionPage() {
         <section className="companion-block reminders-card reminders-card-nearest">
           <h3>{t('companion.nearest')}</h3>
           {renderCompactReminderList([
-            ...(activeLevelReminder ? [activeLevelReminder] : []),
+            ...(visibleActiveLevelReminder ? [visibleActiveLevelReminder] : []),
             ...upcomingVendorReminders.slice(0, 2),
             ...(nearestPowerSpike ? [nearestPowerSpike] : [])
-          ], language, 4)}
+          ], language, 4, visibleActiveLevelReminder?.id ?? null)}
         </section>
 
         <section className="companion-block reminders-card">
