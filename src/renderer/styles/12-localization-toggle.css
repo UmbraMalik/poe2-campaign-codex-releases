@@ -416,6 +416,18 @@
   gap: 14px;
 }
 
+.run-save-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.run-save-notice {
+  margin: 0;
+  color: rgba(142, 245, 178, 0.86);
+  text-align: right;
+}
+
 .run-history-card,
 .run-compare-card,
 .run-save-card {

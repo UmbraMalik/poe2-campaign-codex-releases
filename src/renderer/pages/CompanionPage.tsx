@@ -862,6 +862,7 @@ export function CompanionPage() {
   const [activeTab, setActiveTab] = useState<CompanionTab>('zone');
   const [selectedAct, setSelectedAct] = useState<ZoneAct | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [runSaveNotice, setRunSaveNotice] = useState<string | null>(null);
 
   useDocumentTitle(t('titles.companion'));
 
@@ -947,7 +948,7 @@ export function CompanionPage() {
   const runTask = async (name: string, action: () => Promise<unknown>) => {
     try {
       setBusy(name);
-      await action();
+      return await action();
     } finally {
       setBusy(null);
     }
@@ -955,27 +956,31 @@ export function CompanionPage() {
 
   const hasRunDataToSave = currentRunElapsed > 0 || displayRunTimer.actSplits.length > 0 || config.zoneTimeHistory.length > 0;
 
+  const createDefaultRunLabel = () =>
+    `${t('companion.savedRunFallback')} · ${new Date().toLocaleString(language === 'en' ? 'en-US' : 'ru-RU')}`;
+
   const saveCurrentRun = async () => {
     if (!hasRunDataToSave) {
       return;
     }
 
-    const defaultLabel = `${t('companion.savedRunFallback')} · ${new Date().toLocaleString(language === 'en' ? 'en-US' : 'ru-RU')}`;
-    const label = window.prompt(t('companion.saveRunLabelPrompt'), defaultLabel) ?? defaultLabel;
+    const label = createDefaultRunLabel();
     await runTask('save-run', async () => {
       await window.poe2Overlay.saveCurrentRunToHistory(label);
     });
+    setRunSaveNotice(t('companion.runSavedNotice'));
   };
 
   const resetRunWithOptionalSave = async () => {
     if (hasRunDataToSave) {
       const shouldSave = window.confirm(t('companion.resetSavePrompt'));
       if (shouldSave) {
-        const defaultLabel = `${t('companion.savedRunFallback')} · ${new Date().toLocaleString(language === 'en' ? 'en-US' : 'ru-RU')}`;
+        const defaultLabel = createDefaultRunLabel();
         await runTask('save-and-reset-run', async () => {
           await window.poe2Overlay.saveCurrentRunToHistory(defaultLabel);
           await window.poe2Overlay.resetRunTimer();
         });
+        setRunSaveNotice(t('companion.runSavedAndResetNotice'));
         return;
       }
 
@@ -1311,13 +1316,21 @@ export function CompanionPage() {
           <h3>{t('companion.runSaveTitle')}</h3>
           <p className="helper-text">{t('companion.runSaveIntro')}</p>
         </div>
-        <div className="button-row">
-          <button type="button" className="button-primary" disabled={busy !== null || !hasRunDataToSave} onClick={saveCurrentRun}>
-            {t('companion.saveCurrentRun')}
-          </button>
-          <button type="button" className="button-danger" disabled={busy !== null} onClick={resetRunWithOptionalSave}>
-            {t('overlay.resetTimer')}
-          </button>
+        <div className="run-save-actions">
+          <div className="button-row">
+            <button
+              type="button"
+              className="button-primary"
+              disabled={busy !== null || !hasRunDataToSave}
+              onClick={saveCurrentRun}
+            >
+              {busy === 'save-run' ? t('common.saving') : t('companion.saveCurrentRun')}
+            </button>
+            <button type="button" className="button-danger" disabled={busy !== null} onClick={resetRunWithOptionalSave}>
+              {t('overlay.resetTimer')}
+            </button>
+          </div>
+          {runSaveNotice ? <p className="helper-text run-save-notice">{runSaveNotice}</p> : null}
         </div>
       </section>
     </div>
