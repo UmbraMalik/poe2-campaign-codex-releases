@@ -1330,6 +1330,15 @@ export function OverlayPage() {
 
     setShowResetRunDialog(true);
   };
+  const handleTimerResetPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    handleTimerReset();
+  };
   const handleCompactOverlayToggle = async () => {
     const api = window.poe2Overlay;
     if (!api) {
@@ -1535,12 +1544,40 @@ export function OverlayPage() {
         type="button"
         title={t('overlay.resetTimer')}
         aria-label={t('overlay.resetTimer')}
-        onClick={handleTimerReset}
+        onPointerDown={handleTimerResetPointerDown}
       >
         <span className="timer-button-glyph" aria-hidden="true">↻</span>
       </button>
     </div>
   );
+
+  const resetRunDialog = showResetRunDialog ? (
+    <div className="overlay-confirm-backdrop no-drag" role="presentation" onPointerDown={(event) => event.stopPropagation()}>
+      <section className="overlay-confirm-card" role="dialog" aria-modal="true" aria-labelledby="overlay-reset-dialog-title">
+        <div className="overlay-confirm-header">
+          <div>
+            <p className="eyebrow">{t('companion.runDialogEyebrow')}</p>
+            <h2 id="overlay-reset-dialog-title">{t('companion.resetDialogTitle')}</h2>
+          </div>
+          <button className="overlay-icon-button" type="button" onClick={() => setShowResetRunDialog(false)}>
+            ×
+          </button>
+        </div>
+        <p>{t('companion.resetDialogMessage')}</p>
+        <div className="overlay-confirm-actions">
+          <button className="button-primary" type="button" onClick={saveAndResetRun}>
+            {t('companion.saveAndResetRun')}
+          </button>
+          <button className="button-danger" type="button" onClick={resetRunWithoutSaving}>
+            {t('companion.resetWithoutSaving')}
+          </button>
+          <button className="button-secondary" type="button" onClick={() => setShowResetRunDialog(false)}>
+            {t('common.cancel')}
+          </button>
+        </div>
+      </section>
+    </div>
+  ) : null;
 
   if (isTimerOnlyMode) {
     return (
@@ -1601,6 +1638,8 @@ export function OverlayPage() {
               {t('overlay.expand')}
             </button>
           </footer>
+
+          {resetRunDialog}
 
           <div
             className={getResizeGripClassName(config.overlayMovementLocked)}
@@ -1797,35 +1836,7 @@ export function OverlayPage() {
             </button>
           </div>
         </div>
-
-
-        {showResetRunDialog && (
-          <div className="overlay-confirm-backdrop no-drag" role="presentation">
-            <section className="overlay-confirm-card" role="dialog" aria-modal="true" aria-labelledby="overlay-reset-dialog-title">
-              <div className="overlay-confirm-header">
-                <div>
-                  <p className="eyebrow">{t('companion.runDialogEyebrow')}</p>
-                  <h2 id="overlay-reset-dialog-title">{t('companion.resetDialogTitle')}</h2>
-                </div>
-                <button className="overlay-icon-button" type="button" onClick={() => setShowResetRunDialog(false)}>
-                  ×
-                </button>
-              </div>
-              <p>{t('companion.resetDialogMessage')}</p>
-              <div className="overlay-confirm-actions">
-                <button className="button-primary" type="button" onClick={saveAndResetRun}>
-                  {t('companion.saveAndResetRun')}
-                </button>
-                <button className="button-danger" type="button" onClick={resetRunWithoutSaving}>
-                  {t('companion.resetWithoutSaving')}
-                </button>
-                <button className="button-secondary" type="button" onClick={() => setShowResetRunDialog(false)}>
-                  {t('common.cancel')}
-                </button>
-              </div>
-            </section>
-          </div>
-        )}
+        {resetRunDialog}
 
         <div
             className={getResizeGripClassName(config.overlayMovementLocked)}
