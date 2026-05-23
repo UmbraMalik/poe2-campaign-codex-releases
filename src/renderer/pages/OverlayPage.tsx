@@ -853,7 +853,6 @@ export function OverlayPage() {
   const overlayShellRef = useRef<HTMLElement | null>(null);
   const autoResizeFrameRef = useRef<OverlayRenderTask | null>(null);
   const adaptiveOverlayHeightSuspendedUntilRef = useRef(0);
-  const [showResetRunDialog, setShowResetRunDialog] = useState(false);
   const autoResizeMinimumHeight = snapshot
     ? getOverlayMinimumSize(
         snapshot.runtime.overlayMode,
@@ -1300,40 +1299,6 @@ export function OverlayPage() {
 
     void window.poe2Overlay?.startRunTimer();
   };
-  const resetRunWithoutSaving = () => {
-    setShowResetRunDialog(false);
-    void window.poe2Overlay?.resetRunTimer();
-  };
-
-  const saveAndResetRun = () => {
-    const api = window.poe2Overlay;
-    if (!api) {
-      return;
-    }
-
-    setShowResetRunDialog(false);
-    const label = `${t('companion.savedRunFallback')} · ${new Date().toLocaleString(language === 'en' ? 'en-US' : 'ru-RU')}`;
-    void api.saveCurrentRunToHistory(label).then(() => api.resetRunTimer());
-  };
-
-  const handleTimerReset = () => {
-    const api = window.poe2Overlay;
-    if (!api) {
-      return;
-    }
-
-    const hasRunData = liveRunTimer.runElapsedMs > 0 || displayRunTimer.actSplits.length > 0 || config.zoneTimeHistory.length > 0;
-    if (!hasRunData) {
-      void api.resetRunTimer();
-      return;
-    }
-
-    void api.requestRunResetConfirmation();
-  };
-  const handleTimerResetClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
-    stopOverlayControlPropagation(event);
-    handleTimerReset();
-  };
   const handleCompactOverlayToggle = async () => {
     const api = window.poe2Overlay;
     if (!api) {
@@ -1523,56 +1488,23 @@ export function OverlayPage() {
       <p className="overlay-onboarding-move-hint">{t('overlay.onboardingMoveHint')}</p>
     </div>
   );
-  const timerControls = (
-    <div className="overlay-timer-controls no-drag" aria-label={t('overlay.timerControls')}>
-      <button
-        className={`overlay-timer-control overlay-timer-icon-control overlay-timer-control-${timerPrimaryTone} no-drag`}
-        type="button"
-        title={timerPrimaryTitle}
-        aria-label={timerPrimaryTitle}
-        onClick={handleTimerPrimaryAction}
-      >
-        <span className="timer-button-glyph" aria-hidden="true">{timerPrimaryIcon}</span>
-      </button>
-      <button
-        className="overlay-timer-control overlay-timer-icon-control overlay-timer-control-reset no-drag"
-        type="button"
-        title={t('overlay.resetTimer')}
-        aria-label={t('overlay.resetTimer')}
-        onClick={handleTimerResetClick}
-      >
-        <span className="timer-button-glyph" aria-hidden="true">↻</span>
-      </button>
-    </div>
+  const timerPrimaryButton = (
+    <button
+      className={`overlay-timer-control overlay-timer-icon-control overlay-timer-control-${timerPrimaryTone} no-drag`}
+      type="button"
+      title={timerPrimaryTitle}
+      aria-label={timerPrimaryTitle}
+      onClick={handleTimerPrimaryAction}
+    >
+      <span className="timer-button-glyph" aria-hidden="true">{timerPrimaryIcon}</span>
+    </button>
   );
 
-  const resetRunDialog = showResetRunDialog ? (
-    <div className="overlay-confirm-backdrop no-drag" role="presentation" onPointerDown={(event) => event.stopPropagation()}>
-      <section className="overlay-confirm-card" role="dialog" aria-modal="true" aria-labelledby="overlay-reset-dialog-title">
-        <div className="overlay-confirm-header">
-          <div>
-            <p className="eyebrow">{t('companion.runDialogEyebrow')}</p>
-            <h2 id="overlay-reset-dialog-title">{t('companion.resetDialogTitle')}</h2>
-          </div>
-          <button className="overlay-icon-button" type="button" onClick={() => setShowResetRunDialog(false)}>
-            ×
-          </button>
-        </div>
-        <p>{t('companion.resetDialogMessage')}</p>
-        <div className="overlay-confirm-actions">
-          <button className="button-primary" type="button" onClick={saveAndResetRun}>
-            {t('companion.saveAndResetRun')}
-          </button>
-          <button className="button-danger" type="button" onClick={resetRunWithoutSaving}>
-            {t('companion.resetWithoutSaving')}
-          </button>
-          <button className="button-secondary" type="button" onClick={() => setShowResetRunDialog(false)}>
-            {t('common.cancel')}
-          </button>
-        </div>
-      </section>
+  const timerControls = (
+    <div className="overlay-timer-controls no-drag" aria-label={t('overlay.timerControls')}>
+      {timerPrimaryButton}
     </div>
-  ) : null;
+  );
 
   if (isTimerOnlyMode) {
     return (
@@ -1634,7 +1566,6 @@ export function OverlayPage() {
             </button>
           </footer>
 
-          {resetRunDialog}
 
           <div
             className={getResizeGripClassName(config.overlayMovementLocked)}
@@ -1660,6 +1591,7 @@ export function OverlayPage() {
             <div className="hud-zone-title-card">
               <div className="hud-zone-kicker-row">
                 <span className="hud-zone-act-pill">{overlayActLabel}</span>
+                {timerPrimaryButton}
               </div>
               <h1 className="hud-zone-name">{overlayZoneName}</h1>
             </div>
@@ -1668,9 +1600,6 @@ export function OverlayPage() {
             </div>
           </div>
           <div className="hud-header-divider" aria-hidden="true" />
-          <div className="overlay-top-control-row no-drag">
-            {timerControls}
-          </div>
           <p className={`hud-meta level-${levelState.state}`}>
             <LiveTimerMeta
               runTimer={displayRunTimer}
@@ -1831,7 +1760,6 @@ export function OverlayPage() {
             </button>
           </div>
         </div>
-        {resetRunDialog}
 
         <div
             className={getResizeGripClassName(config.overlayMovementLocked)}
