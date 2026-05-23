@@ -121,6 +121,30 @@ test('EN campaign bonus fixture marks the correct act-specific bonuses only', ()
   ]);
 });
 
+
+test('Servi venom vial choice can be completed after leaving Venom Crypts', () => {
+  const app = createTestAppInstance();
+  applyAppLogLine(app as never, '2026/05/16 22:10:10 123 [DEBUG Client] Generating level 33 area "G3_5" with seed 1');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Ядовитые крипты]');
+  applyAppLogLine(app as never, '2026/05/16 22:12:10 123 [DEBUG Client] Generating level 33 area "G3_4" with seed 2');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Развалины в джунглях]');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Лагерь на зиккурате]');
+
+  applyAppLogLine(app as never, ': Игрок Umbra получил 30% увеличение [AilmentThreshold|порога стихийных состояний].');
+
+  assert.deepEqual(getDoneBonusIds(app), ['act3_venom_crypts_choice']);
+});
+
+test('Servi venom vial choice also matches EN client reward wording', () => {
+  const app = createTestAppInstance();
+  applyAppLogLine(app as never, '2026/05/16 22:10:10 123 [DEBUG Client] Generating level 33 area "G3_5" with seed 1');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Venom Crypts]');
+  applyAppLogLine(app as never, '[SCENE] Set Source [The Ziggurat Encampment]');
+
+  applyAppLogLine(app as never, ': Umbra has received 30% increased [AilmentThreshold|Elemental Ailment Threshold].');
+
+  assert.deepEqual(getDoneBonusIds(app), ['act3_venom_crypts_choice']);
+});
 test('manual-only bonuses stay manual when no reliable reward line exists', () => {
   const salvageBench = getCampaignBonuses().find(
     (bonus) => bonus.id === 'act1_ogham_village_salvage_bench'

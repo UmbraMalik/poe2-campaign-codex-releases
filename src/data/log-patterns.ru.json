@@ -62,6 +62,9 @@
     ],
     "rewardStunThreshold": [
       ": Игрок (?<player>.+?) получил (?<amount>\\d+)% увеличение \\[StunThreshold\\|порога оглушения\\]\\.?"
+    ],
+    "rewardElementalAilmentThreshold": [
+      ": Игрок (?<player>.+?) получил (?<amount>\\d+)% увеличение \\[AilmentThreshold\\|порога стихийных состояний\\]\\.?"
     ]
   },
   "notes": [

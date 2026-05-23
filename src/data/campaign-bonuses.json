@@ -467,17 +467,32 @@
         {
           "all": [
             "порог оглушения"
-          ],
-          "zoneIds": [
-            "a3_venom_crypts"
           ]
         },
         {
           "all": [
             "восстановлению маны"
-          ],
-          "zoneIds": [
-            "a3_venom_crypts"
+          ]
+        },
+        {
+          "all": [
+            "стихийн",
+            "состояни"
+          ]
+        },
+        {
+          "all": [
+            "stun threshold"
+          ]
+        },
+        {
+          "all": [
+            "mana recovery"
+          ]
+        },
+        {
+          "all": [
+            "elemental ailment threshold"
           ]
         }
       ]
