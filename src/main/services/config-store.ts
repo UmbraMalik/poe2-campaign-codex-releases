@@ -18,6 +18,7 @@ import type {
   RunTimerActSplit,
   RunTimerState,
   RunTimerStatus,
+  SavedRunHistoryEntry,
   SettingsPatch,
   TownTimerState,
   TownVisitEntry,
@@ -385,7 +386,44 @@ function normalizeZoneTimeHistory(value: unknown): ZoneTimeEntry[] {
   });
 }
 
-export function normalizeAppConfig(config: Partial<AppConfig> = {}): AppConfig {
+export 
+function normalizeSavedRunHistoryEntry(value: unknown): SavedRunHistoryEntry | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = safeString(value.id, null);
+  const savedAt = finiteTimestamp(value.savedAt);
+  if (!id || savedAt === null) {
+    return null;
+  }
+
+  const currentAct = typeof value.currentAct === 'number' || value.currentAct === 'interlude'
+    ? value.currentAct
+    : null;
+  const runTimer = normalizeRunTimer(value.runTimer);
+  const totalElapsedMs = nonNegativeMs(value.totalElapsedMs);
+
+  return {
+    id,
+    label: safeString(value.label, '') ?? '',
+    savedAt,
+    totalElapsedMs,
+    currentAct,
+    status: normalizeEnum(value.status, RUN_TIMER_STATUSES, runTimer.status),
+    actSplits: Array.isArray(value.actSplits)
+      ? value.actSplits.map(normalizeRunTimerActSplit).filter((split): split is RunTimerActSplit => split !== null)
+      : [...runTimer.actSplits],
+    longestZones: normalizeZoneTimeHistory(value.longestZones),
+    zoneTimeHistory: normalizeZoneTimeHistory(value.zoneTimeHistory),
+    runTimer: {
+      ...runTimer,
+      elapsedMs: runTimer.elapsedMs > 0 ? runTimer.elapsedMs : totalElapsedMs
+    }
+  };
+}
+
+function normalizeAppConfig(config: Partial<AppConfig> = {}): AppConfig {
   const rawConfig = isRecord(config) ? config : {};
   const rawZoneProgress = isRecord(rawConfig.zoneProgress) ? rawConfig.zoneProgress : DEFAULT_CONFIG.zoneProgress;
   const mergedZoneProgress = Object.fromEntries(
@@ -431,6 +469,13 @@ export function normalizeAppConfig(config: Partial<AppConfig> = {}): AppConfig {
       }
     : DEFAULT_CONFIG.lastRunSummary;
 
+  const runHistory = Array.isArray(rawConfig.runHistory)
+    ? rawConfig.runHistory
+        .map(normalizeSavedRunHistoryEntry)
+        .filter((entry): entry is SavedRunHistoryEntry => entry !== null)
+        .slice(0, 20)
+    : [...DEFAULT_CONFIG.runHistory];
+
   return {
     ...DEFAULT_CONFIG,
     appLanguage: rawConfig.appLanguage === 'en' ? 'en' : DEFAULT_CONFIG.appLanguage,
@@ -468,6 +513,7 @@ export function normalizeAppConfig(config: Partial<AppConfig> = {}): AppConfig {
     zoneTimeHistory: normalizeZoneTimeHistory(rawConfig.zoneTimeHistory),
     bestRun,
     lastRunSummary,
+    runHistory,
     levelRemindersState: normalizeLevelRemindersState(rawConfig.levelRemindersState),
     runTimer: normalizeRunTimer(rawConfig.runTimer),
     townTimer: normalizeTownTimer(rawConfig.townTimer),

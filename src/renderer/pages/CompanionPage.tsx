@@ -20,11 +20,12 @@ import type { ActTimeRow } from '../companion-helpers';
 import { getCampaignBonusView, getGuideView, translateDataText } from '../../i18n/data';
 import { translate } from '../../i18n/translations';
 import { getGuideUpdateClassName } from '../guide-update-highlights';
-import type { AppLanguage, CampaignBonusDefinition, CampaignBonusProgress, GuideEntry, RunSummary, ZoneAct } from '../../shared/types';
+import type { AppLanguage, CampaignBonusDefinition, CampaignBonusProgress, GuideEntry, RunSummary, SavedRunHistoryEntry, ZoneAct } from '../../shared/types';
 
 type CompanionTab = 'zone' | 'route' | 'timer' | 'actTimes' | 'reminders' | 'bonuses' | 'summary';
 
 const ROUTE_OVERVIEW_VISIBLE_ITEMS = 2;
+const TOTAL_CAMPAIGN_ACTS = 5;
 
 function getRouteStatusLabel(
   status: 'current' | 'missed' | 'completed' | 'visited' | 'pending',
@@ -256,6 +257,34 @@ function renderLongestZoneList(
   );
 }
 
+
+function formatSavedRunDate(timestamp: number, language: AppLanguage): string {
+  return new Date(timestamp).toLocaleString(language === 'en' ? 'en-US' : 'ru-RU');
+}
+
+function getSavedRunActRows(entry: SavedRunHistoryEntry): ActTimeRow[] {
+  return getActTimeRowsFromSplits(entry.actSplits, entry.totalElapsedMs, {
+    currentAct: typeof entry.currentAct === 'number' ? entry.currentAct : null,
+    includeCurrentAct: entry.status !== 'finished',
+    currentStatus: entry.status
+  });
+}
+
+function getBestSavedRun(history: SavedRunHistoryEntry[]): SavedRunHistoryEntry | null {
+  const candidates = history.filter((entry) => entry.totalElapsedMs > 0);
+  return candidates.length > 0
+    ? [...candidates].sort((left, right) => left.totalElapsedMs - right.totalElapsedMs)[0]
+    : null;
+}
+
+function formatDelta(ms: number): string {
+  if (ms === 0) {
+    return '±00:00';
+  }
+
+  return `${ms > 0 ? '+' : '-'}${formatDuration(Math.abs(ms))}`;
+}
+
 function renderActTimesDashboard(
   rows: ActTimeRow[],
   totalElapsedMs: number,
@@ -283,7 +312,7 @@ function renderActTimesDashboard(
           )}
           {renderMetricCard(
             translate(language, 'companion.completedActs'),
-            `${completedActCount} / ${Math.max(4, rows.length)}`,
+            `${completedActCount} / ${TOTAL_CAMPAIGN_ACTS}`,
             currentAct ? translate(language, 'companion.currentActMetric', { act: currentAct.act }) : translate(language, 'companion.noCurrentAct')
           )}
           {renderMetricCard(
@@ -305,6 +334,113 @@ function renderActTimesDashboard(
         {renderActTimeCards(rows, emptyMessage, language)}
       </section>
     </div>
+  );
+}
+
+
+function renderRunComparison(
+  history: SavedRunHistoryEntry[],
+  currentElapsedMs: number,
+  currentRows: ActTimeRow[],
+  language: AppLanguage
+) {
+  const bestRun = getBestSavedRun(history);
+
+  if (!bestRun) {
+    return (
+      <section className="companion-block run-compare-card">
+        <h3>{translate(language, 'companion.runCompareTitle')}</h3>
+        <p className="helper-text">{translate(language, 'companion.runCompareEmpty')}</p>
+      </section>
+    );
+  }
+
+  const bestRows = getSavedRunActRows(bestRun);
+  const bestRowsByAct = new Map(bestRows.map((row) => [row.act, row]));
+  const currentRowsByAct = new Map(currentRows.map((row) => [row.act, row]));
+  const acts = Array.from(new Set([...bestRowsByAct.keys(), ...currentRowsByAct.keys()])).sort((left, right) => left - right);
+
+  return (
+    <section className="companion-block run-compare-card">
+      <div className="summary-section-heading">
+        <h3>{translate(language, 'companion.runCompareTitle')}</h3>
+        <span>{translate(language, 'companion.runCompareBestDate', { date: formatSavedRunDate(bestRun.savedAt, language) })}</span>
+      </div>
+      <div className="run-comparison-total">
+        <span>{translate(language, 'companion.currentRunTime')}: <strong>{formatDuration(currentElapsedMs)}</strong></span>
+        <span>{translate(language, 'companion.bestSavedRun')}: <strong>{formatDuration(bestRun.totalElapsedMs)}</strong></span>
+        <span className={currentElapsedMs <= bestRun.totalElapsedMs ? 'delta-good' : 'delta-bad'}>
+          {translate(language, 'companion.delta')}: <strong>{formatDelta(currentElapsedMs - bestRun.totalElapsedMs)}</strong>
+        </span>
+      </div>
+      {acts.length > 0 && (
+        <div className="run-comparison-grid">
+          {acts.map((act) => {
+            const current = currentRowsByAct.get(act);
+            const best = bestRowsByAct.get(act);
+            const delta = current && best ? current.elapsedMs - best.elapsedMs : null;
+            return (
+              <div key={`run-compare-act-${act}`} className="run-comparison-act-row">
+                <span>{formatActLabel(act, language)}</span>
+                <strong>{current ? formatDuration(current.elapsedMs) : '—'}</strong>
+                <small className={delta === null ? '' : delta <= 0 ? 'delta-good' : 'delta-bad'}>
+                  {delta === null ? '—' : formatDelta(delta)}
+                </small>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function renderRunHistory(
+  history: SavedRunHistoryEntry[],
+  language: AppLanguage,
+  onRestore: (runId: string) => void,
+  onDelete: (runId: string) => void
+) {
+  return (
+    <section className="companion-block run-history-card">
+      <div className="summary-section-heading">
+        <h3>{translate(language, 'companion.runHistoryTitle')}</h3>
+        <span>{translate(language, 'companion.runHistoryCount', { count: history.length })}</span>
+      </div>
+      {history.length === 0 ? (
+        <p className="helper-text">{translate(language, 'companion.runHistoryEmpty')}</p>
+      ) : (
+        <div className="run-history-list">
+          {history.slice(0, 8).map((entry) => {
+            const rows = getSavedRunActRows(entry);
+            const slowestAct = getSlowestActRow(rows);
+            const longestZone = entry.longestZones[0] ?? null;
+            return (
+              <article key={entry.id} className="run-history-item">
+                <div>
+                  <strong>{entry.label || translate(language, 'companion.savedRunFallback')}</strong>
+                  <span>{formatSavedRunDate(entry.savedAt, language)}</span>
+                </div>
+                <div className="run-history-stats">
+                  <span>{translate(language, 'companion.totalTime')}: <b>{formatDuration(entry.totalElapsedMs)}</b></span>
+                  <span>{translate(language, 'companion.completedActs')}: <b>{getCompletedActCount(rows)} / {TOTAL_CAMPAIGN_ACTS}</b></span>
+                  <span>{translate(language, 'companion.longestAct')}: <b>{slowestAct ? `${formatActLabel(slowestAct.act, language)} · ${formatDuration(slowestAct.elapsedMs)}` : '—'}</b></span>
+                  <span>{translate(language, 'companion.longestZone')}: <b>{longestZone ? `${translateDataText(longestZone.zone_ru, language)} · ${formatDuration(longestZone.elapsedMs)}` : '—'}</b></span>
+                </div>
+                <div className="button-row run-history-actions">
+                  <button type="button" className="button-secondary" onClick={() => onRestore(entry.id)}>
+                    {translate(language, 'companion.continueSavedRun')}
+                  </button>
+                  <button type="button" className="button-danger" onClick={() => onDelete(entry.id)}>
+                    {translate(language, 'companion.deleteSavedRun')}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -677,7 +813,7 @@ function renderSummary(summary: RunSummary | null, language: AppLanguage) {
         </div>
         <div className="run-metric-grid">
           {renderMetricCard(translate(language, 'companion.totalTime'), formatDuration(summary.totalElapsedMs), translate(language, 'companion.finalTime'), 'accent')}
-          {renderMetricCard(translate(language, 'companion.completedActs'), String(completedActCount), translate(language, 'companion.completedActsHint'))}
+          {renderMetricCard(translate(language, 'companion.completedActs'), `${completedActCount} / ${TOTAL_CAMPAIGN_ACTS}`, translate(language, 'companion.completedActsHint'))}
           {renderMetricCard(translate(language, 'companion.pauses'), String(summary.pauseCount), translate(language, 'companion.pauseCountHint'), 'muted')}
           {renderMetricCard(
             translate(language, 'companion.record'),
@@ -779,6 +915,7 @@ export function CompanionPage() {
     snapshot.campaignBonuses,
     campaignBonusProgress
   );
+  const runHistory = config.runHistory ?? [];
   const currentZoneBonuses = getCurrentZoneCampaignBonuses(snapshot);
   const localizedCurrentZoneBonuses = currentZoneBonuses.map(({ bonus, done }) => ({
     bonus: getCampaignBonusView(bonus, language) ?? bonus,
@@ -805,6 +942,63 @@ export function CompanionPage() {
     } finally {
       setBusy(null);
     }
+  };
+
+  const hasRunDataToSave = currentRunElapsed > 0 || displayRunTimer.actSplits.length > 0 || config.zoneTimeHistory.length > 0;
+
+  const saveCurrentRun = async () => {
+    if (!hasRunDataToSave) {
+      return;
+    }
+
+    const defaultLabel = `${t('companion.savedRunFallback')} · ${new Date().toLocaleString(language === 'en' ? 'en-US' : 'ru-RU')}`;
+    const label = window.prompt(t('companion.saveRunLabelPrompt'), defaultLabel) ?? defaultLabel;
+    await runTask('save-run', async () => {
+      await window.poe2Overlay.saveCurrentRunToHistory(label);
+    });
+  };
+
+  const resetRunWithOptionalSave = async () => {
+    if (hasRunDataToSave) {
+      const shouldSave = window.confirm(t('companion.resetSavePrompt'));
+      if (shouldSave) {
+        const defaultLabel = `${t('companion.savedRunFallback')} · ${new Date().toLocaleString(language === 'en' ? 'en-US' : 'ru-RU')}`;
+        await runTask('save-and-reset-run', async () => {
+          await window.poe2Overlay.saveCurrentRunToHistory(defaultLabel);
+          await window.poe2Overlay.resetRunTimer();
+        });
+        return;
+      }
+
+      const shouldResetWithoutSave = window.confirm(t('companion.resetWithoutSavePrompt'));
+      if (!shouldResetWithoutSave) {
+        return;
+      }
+    }
+
+    await runTask('reset-run', async () => {
+      await window.poe2Overlay.resetRunTimer();
+    });
+  };
+
+  const restoreSavedRun = async (runId: string) => {
+    if (!window.confirm(t('companion.restoreRunPrompt'))) {
+      return;
+    }
+
+    await runTask('restore-run', async () => {
+      await window.poe2Overlay.restoreSavedRun(runId);
+    });
+  };
+
+  const deleteSavedRun = async (runId: string) => {
+    if (!window.confirm(t('companion.deleteRunPrompt'))) {
+      return;
+    }
+
+    await runTask('delete-run', async () => {
+      await window.poe2Overlay.deleteSavedRun(runId);
+    });
   };
 
   const openExternalLink = async (name: string, url: string) => {
@@ -1071,11 +1265,7 @@ export function CompanionPage() {
             type="button"
             className="button-danger"
             disabled={busy !== null}
-            onClick={() =>
-              runTask('reset-run', async () => {
-                await window.poe2Overlay.resetRunTimer();
-              })
-            }
+onClick={resetRunWithOptionalSave}
           >
             {t('common.reset')}
           </button>
@@ -1094,6 +1284,20 @@ export function CompanionPage() {
           : t('companion.actTimesEmptyRunning'),
         language
       )}
+      <section className="companion-block run-save-card">
+        <div>
+          <h3>{t('companion.runSaveTitle')}</h3>
+          <p className="helper-text">{t('companion.runSaveIntro')}</p>
+        </div>
+        <div className="button-row">
+          <button type="button" className="button-primary" disabled={busy !== null || !hasRunDataToSave} onClick={saveCurrentRun}>
+            {t('companion.saveCurrentRun')}
+          </button>
+          <button type="button" className="button-danger" disabled={busy !== null} onClick={resetRunWithOptionalSave}>
+            {t('overlay.resetTimer')}
+          </button>
+        </div>
+      </section>
     </div>
   );
 
@@ -1304,7 +1508,7 @@ export function CompanionPage() {
             </div>
             <div className="run-metric-grid">
               {renderMetricCard(t('companion.totalTime'), formatDuration(currentRunElapsed), formatRunStatus(displayRunTimer.status, language), 'accent')}
-              {renderMetricCard(t('companion.completedActs'), `${getCompletedActCount(actTimeRows)} / ${Math.max(4, actTimeRows.length)}`, t('companion.completedActsHint'))}
+              {renderMetricCard(t('companion.completedActs'), `${getCompletedActCount(actTimeRows)} / ${TOTAL_CAMPAIGN_ACTS}`, t('companion.completedActsHint'))}
               {renderMetricCard(t('companion.currentAct'), nowAct === null ? '—' : formatActTitle(nowAct, language), currentActElapsed !== null ? formatDuration(currentActElapsed) : t('common.notAvailable'))}
               {renderMetricCard(t('companion.longestZone'), longestZones[0] ? formatDuration(longestZones[0].elapsedMs) : '—', longestZones[0] ? translateDataText(longestZones[0].zone_ru, language) : t('companion.zoneHistoryEmpty'), 'muted')}
             </div>
@@ -1323,6 +1527,9 @@ export function CompanionPage() {
           <p className="helper-text">{t('companion.bestRunEmpty')}</p>
         )}
       </section>
+
+      {renderRunComparison(runHistory, currentRunElapsed, actTimeRows, language)}
+      {renderRunHistory(runHistory, language, restoreSavedRun, deleteSavedRun)}
 
       <section className="companion-block summary-longest-card">
         <h3>{t('companion.longestZones')}</h3>

@@ -1299,7 +1299,27 @@ export function OverlayPage() {
     void window.poe2Overlay?.startRunTimer();
   };
   const handleTimerReset = () => {
-    void window.poe2Overlay?.resetRunTimer();
+    const api = window.poe2Overlay;
+    if (!api) {
+      return;
+    }
+
+    const hasRunData = liveRunTimer.runElapsedMs > 0 || displayRunTimer.actSplits.length > 0 || config.zoneTimeHistory.length > 0;
+    if (!hasRunData) {
+      void api.resetRunTimer();
+      return;
+    }
+
+    const shouldSave = window.confirm(t('companion.resetSavePrompt'));
+    if (shouldSave) {
+      const label = `${t('companion.savedRunFallback')} · ${new Date().toLocaleString(language === 'en' ? 'en-US' : 'ru-RU')}`;
+      void api.saveCurrentRunToHistory(label).then(() => api.resetRunTimer());
+      return;
+    }
+
+    if (window.confirm(t('companion.resetWithoutSavePrompt'))) {
+      void api.resetRunTimer();
+    }
   };
   const handleCompactOverlayToggle = async () => {
     const api = window.poe2Overlay;

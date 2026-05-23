@@ -122,6 +122,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   zoneTimeHistory: [],
   bestRun: null,
   lastRunSummary: null,
+  runHistory: [],
   levelRemindersState: {
     shown: [],
     dismissed: [],

@@ -331,6 +331,18 @@ export function runRegisterIpc(this: any) {
             this.resetRunTimer();
             return this.getSnapshot();
         });
+        ipcMain.handle('app:save-current-run', async (_event: any, label: any) => {
+            this.saveCurrentRunToHistory(typeof label === 'string' ? label : null);
+            return this.getSnapshot();
+        });
+        ipcMain.handle('app:restore-saved-run', async (_event: any, runId: any) => {
+            this.restoreSavedRun(String(runId ?? ''));
+            return this.getSnapshot();
+        });
+        ipcMain.handle('app:delete-saved-run', async (_event: any, runId: any) => {
+            this.deleteSavedRun(String(runId ?? ''));
+            return this.getSnapshot();
+        });
         ipcMain.handle('app:finish-run-timer', async () => {
             this.finishRunTimer();
             return this.getSnapshot();

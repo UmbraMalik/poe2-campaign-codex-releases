@@ -407,3 +407,111 @@
     flex-direction: column;
   }
 }
+
+/* Run save / history / comparison. */
+.run-save-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.run-history-card,
+.run-compare-card,
+.run-save-card {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(214, 162, 84, 0.10), transparent 32%),
+    rgba(255, 255, 255, 0.025);
+}
+
+.run-history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.run-history-item {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.022));
+}
+
+.run-history-item > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.run-history-item > div:first-child strong {
+  color: #fff7df;
+}
+
+.run-history-item > div:first-child span {
+  color: rgba(234, 240, 247, 0.62);
+  font-size: 12px;
+}
+
+.run-history-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.run-history-stats span,
+.run-comparison-total span {
+  color: rgba(234, 240, 247, 0.68);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.run-history-stats b,
+.run-comparison-total strong {
+  color: #ffffff;
+}
+
+.run-history-actions {
+  justify-content: flex-end;
+}
+
+.run-comparison-total {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.run-comparison-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.run-comparison-act-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.027);
+}
+
+.run-comparison-act-row span {
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 800;
+}
+
+.run-comparison-act-row strong {
+  color: #ffffff;
+}
+
+.delta-good {
+  color: #8ee6aa !important;
+}
+
+.delta-bad {
+  color: #ffb38c !important;
+}

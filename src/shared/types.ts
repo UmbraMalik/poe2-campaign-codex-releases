@@ -348,6 +348,20 @@ export interface RunSummary {
   isNewPb: boolean;
 }
 
+
+export interface SavedRunHistoryEntry {
+  id: string;
+  label: string;
+  savedAt: number;
+  totalElapsedMs: number;
+  currentAct: ZoneAct | null;
+  status: RunTimerStatus;
+  actSplits: RunTimerActSplit[];
+  longestZones: ZoneTimeEntry[];
+  zoneTimeHistory: ZoneTimeEntry[];
+  runTimer: RunTimerState;
+}
+
 export interface AppConfig {
   appLanguage: AppLanguage;
   logFilePath: string | null;
@@ -378,6 +392,7 @@ export interface AppConfig {
   zoneTimeHistory: ZoneTimeEntry[];
   bestRun: BestRunSummary | null;
   lastRunSummary: RunSummary | null;
+  runHistory: SavedRunHistoryEntry[];
   levelRemindersState: LevelRemindersState;
   runTimer: RunTimerState;
   townTimer: TownTimerState;
@@ -624,6 +639,9 @@ export interface ElectronApi {
   pauseRunTimer: () => Promise<AppSnapshot>;
   resumeRunTimer: () => Promise<AppSnapshot>;
   resetRunTimer: () => Promise<AppSnapshot>;
+  saveCurrentRunToHistory: (label?: string) => Promise<AppSnapshot>;
+  restoreSavedRun: (runId: string) => Promise<AppSnapshot>;
+  deleteSavedRun: (runId: string) => Promise<AppSnapshot>;
   finishRunTimer: () => Promise<AppSnapshot>;
   getRunTimerState: () => Promise<RunTimerState>;
   isTimerDiagnosticsEnabled: () => Promise<boolean>;

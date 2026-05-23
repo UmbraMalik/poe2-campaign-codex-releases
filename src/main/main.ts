@@ -80,6 +80,7 @@ import type {
   OverlayMode,
   RunSummary,
   RunTimerState,
+  SavedRunHistoryEntry,
   SettingsPatch,
   TimerDiagnosticsPayload,
   UpdateCheckResult,
@@ -946,6 +947,88 @@ export class PoeOverlayApp {
     }
     resetRunTimer() {
         return runResetRunTimerMethod.apply(this, arguments as any);
+    }
+    saveCurrentRunToHistory(label: string | null = null) {
+        const now = Date.now();
+        const runTimer = this.config.runTimer;
+        const totalElapsedMs = this.getRunTimerDisplayElapsedMs(now);
+        const hasAnyRunData = totalElapsedMs > 0 || runTimer.actSplits.length > 0 || this.config.zoneTimeHistory.length > 0;
+        if (!hasAnyRunData) {
+            return;
+        }
+
+        const currentAct = this.currentZone.guide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null;
+        const longestZones = [...this.config.zoneTimeHistory]
+            .sort((left: any, right: any) => right.elapsedMs - left.elapsedMs)
+            .slice(0, 5);
+        const safeLabel = typeof label === 'string' && label.trim().length > 0
+            ? label.trim().slice(0, 80)
+            : null;
+        const entry: SavedRunHistoryEntry = {
+            id: `run-${now}-${Math.random().toString(36).slice(2, 8)}`,
+            label: safeLabel ?? `Run ${new Date(now).toLocaleString('ru-RU')}`,
+            savedAt: now,
+            totalElapsedMs,
+            currentAct,
+            status: runTimer.status,
+            actSplits: [...runTimer.actSplits],
+            longestZones,
+            zoneTimeHistory: [...this.config.zoneTimeHistory],
+            runTimer: {
+                ...runTimer,
+                status: runTimer.status === 'running' ? 'paused' : runTimer.status,
+                elapsedMs: totalElapsedMs,
+                resumedAt: null,
+                pausedAt: now,
+                currentZoneElapsedMs: this.getCurrentZoneElapsedMs(now),
+                lastZoneEnteredAt: null,
+                pauseReason: runTimer.status === 'running' ? 'manual' : runTimer.pauseReason
+            }
+        };
+
+        this.config = this.configStore.update({
+            runHistory: [entry, ...this.config.runHistory.filter((item: SavedRunHistoryEntry) => item.id !== entry.id)].slice(0, 20)
+        });
+        this.broadcastState();
+    }
+    restoreSavedRun(runId: string) {
+        const entry = this.config.runHistory.find((item: SavedRunHistoryEntry) => item.id === runId);
+        if (!entry) {
+            return;
+        }
+        const now = Date.now();
+        this.clearRunTimerStartTimer();
+        if (typeof entry.currentAct === 'number') {
+            this.runtime.lastGameplayAct = entry.currentAct;
+            this.currentZone = {
+                ...this.currentZone,
+                actHint: entry.currentAct
+            };
+        }
+        this.config = this.configStore.update({
+            ignoreExistingLogOnNextStart: true,
+            runTimer: {
+                ...entry.runTimer,
+                status: 'paused',
+                elapsedMs: entry.totalElapsedMs,
+                resumedAt: null,
+                pausedAt: now,
+                finishedAt: null,
+                lastZoneEnteredAt: null,
+                pauseReason: 'manual'
+            },
+            zoneTimeHistory: [...entry.zoneTimeHistory],
+            lastRunSummary: null
+        });
+        this.emitRunTimerState();
+        this.refreshTrayMenu();
+        this.broadcastState();
+    }
+    deleteSavedRun(runId: string) {
+        this.config = this.configStore.update({
+            runHistory: this.config.runHistory.filter((item: SavedRunHistoryEntry) => item.id !== runId)
+        });
+        this.broadcastState();
     }
     finishRunTimer() {
         return runFinishRunTimerMethod.apply(this, arguments as any);
