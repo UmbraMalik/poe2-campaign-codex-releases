@@ -515,6 +515,16 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
     ]
   },
   {
+    "id": "a4_kingsmarch",
+    "act": 4,
+    "zoneRu": "Кингсмарш",
+    "zoneEn": "Kingsmarch",
+    "areaIds": [
+      "C_G4_town",
+      "G4_town"
+    ]
+  },
+  {
     "id": "a4_kids_bay",
     "act": 4,
     "zoneRu": "Кеджский залив",

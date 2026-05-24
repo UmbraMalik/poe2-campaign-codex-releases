@@ -1162,5 +1162,22 @@
   "Дальше идти в Выжженные фермерские земли.": "Then go to the Scorched Farmlands.",
   "Финальная ветка маршрута: Пристанище → Выжженные фермерские земли → Камни Серли → Чернолесье → Холтен → Вольфенхолд → Поместье Холтен.": "Final route branch: Refuge → Scorched Farmlands → Stones of Serle → Blackwood → Holten → Wolvenhold → Holten Estate.",
   "Пристанище → Выжженные фермерские земли → Камни Серли.": "Refuge → Scorched Farmlands → Stones of Serle.",
-  "Здесь начинается 1-я страница акта; финал всей цепочки — Поместье Холтен.": "The first act page starts here; the whole chain ends at Holten Estate."
+  "Здесь начинается 1-я страница акта; финал всей цепочки — Поместье Холтен.": "The first act page starts here; the whole chain ends at Holten Estate.",
+  "Кингсмарш": "Kingsmarch",
+  "Кингсмарк": "Kingsmarch",
+  "Акт 4 / хаб": "Act 4 / hub",
+  "Открыть корабль и идти в Кеджский залив": "Open the ship map and go to Kedge Bay.",
+  "Дальше закрывать острова по порядку: Остров Рода → Остров Вакапану → Заброшенная тюрьма → Остров криков → Глаз Хинекоры → Арастас → Нгакану": "Then clear the islands in order: Isle of Kin → Whakapanu Island → Abandoned Prison → Isle of Screams → Eye of Hinekora → Arastas → Ngakanu.",
+  "Мыс грабителя — опционально, делать только если собрана карта сокровищ и не ломаешь темп": "Plunder's Point is optional; do it only if the treasure map is assembled and it will not break your pace.",
+  "Хаб корабля Акта 4": "Act 4 ship hub",
+  "Не зависать в хабе: выбрать следующий остров и сразу отплывать": "Do not linger in the hub: choose the next island and sail out immediately.",
+  "Порядок корабля: Кеджский залив → Остров Рода → Остров Вакапану → Заброшенная тюрьма → Остров криков → Глаз Хинекоры → Арастас → Мыс грабителя (опционально) → Нгакану": "Ship order: Kedge Bay → Isle of Kin → Whakapanu Island → Abandoned Prison → Isle of Screams → Eye of Hinekora → Arastas → Plunder's Point (optional) → Ngakanu.",
+  "С корабля сначала идти в Кеджский залив": "From the ship, go to Kedge Bay first.",
+  "Потом закрывать основные острова: Остров Рода → Остров Вакапану → Заброшенная тюрьма → Остров криков → Глаз Хинекоры → Арастас → Нгакану": "Then clear the main islands: Isle of Kin → Whakapanu Island → Abandoned Prison → Isle of Screams → Eye of Hinekora → Arastas → Ngakanu.",
+  "Мыс грабителя оставить как опциональную Expedition-точку после карты сокровищ": "Leave Plunder's Point as an optional Expedition stop after the treasure map.",
+  "Мыс грабителя можно пропустить в быстром прохождении": "Plunder's Point can be skipped in a speed-focused run.",
+  "Не возвращаться в уже закрытые острова без причины": "Do not return to already cleared islands without a reason.",
+  "Кингсмарш — только хаб: сам маршрут по зонам ниже остаётся прежним, эта карточка нужна как памятка порядка отплытия.": "Kingsmarch is only a hub: the zone route below stays the same; this card is just a reminder for the sailing order.",
+  "Если запутался на карте Акта 4: порядок корабля — Кеджский залив, Остров Рода, Остров Вакапану, Заброшенная тюрьма, Остров криков, Глаз Хинекоры, Арастас, Нгакану.": "If the Act 4 map gets confusing: ship order is Kedge Bay, Isle of Kin, Whakapanu Island, Abandoned Prison, Isle of Screams, Eye of Hinekora, Arastas, Ngakanu.",
+  "Мыс грабителя отмечать как боковую точку: идти туда только после Torn Map Pieces / карты сокровищ.": "Treat Plunder's Point as a side stop: go there only after Torn Map Pieces / the treasure map."
 }
