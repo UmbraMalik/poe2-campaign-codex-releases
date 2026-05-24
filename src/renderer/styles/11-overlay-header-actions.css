@@ -843,3 +843,44 @@
 .overlay-page.density-compact:not(.overlay-page-timer-only):not(.is-overlay-collapsed) .overlay-hud {
   max-height: 100vh !important;
 }
+
+/* === Overlay footer mode buttons: keep mode toggles centered and width-aligned. ===
+   Compact/expanded footer buttons were hugging the left edge on narrow overlays.
+   Treat them as full-width actions so “Компактно”, “Только таймер” and
+   “Развернуть” line up with the card body instead of floating off-center. */
+.overlay-page:not(.overlay-page-timer-only) .hud-footer-row {
+  width: 100%;
+  justify-content: stretch !important;
+}
+
+.overlay-page:not(.overlay-page-timer-only) .hud-footer-actions {
+  width: 100%;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px !important;
+}
+
+.overlay-page:not(.overlay-page-timer-only) .hud-footer-actions > .timer-only-collapse-button {
+  width: 100% !important;
+  min-width: 0 !important;
+  justify-content: center;
+  text-align: center;
+}
+
+.overlay-page.overlay-page-timer-only .timer-only-footer {
+  width: 100%;
+  justify-content: stretch !important;
+}
+
+.overlay-page.overlay-page-timer-only .timer-only-expand-button {
+  width: 100% !important;
+  min-width: 0 !important;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 260px) {
+  .overlay-page:not(.overlay-page-timer-only) .hud-footer-actions {
+    grid-template-columns: 1fr;
+  }
+}
