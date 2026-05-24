@@ -27,6 +27,7 @@ import {
 } from '../companion-helpers';
 import { formatDuration, getLevelState } from '../utils';
 import { getOverlayMinimumSize } from '../../shared/overlay-layout';
+import { isEndgameT15Act } from '../../shared/timers';
 import { shouldStartOverlayDrag } from '../../shared/overlay-drag';
 import {
   getOverlayLockButtonIcon,
@@ -59,6 +60,10 @@ import type {
 function formatActTitle(act: ZoneAct | null, language: AppLanguage): string {
   if (act === null) {
     return translate(language, 'overlay.currentZoneFallback');
+  }
+
+  if (typeof act === 'number' && isEndgameT15Act(act)) {
+    return translate(language, 'route.endgameToT15');
   }
 
   return act === 'interlude'
@@ -1163,7 +1168,7 @@ export function OverlayPage() {
         : runtime.lastGameplayAct ?? null;
   const currentActTimerLabel =
     currentActTimerAct !== null
-      ? translate(language, 'route.act', { act: currentActTimerAct })
+      ? formatActTitle(currentActTimerAct, language)
       : guide?.act === 'interlude' || currentZone.actHint === 'interlude'
         ? translate(language, 'route.interludes')
         : null;

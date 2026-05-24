@@ -4,6 +4,12 @@ import type {
   TownTimerState
 } from './types';
 
+export const ENDGAME_T15_ACT = 6;
+
+export function isEndgameT15Act(act: number | null | undefined): boolean {
+  return act === ENDGAME_T15_ACT;
+}
+
 export function formatDuration(ms: number): string {
   const safeMs = Math.max(0, Math.floor(ms));
   const totalSeconds = Math.floor(safeMs / 1000);

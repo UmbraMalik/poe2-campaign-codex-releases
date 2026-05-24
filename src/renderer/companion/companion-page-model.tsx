@@ -5,6 +5,7 @@ import type { ActTimeRow } from '../companion-helpers';
 import { formatDuration } from '../utils';
 import { getGuideView, translateDataText } from '../../i18n/data';
 import { translate } from '../../i18n/translations';
+import { isEndgameT15Act } from '../../shared/timers';
 import type {
   AppLanguage,
   AppSnapshot,
@@ -99,6 +100,10 @@ export function formatRouteCardTitle(guide: GuideEntry, language: AppLanguage): 
 export function formatActTitle(act: ZoneAct | null, language: AppLanguage) {
   if (act === null) {
     return translate(language, 'companion.routeTitleFallback');
+  }
+
+  if (typeof act === 'number' && isEndgameT15Act(act)) {
+    return translate(language, 'route.endgameToT15');
   }
 
   return act === 'interlude'

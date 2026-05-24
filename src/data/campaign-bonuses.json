@@ -1140,7 +1140,31 @@
             "2 очка пассивных умений для набора оружия"
           ],
           "zoneIds": [
-            "i2_glacial_tarn"
+            "i2_glacial_tarn",
+            "i2_mount_cryer"
+          ]
+        },
+        {
+          "all": [
+            "2",
+            "очк",
+            "набор",
+            "оруж"
+          ],
+          "zoneIds": [
+            "i2_glacial_tarn",
+            "i2_mount_cryer"
+          ]
+        },
+        {
+          "all": [
+            "2",
+            "weapon set",
+            "passive"
+          ],
+          "zoneIds": [
+            "i2_glacial_tarn",
+            "i2_mount_cryer"
           ]
         }
       ]
@@ -1187,7 +1211,46 @@
           ],
           "zoneIds": [
             "i_final_holten_estate",
-            "i_final_darkness"
+            "i_final_darkness",
+            "i_final_holten"
+          ]
+        },
+        {
+          "all": [
+            "2",
+            "очк",
+            "набор",
+            "оруж"
+          ],
+          "zoneIds": [
+            "i_final_holten_estate",
+            "i_final_darkness",
+            "i_final_holten"
+          ]
+        },
+        {
+          "all": [
+            "получили",
+            "2 очка пассивных умений для набора оружия"
+          ],
+          "sceneNames": [
+            "Ориат",
+            "Убежище в зиккурате",
+            "Oriath",
+            "Ziggurat Refuge"
+          ]
+        },
+        {
+          "all": [
+            "2",
+            "weapon set",
+            "passive"
+          ],
+          "sceneNames": [
+            "Ориат",
+            "Убежище в зиккурате",
+            "Oriath",
+            "Ziggurat Refuge"
           ]
         }
       ]

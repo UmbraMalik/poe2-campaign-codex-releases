@@ -354,8 +354,8 @@ const baseTranslations = {
       longestZones: 'Самые долгие зоны',
       actTimesEmptyFinished: 'В этом забеге не записались сплиты по актам.',
       actTimesEmptyRunning: 'Время актов появится после перехода между актами.',
-      actTimesTitle: 'Время актов',
-      actTimesIntro: 'Разбивка забега по актам: отдельное время акта, статус и накопленное общее время.',
+      actTimesTitle: 'Время актов и До Т15',
+      actTimesIntro: 'Разбивка забега по актам и отдельный сегмент эндгейма до Т15 карт: время сегмента, статус и накопленное общее время.',
       totalTimeHint: 'С начала текущего забега',
       completedActs: 'Завершено актов',
       completedActsHint: 'По записанным переходам между актами',
@@ -582,7 +582,8 @@ const baseTranslations = {
     },
     route: {
       act: 'Акт {act}',
-      interludes: 'Интерлюдии'
+      interludes: 'Интерлюдии',
+      endgameToT15: 'До Т15'
     },
     states: {
       unknown: 'НЕИЗВЕСТНО',
@@ -992,8 +993,8 @@ const baseTranslations = {
       longestZones: 'Longest Zones',
       actTimesEmptyFinished: 'No act splits were recorded in this run.',
       actTimesEmptyRunning: 'Act times will appear after you transition between acts.',
-      actTimesTitle: 'Act Times',
-      actTimesIntro: 'Run breakdown by act: act time, status, and cumulative total time.',
+      actTimesTitle: 'Act Times and To T15',
+      actTimesIntro: 'Run breakdown by act plus a separate endgame-to-T15 segment: segment time, status, and cumulative total time.',
       totalTimeHint: 'Since the start of the current run',
       completedActs: 'Completed acts',
       completedActsHint: 'Based on recorded act transitions',
@@ -1220,7 +1221,8 @@ const baseTranslations = {
     },
     route: {
       act: 'Act {act}',
-      interludes: 'Interludes'
+      interludes: 'Interludes',
+      endgameToT15: 'To T15'
     },
     states: {
       unknown: 'UNKNOWN',

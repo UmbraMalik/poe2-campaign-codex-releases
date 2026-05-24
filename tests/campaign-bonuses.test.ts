@@ -150,6 +150,29 @@ test('EN campaign bonus fixture marks the correct act-specific bonuses only', ()
 });
 
 
+
+test('Yeti tusks weapon-set reward can be claimed after returning to Kriar Village', () => {
+  const app = createTestAppInstance();
+  applyAppLogLine(app as never, '2026/05/24 03:30:10 123 [DEBUG Client] Generating level 55 area "C_P3_4" with seed 1');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Воющие пещеры]');
+  applyAppLogLine(app as never, '2026/05/24 03:32:10 123 [DEBUG Client] Generating level 54 area "C_P3_2" with seed 2');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Деревня Криар]');
+  applyAppLogLine(app as never, ': Вы получили 2 очка пассивных умений для набора оружия.');
+
+  assert.deepEqual(getDoneBonusIds(app), ['int3_howling_caves_yeti_weapon_points']);
+});
+
+test('Final interlude weapon-set reward can be claimed in the endgame refuge', () => {
+  const app = createTestAppInstance();
+  applyAppLogLine(app as never, '2026/05/24 16:50:00 123 [DEBUG Client] Generating level 59 area "P1_6" with seed 1');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Поместье Холтен]');
+  applyAppLogLine(app as never, '2026/05/24 16:59:09 123 [DEBUG Client] Generating level 65 area "G_Endgame_Town" with seed 1');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Убежище в зиккурате]');
+  applyAppLogLine(app as never, ': Вы получили 2 очка пассивных умений для набора оружия.');
+
+  assert.deepEqual(getDoneBonusIds(app), ['int3_final_zolin_zelina_weapon_points']);
+});
+
 test('Servi venom vial choice can be completed after leaving Venom Crypts', () => {
   const app = createTestAppInstance();
   applyAppLogLine(app as never, '2026/05/16 22:10:10 123 [DEBUG Client] Generating level 33 area "G3_5" with seed 1');

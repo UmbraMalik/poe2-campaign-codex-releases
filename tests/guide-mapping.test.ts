@@ -93,6 +93,7 @@ test('inferActHintFromInternalAreaId covers G1-G5 and P1-P3 prefixes', () => {
     ['G3_17', 3],
     ['G4_11_2', 4],
     ['G5_demo', 5],
+    ['G_Endgame_Town', 6],
     ['P1_4', 5],
     ['P2_6', 5],
     ['P3_5', 5]

@@ -39,6 +39,7 @@ import {
 import { buildChecklistDefinition, buildChecklistViewItems } from '../shared/checklist';
 import { getRunTimerDisplayElapsed, getZoneTimerDisplayElapsed } from '../shared/timers';
 import { getOverlayMinimumSize } from '../shared/overlay-layout';
+import { ENDGAME_T15_ACT } from '../shared/timers';
 import {
   areOverlayBoundsEqual,
   areOverlayBoundsSizeEqual,
@@ -355,10 +356,10 @@ export function runSetTownScene(this: any, rawZoneName: any, source: any) {
             this.currentZone.sceneKind !== 'town';
         const matchedTownGuide = rawZoneName ? this.guideService.findByZoneName(rawZoneName) : null;
         const townActHint = inferActHintFromTownScene(rawZoneName);
+        const shouldClearGuide = townActHint === ENDGAME_T15_ACT ||
+            this.normalizeSceneSource(rawZoneName) === 'clearfell encampment';
         const nextTownGuide = matchedTownGuide ??
-            (this.normalizeSceneSource(rawZoneName) === 'clearfell encampment'
-                ? null
-                : this.currentZone.guide);
+            (shouldClearGuide ? null : this.currentZone.guide);
         const nextActHint = townActHint ?? nextTownGuide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null;
         // Town/hub scenes are part of the run. Do not pause timers and do not
         // start separate town tracking.

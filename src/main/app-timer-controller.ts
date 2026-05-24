@@ -37,7 +37,7 @@ import {
   DEFAULT_TOWN_TIMER
 } from '../shared/defaults';
 import { buildChecklistDefinition, buildChecklistViewItems } from '../shared/checklist';
-import { getRunTimerDisplayElapsed, getZoneTimerDisplayElapsed } from '../shared/timers';
+import { ENDGAME_T15_ACT, getRunTimerDisplayElapsed, getZoneTimerDisplayElapsed } from '../shared/timers';
 import { getOverlayMinimumSize } from '../shared/overlay-layout';
 import {
   areOverlayBoundsEqual,
@@ -57,6 +57,7 @@ import {
 } from './hotkey-utils';
 import {
   inferActHintFromInternalAreaId as inferActHintFromInternalAreaIdFromScene,
+  inferActHintFromTownScene,
   isActLabelScene,
   isLoginLikeScene,
   isTownSceneWithGuide,
@@ -220,16 +221,20 @@ export function runProcessRunTimerActivityFromLogLine(this: any, line: any, sour
         if (source === 'bootstrap') {
             if (this.isTownSceneWithGuide(rawSceneSource, matchedGuide)) {
                 const matchedTownGuide = rawSceneSource ? this.guideService.findByZoneName(rawSceneSource) : null;
+                const townActHint = inferActHintFromTownScene(rawSceneSource);
+                const shouldClearGuide = townActHint === ENDGAME_T15_ACT ||
+                    this.normalizeSceneSource(rawSceneSource) === 'clearfell encampment';
                 const nextTownGuide = matchedTownGuide ??
-                    (this.normalizeSceneSource(rawSceneSource) === 'clearfell encampment'
-                        ? null
-                        : this.currentZone.guide);
+                    (shouldClearGuide ? null : this.currentZone.guide);
                 this.currentZone = {
                     rawZoneName: rawSceneSource,
                     guide: nextTownGuide,
                     sceneKind: 'town',
-                    actHint: nextTownGuide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null
+                    actHint: townActHint ?? nextTownGuide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null
                 };
+                if (typeof townActHint === 'number') {
+                    this.runtime.lastGameplayAct = townActHint;
+                }
                 this.syncRuntimeZoneFields(rawSceneSource, this.currentZone.guide);
                 this.logZoneEventDecision(zoneMatch, 'updated');
             }
