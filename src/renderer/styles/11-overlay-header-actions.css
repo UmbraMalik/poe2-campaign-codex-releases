@@ -696,27 +696,36 @@
 }
 
 .overlay-page.is-overlay-collapsed {
-  height: 100vh;
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
   padding: 5px;
+  overflow: hidden !important;
 }
 
-.overlay-page.is-overlay-collapsed .overlay-collapsed-shell {
-  min-height: 0;
-  max-height: none;
-  padding: 6px 8px;
-  overflow: hidden;
-  border-radius: 14px;
+.overlay-page.is-overlay-collapsed .overlay-collapsed-shell,
+.overlay-page.is-overlay-collapsed .overlay-shell.overlay-collapsed-shell,
+.overlay-page.is-overlay-collapsed .overlay-hud.overlay-collapsed-shell {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  padding: 6px 8px !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
 }
 
 .hud-collapsed-bar {
   min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 28px;
+  display: flex !important;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }
 
 .hud-collapsed-main {
+  flex: 1 1 auto;
   min-width: 0;
   display: inline-flex;
   align-items: center;
@@ -729,6 +738,7 @@
 }
 
 .hud-collapsed-zone-name {
+  flex: 1 1 auto;
   min-width: 0;
   margin: 0;
   overflow: hidden;
@@ -736,7 +746,7 @@
   white-space: nowrap;
   color: #fff4d6;
   font-family: var(--font-display);
-  font-size: clamp(16px, calc(var(--font-title) * 0.82), 21px);
+  font-size: clamp(15px, calc(var(--font-title) * 0.76), 20px);
   font-weight: 950;
   line-height: 1.05;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.65);
@@ -746,30 +756,34 @@
   position: static !important;
   flex: 0 0 auto;
   max-width: none !important;
+  min-width: 0 !important;
+  justify-self: auto !important;
 }
 
 .overlay-page.is-overlay-collapsed .overlay-quick-actions {
+  flex-wrap: nowrap !important;
   gap: 5px !important;
+}
+
+/* In the one-line collapsed bar the language pill eats too much width and
+   forces controls into a second row on narrow overlays. Keep language switching
+   in the expanded header; collapsed mode is only a temporary dodge button. */
+.overlay-page.is-overlay-collapsed .overlay-language-toggle {
+  display: none !important;
 }
 
 .overlay-page.is-overlay-collapsed .overlay-icon-button,
 .overlay-page.is-overlay-collapsed .overlay-timer-icon-control {
-  width: 24px;
-  min-width: 24px;
-  height: 24px;
-  min-height: 24px;
-}
-
-.overlay-page.is-overlay-collapsed .overlay-language-toggle,
-.overlay-page.is-overlay-collapsed .overlay-language-toggle-hitarea {
-  width: 54px !important;
-  min-width: 54px !important;
-  height: 26px !important;
-  min-height: 26px !important;
+  width: 24px !important;
+  min-width: 24px !important;
+  max-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
 }
 
 .overlay-page.is-overlay-collapsed.density-compact .overlay-collapsed-shell {
-  padding: 5px 7px;
+  padding: 5px 7px !important;
 }
 
 .overlay-page.is-overlay-collapsed.density-compact .hud-collapsed-bar {
@@ -777,16 +791,17 @@
 }
 
 .overlay-page.is-overlay-collapsed.density-compact .hud-collapsed-zone-name {
-  font-size: clamp(15px, calc(var(--font-title) * 0.78), 19px);
+  font-size: clamp(14px, calc(var(--font-title) * 0.72), 18px);
 }
 
 @media (max-width: 380px) {
   .overlay-page.is-overlay-collapsed .hud-collapsed-bar {
-    grid-template-columns: minmax(0, 1fr);
+    display: flex !important;
+    grid-template-columns: none !important;
     gap: 6px;
   }
 
   .overlay-page.is-overlay-collapsed .hud-title-actions {
-    justify-self: end;
+    justify-self: auto !important;
   }
 }
