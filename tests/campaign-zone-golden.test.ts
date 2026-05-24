@@ -23,6 +23,16 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
     ]
   },
   {
+    "id": "a1_clearfell_encampment",
+    "act": 1,
+    "zoneRu": "Лагерь Клирфелл",
+    "zoneEn": "Clearfell Encampment",
+    "areaIds": [
+      "C_G1_town",
+      "G1_town"
+    ]
+  },
+  {
     "id": "a1_clearfell",
     "act": 1,
     "zoneRu": "Клирфелл",
@@ -170,6 +180,16 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
     "areaIds": [
       "C_G2_1",
       "G2_1"
+    ]
+  },
+  {
+    "id": "a2_ardura_caravan",
+    "act": 2,
+    "zoneRu": "Караван Ардура",
+    "zoneEn": "Ardura Caravan",
+    "areaIds": [
+      "C_G2_town",
+      "G2_town"
     ]
   },
   {
@@ -343,16 +363,6 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
     ]
   },
   {
-    "id": "a2_dreadnought_vanguard",
-    "act": 2,
-    "zoneRu": "Авангард Дредноута",
-    "zoneEn": "Dreadnought Vanguard",
-    "areaIds": [
-      "C_G2_12_2",
-      "G2_12_2"
-    ]
-  },
-  {
     "id": "a3_sandswept_marsh",
     "act": 3,
     "zoneRu": "Занесённое песком болото",
@@ -360,6 +370,16 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
     "areaIds": [
       "C_G3_1",
       "G3_1"
+    ]
+  },
+  {
+    "id": "a3_ziggurat_encampment",
+    "act": 3,
+    "zoneRu": "Лагерь на зиккурате",
+    "zoneEn": "The Ziggurat Encampment",
+    "areaIds": [
+      "C_G3_town",
+      "G3_town"
     ]
   },
   {
@@ -512,6 +532,16 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
     "areaIds": [
       "C_G3_17",
       "G3_17"
+    ]
+  },
+  {
+    "id": "a4_kingsmarch",
+    "act": 4,
+    "zoneRu": "Кингсмарш",
+    "zoneEn": "Kingsmarch",
+    "areaIds": [
+      "C_G4_town",
+      "G4_town"
     ]
   },
   {
@@ -689,6 +719,16 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
     ]
   },
   {
+    "id": "interlude_khari_bazaar",
+    "act": 5,
+    "zoneRu": "Кхарийский базар",
+    "zoneEn": "Khari Bazaar",
+    "areaIds": [
+      "C_P2_Town",
+      "P2_Town"
+    ]
+  },
+  {
     "id": "interlude_khari_crossing",
     "act": 5,
     "zoneRu": "Кхарийский перевал",
@@ -711,7 +751,7 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
   {
     "id": "interlude_selvari_sanctuary",
     "act": 5,
-    "zoneRu": "Храм Селхари",
+    "zoneRu": "Храм Селари",
     "zoneEn": "Sel Khari Sanctuary",
     "areaIds": [
       "C_P2_3",
@@ -727,13 +767,6 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
       "C_P2_5",
       "P2_5"
     ]
-  },
-  {
-    "id": "interlude_level_52_power_spike",
-    "act": 5,
-    "zoneRu": "52 уровень",
-    "zoneEn": "Level 52 Power Spike",
-    "areaIds": []
   },
   {
     "id": "i2_kima",
@@ -753,6 +786,26 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
     "areaIds": [
       "C_P2_7",
       "P2_7"
+    ]
+  },
+  {
+    "id": "interlude_the_glade",
+    "act": 5,
+    "zoneRu": "Опушка",
+    "zoneEn": "The Glade",
+    "areaIds": [
+      "C_P3_Town",
+      "P3_Town"
+    ]
+  },
+  {
+    "id": "interlude_ashen_forest",
+    "act": 5,
+    "zoneRu": "Пепельный лес",
+    "zoneEn": "Ashen Forest",
+    "areaIds": [
+      "C_P3_1",
+      "P3_1"
     ]
   },
   {
@@ -816,11 +869,24 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
     ]
   },
   {
-    "id": "i_final_darkness",
+    "id": "interlude_refuge",
     "act": 5,
-    "zoneRu": "Финальная интерлюдия / Тьма",
-    "zoneEn": "Final Interlude",
-    "areaIds": []
+    "zoneRu": "Пристанище",
+    "zoneEn": "The Refuge",
+    "areaIds": [
+      "C_P1_Town",
+      "P1_Town"
+    ]
+  },
+  {
+    "id": "interlude_scorched_farmlands",
+    "act": 5,
+    "zoneRu": "Выжженные фермерские земли",
+    "zoneEn": "Scorched Farmlands",
+    "areaIds": [
+      "C_P1_1",
+      "P1_1"
+    ]
   },
   {
     "id": "interlude_stones_of_serle",

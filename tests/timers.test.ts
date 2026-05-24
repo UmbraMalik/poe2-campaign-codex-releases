@@ -133,6 +133,61 @@ test('act splits survive transitions from Act 1 through Act 5 and finalise corre
   assert.equal(runTimer.elapsedMs, 8_000);
 });
 
+
+test('Endgame refuge starts the To T15 segment after Act 5', () => {
+  const app = createTestAppInstance();
+
+  withMockedNow(1_000, () => {
+    applyAppLogLine(app as never, '2026/05/24 16:50:00 123 [DEBUG Client] Generating level 59 area "P1_6" with seed 1');
+    applyAppLogLine(app as never, '[SCENE] Set Source [Поместье Холтен]');
+    (app as any).startRunTimerFromAnchor(1_000);
+  });
+
+  withMockedNow(2_000, () => {
+    applyAppLogLine(app as never, '2026/05/24 16:59:09 123 [DEBUG Client] Generating level 65 area "G_Endgame_Town" with seed 1');
+    applyAppLogLine(app as never, '[SCENE] Set Source [(null)]');
+    applyAppLogLine(app as never, '[SCENE] Set Source [Убежище в зиккурате]');
+  });
+
+  const runTimer = (app as any).config.runTimer;
+  assert.equal((app as any).currentZone.sceneKind, 'town');
+  assert.equal((app as any).currentZone.rawZoneName, 'Убежище в зиккурате');
+  assert.equal((app as any).currentZone.guide, null);
+  assert.equal((app as any).currentZone.actHint, 6);
+  assert.equal((app as any).runtime.lastGameplayAct, 6);
+  assert.deepEqual(runTimer.actSplits.map((split: { act: number }) => split.act), [5]);
+  assert.equal(getCurrentActElapsedMsForAct(runTimer, 6, 2_000), 0);
+});
+
+test('level 79 map area auto-finishes and saves the To T15 run', () => {
+  const app = createTestAppInstance();
+
+  withMockedNow(1_000, () => {
+    applyAppLogLine(app as never, '2026/05/24 16:50:00 123 [DEBUG Client] Generating level 59 area "P1_6" with seed 1');
+    applyAppLogLine(app as never, '[SCENE] Set Source [Поместье Холтен]');
+    (app as any).startRunTimerFromAnchor(1_000);
+  });
+
+  withMockedNow(2_000, () => {
+    applyAppLogLine(app as never, '2026/05/24 16:59:09 123 [DEBUG Client] Generating level 65 area "G_Endgame_Town" with seed 1');
+    applyAppLogLine(app as never, '[SCENE] Set Source [Убежище в зиккурате]');
+  });
+
+  withMockedNow(5_000, () => {
+    applyAppLogLine(app as never, '2026/05/24 17:47:33 123 [DEBUG Client] Generating level 79 area "MapWorldsT15_Test" with seed 1');
+  });
+
+  const runTimer = (app as any).config.runTimer;
+  assert.equal(runTimer.status, 'finished');
+  assert.equal(runTimer.elapsedMs, 4_000);
+  assert.deepEqual(runTimer.actSplits.map((split: { act: number }) => split.act), [5, 6]);
+  assert.equal((app as any).config.runHistory.length, 1);
+  assert.equal((app as any).config.runHistory[0].status, 'finished');
+  assert.equal((app as any).config.runHistory[0].totalElapsedMs, 4_000);
+  assert.ok((app as any).runtime.endgameT15CompletionNotice);
+  assert.equal((app as any).runtime.endgameT15CompletionNotice.totalElapsedMs, 4_000);
+});
+
 test('Kingsmarch town scene starts Act 4 timer after Act 3', () => {
   const app = createTestAppInstance();
 
@@ -166,7 +221,7 @@ test('no-guide gameplay zones preserve current act timer and do not create false
 
   withMockedNow(2_000, () => {
     applyAppLogLine(app as never, '2026/05/16 22:10:10 123 [DEBUG Client] Generating level 12 area "G1_unknown_test" with seed 1');
-    applyAppLogLine(app as never, '[SCENE] Set Source [The Glade]');
+    applyAppLogLine(app as never, '[SCENE] Set Source [Misty Side Zone]');
   });
 
   const runTimer = (app as any).config.runTimer;

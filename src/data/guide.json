@@ -87,6 +87,101 @@
       ]
     },
     {
+      "id": "a1_clearfell_encampment",
+      "act": 1,
+      "zone_en": "Clearfell Encampment",
+      "zone_ru": "Лагерь Клирфелл",
+      "aliases": [
+        "Клирфелл лагерь"
+      ],
+      "recommended_level": 1,
+      "recommended_level_label": "Акт 1 / хаб",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "a1_clearfell_encampment_task_1",
+          "text": "После Миллера взять награду/камень и сразу выйти в Клирфелл",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a1_clearfell_encampment_task_2",
+          "text": "Основной порядок: Клирфелл → Грельвуд → Красная Долина → Мрачные заросли → Кладбище Вечных → Супружеская гробница → Мавзолей претора",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a1_clearfell_encampment_task_3",
+          "text": "Дальше: Охотничьи угодья → Фрейторн → Фермерские земли Огама → Деревня Огам → Стены замка → Замок Огам",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a1_clearfell_encampment_task_4",
+          "text": "Грязевая нора — опционально, заходить только если нужен ранний камень поддержки",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Хаб Акта 1 и ранние торговцы"
+      ],
+      "skip": [
+        "Не зависать в городе: забрал награду, проверил торговцев и сразу в маршрут"
+      ],
+      "important": [
+        "Порядок Акта 1 держать через основные зоны; Грязевая нора не обязательна для быстрого прохождения."
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Клирфелл",
+      "details": {
+        "route": [
+          "Клирфелл → Грельвуд → Красная Долина → Мрачные заросли → Кладбище Вечных → Супружеская гробница → Мавзолей претора",
+          "Охотничьи угодья → Фрейторн → Фермерские земли Огама → Деревня Огам → Стены замка → Замок Огам",
+          "Грязевая нора — опционально, не ломать темп ради неё без нужды"
+        ],
+        "rewards": [
+          "Хаб Акта 1 и ранние торговцы"
+        ],
+        "skip": [
+          "Грязевая нора в быстром маршруте, если ранний саппорт не нужен",
+          "Долгие проверки города после каждого портала"
+        ],
+        "important": [
+          "Лагерь Клирфелл — памятка маршрута: сам прогресс начинается в Клирфелле, дальше идти по карточкам акта."
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "town_plan": [
+          "Проверить раннее оружие/броню у торговцев, поставить камни и выйти из города без лишних кругов."
+        ],
+        "navigation": [
+          "Если сбился: основной маршрут начинается с Клирфелла; Грязевая нора — боковая опционалка."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_G1_town",
+        "G1_town"
+      ]
+    },
+    {
       "id": "a1_clearfell",
       "act": 1,
       "zone_en": "Clearfell",
@@ -205,7 +300,7 @@
       "zone_ru": "Грязевая нора",
       "aliases": [],
       "recommended_level": 3,
-      "recommended_level_label": "3+",
+      "recommended_level_label": "опционально / 3+",
       "is_good_xp_zone": false,
       "checklist": [
         {
@@ -240,6 +335,7 @@
         "Для быстрого прохождения можно пропустить, если камень поддержки не нужен"
       ],
       "important": [
+        "Опциональная боковая зона из Клирфелла.",
         "Хорошая ранняя опционалка, но не обязательный прогресс кампании"
       ],
       "after": [],
@@ -262,6 +358,7 @@
           "Для быстрого прохождения можно пропустить, если камень поддержки не нужен"
         ],
         "important": [
+          "Опциональная боковая зона из Клирфелла.",
           "Хорошая ранняя опционалка, но не обязательный прогресс кампании"
         ],
         "after": [],
@@ -1378,7 +1475,7 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Окраины Вастири",
+      "next_zone_ru": "Караван Ардура",
       "details": {
         "route": [
           "Забрать лиговую сферу алхимии",
@@ -1459,13 +1556,14 @@
       ],
       "skip": [],
       "important": [
+        "После Окраин Вастири попасть в Караван Ардура, затем выходить в Каменоломню Маудун.",
         "После босса: город → Асала → карта пустыни → Ворота Халани для квестового состояния → TP"
       ],
       "after": [],
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Каменоломня Маудун",
+      "next_zone_ru": "Караван Ардура",
       "details": {
         "route": [
           "Если нашёл разграбленный лагерь — взять камень поддержки 2 тира",
@@ -1478,6 +1576,7 @@
         ],
         "skip": [],
         "important": [
+          "После Окраин Вастири попасть в Караван Ардура, затем выходить в Каменоломню Маудун.",
           "После босса: город → Асала → карта пустыни → Ворота Халани для квестового состояния → TP"
         ],
         "after": [],
@@ -1501,6 +1600,106 @@
       "area_ids": [
         "C_G2_1",
         "G2_1"
+      ]
+    },
+    {
+      "id": "a2_ardura_caravan",
+      "act": 2,
+      "zone_en": "Ardura Caravan",
+      "zone_ru": "Караван Ардура",
+      "aliases": [
+        "Караван",
+        "Caravan",
+        "The Ardura Caravan"
+      ],
+      "recommended_level": 13,
+      "recommended_level_label": "Акт 2 / хаб",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "a2_ardura_caravan_task_1",
+          "text": "После Окраин Вастири из Каравана идти в Каменоломню Маудун → Шахта Маудун → Тропа Изменницы → Ворота Халани",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a2_ardura_caravan_task_2",
+          "text": "Дальше: Бесплодные земли мастодонтов → Бессветный проход → Костяные ямы → Кет → Затерянный город → Захоронённые святилища",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a2_ardura_caravan_task_3",
+          "text": "Финал: Долина Титанов → Грот Титанов → Дешар → Путь скорби → Шпили Дешара → Дредноут",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a2_ardura_caravan_task_4",
+          "text": "Испытание Сехем — опционально, не обязательно для маршрута кампании",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Хаб Акта 2 и быстрые возвраты к торговцам"
+      ],
+      "skip": [
+        "Авангард Дредноута больше не вести как отдельную точку маршрута",
+        "Испытание Сехем можно отложить, если цель — быстрый проход актов"
+      ],
+      "important": [
+        "Акт 2 начинается с Окраин Вастири; после входа в Караван идти в Каменоломню Маудун.",
+        "0.5: Авангард Дредноута убран из актуального маршрута; финал акта закрывается через Дредноут."
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Каменоломня Маудун",
+      "details": {
+        "route": [
+          "Окраины Вастири → Караван Ардура → Каменоломня Маудун → Шахта Маудун → Тропа Изменницы → Ворота Халани",
+          "Бесплодные земли мастодонтов → Бессветный проход → Костяные ямы → Кет → Затерянный город → Захоронённые святилища",
+          "Долина Титанов → Грот Титанов → Дешар → Путь скорби → Шпили Дешара → Дредноут"
+        ],
+        "rewards": [
+          "Хаб Акта 2 и быстрые возвраты к торговцам"
+        ],
+        "skip": [
+          "Авангард Дредноута: зона удалена из актуального маршрута 0.5",
+          "Испытание Сехем — опционально"
+        ],
+        "important": [
+          "Караван Ардура — хаб после стартовой зоны; не вести его перед Окраинами Вастири.",
+          "Авангард Дредноута больше не возвращать в маршрут 0.5."
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "town_plan": [
+          "Пока караван едет, сдавать квесты, проверять торговцев и не стоять в пустой анимации."
+        ],
+        "navigation": [
+          "Если потерял порядок: сначала Окраины Вастири и Караван, потом Маудун/Халани, затем мастодонты и Кет, затем Титаны/Дешар/Дредноут."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_G2_town",
+        "G2_town"
       ]
     },
     {
@@ -1849,7 +2048,15 @@
         },
         {
           "id": "a2_mastodon_badlands_task_2",
-          "text": "Бездны обычно скипать, если XP хватает",
+          "text": "Найти Бессветный проход и открыть лиг-механику Abyss",
+          "type": "route_task",
+          "required": true,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a2_mastodon_badlands_task_3",
+          "text": "После открытия Abyss идти дальше к Костяным ямам",
           "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
@@ -1857,31 +2064,36 @@
         }
       ],
       "rewards": [
+        "Открытие лиг-механики Abyss",
         "Шанс на валюту/базу"
       ],
       "skip": [
-        "Бездны и Lightless Passage, если не нужен XP/валюта"
+        "Лишние Бездны после открытия механики, если XP хватает"
       ],
       "important": [
+        "Обязательно найти Бессветный проход и открыть Abyss-механику.",
         "Разница между старой бронёй и текущей огромная"
       ],
       "after": [],
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Костяные ямы",
+      "next_zone_ru": "Бессветный проход",
       "details": {
         "route": [
           "Начать обновлять бронебазы",
-          "Бездны обычно скипать, если XP хватает"
+          "Найти Бессветный проход и открыть лиг-механику Abyss",
+          "После открытия Abyss идти дальше к Костяным ямам"
         ],
         "rewards": [
+          "Открытие лиг-механики Abyss",
           "Шанс на валюту/базу"
         ],
         "skip": [
-          "Бездны и Lightless Passage, если не нужен XP/валюта"
+          "Лишние Бездны после открытия механики, если XP хватает"
         ],
         "important": [
+          "Обязательно найти Бессветный проход и открыть Abyss-механику.",
           "Разница между старой бронёй и текущей огромная"
         ],
         "after": [],
@@ -1889,10 +2101,10 @@
         "xp_notes": [],
         "crafting_tips": [],
         "opportunistic": [
-          "Abyss обычно скипать, если XP хватает; если сильно отстал — можно использовать как догон."
+          "После открытия Abyss лишние Бездны обычно скипать, если XP хватает; если сильно отстал — можно использовать как догон."
         ],
         "navigation": [
-          "Идти к Костяным ямам, не разворачивать маршрут ради случайных мелких наград."
+          "Сначала найти Бессветный проход для открытия Abyss, затем возвращаться в основной маршрут к Костяным ямам."
         ]
       },
       "display": {
@@ -1944,7 +2156,7 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Колодец душ / Костяные ямы",
+      "next_zone_ru": "Костяные ямы",
       "details": {
         "route": [
           "Пройти к Колодцу душ, если нужна Abyss-ветка",
@@ -1967,7 +2179,7 @@
           "Можно использовать как догон по опыту/луту, если отстал."
         ],
         "navigation": [
-          "Зона ведёт к Колодцу душ; после проверки возвращаться в основной маршрут Акта 2."
+          "После открытия Abyss вернуться в основной маршрут и идти в Костяные ямы."
         ]
       },
       "display": {
@@ -1988,7 +2200,7 @@
         "The Trial of the Sekhemas"
       ],
       "recommended_level": 22,
-      "recommended_level_label": "22+",
+      "recommended_level_label": "опционально / 22+",
       "is_good_xp_zone": false,
       "checklist": [
         {
@@ -2023,6 +2235,7 @@
         "Можно отложить, если на старте кампании важнее темп или билд ещё слабый"
       ],
       "important": [
+        "Опционально: можно отложить, если цель — быстро закрыть кампанию.",
         "Это опциональное испытание, а не обязательный маршрут Акта 2",
         "Лучше заходить, когда хватает урона, контроля и выживаемости"
       ],
@@ -2044,6 +2257,7 @@
           "Можно отложить, если на старте кампании важнее темп или билд ещё слабый"
         ],
         "important": [
+          "Опционально: можно отложить, если цель — быстро закрыть кампанию.",
           "Это опциональное испытание, а не обязательный маршрут Акта 2",
           "Лучше заходить, когда хватает урона, контроля и выживаемости"
         ],
@@ -2052,6 +2266,7 @@
         "xp_notes": [],
         "crafting_tips": [],
         "navigation": [
+          "Опционально: возвращаться только когда готов к испытанию.",
           "После проверки/попытки возвращаться в основной маршрут Акта 2."
         ]
       },
@@ -2847,7 +3062,7 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Занесённое песком болото",
+      "next_zone_ru": "Лагерь на зиккурате",
       "details": {
         "route": [
           "Идти аккуратно: зона опасная",
@@ -2886,60 +3101,6 @@
       "area_ids": [
         "C_G2_12_1",
         "G2_12_1"
-      ]
-    },
-    {
-      "id": "a2_dreadnought_vanguard",
-      "act": 2,
-      "zone_en": "Dreadnought Vanguard",
-      "zone_ru": "Авангард Дредноута",
-      "aliases": [],
-      "recommended_level": 28.5,
-      "recommended_level_label": "28.5 перед Джаманрой",
-      "is_good_xp_zone": true,
-      "checklist": [
-        {
-          "id": "a2_dreadnought_vanguard_task_1",
-          "text": "0.5: зона удалена из актуального маршрута",
-          "type": "route_task",
-          "required": false,
-          "autoCompleteKeywords": [],
-          "autoCompleteMode": "manual_or_zone_leave_infer"
-        }
-      ],
-      "rewards": [],
-      "skip": [],
-      "important": [
-        "0.5: зона удалена из актуального маршрута; карточка оставлена как архивная запись, чтобы не ломать старые данные и тестовые фикстуры."
-      ],
-      "after": [],
-      "boss_tips": [],
-      "xp_notes": [],
-      "crafting_tips": [],
-      "next_zone_ru": "Занесённое песком болото",
-      "details": {
-        "route": [
-          "0.5: Авангард Дредноута больше не является частью актуального маршрута."
-        ],
-        "rewards": [],
-        "skip": [],
-        "important": [
-          "0.5: зона удалена из актуального маршрута; карточка оставлена как архивная запись, чтобы не ломать старые данные и тестовые фикстуры."
-        ],
-        "after": [],
-        "boss_tips": [],
-        "xp_notes": [],
-        "crafting_tips": [],
-        "xp_strategy": [],
-        "time_saves": []
-      },
-      "display": {
-        "wideModeRecommended": true,
-        "showAllChecklist": true
-      },
-      "area_ids": [
-        "C_G2_12_2",
-        "G2_12_2"
       ]
     },
     {
@@ -2992,13 +3153,14 @@
       ],
       "skip": [],
       "important": [
+        "После стартовой зоны попасть в Лагерь на зиккурате, затем идти в Развалины в джунглях.",
         "В городе проверить Освальда на оружие, броню и фласки"
       ],
       "after": [],
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Развалины в джунглях",
+      "next_zone_ru": "Лагерь на зиккурате",
       "details": {
         "route": [
           "Если встретил Рутбриджа — убить за камень умения 9 уровня",
@@ -3013,6 +3175,7 @@
         ],
         "skip": [],
         "important": [
+          "После стартовой зоны попасть в Лагерь на зиккурате, затем идти в Развалины в джунглях.",
           "В городе проверить Освальда на оружие, броню и фласки"
         ],
         "after": [],
@@ -3036,6 +3199,101 @@
       "area_ids": [
         "C_G3_1",
         "G3_1"
+      ]
+    },
+    {
+      "id": "a3_ziggurat_encampment",
+      "act": 3,
+      "zone_en": "The Ziggurat Encampment",
+      "zone_ru": "Лагерь на зиккурате",
+      "aliases": [
+        "Зиккурат",
+        "Ziggurat",
+        "Ziggurat Encampment"
+      ],
+      "recommended_level": 28,
+      "recommended_level_label": "Акт 3 / хаб",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "a3_ziggurat_encampment_task_1",
+          "text": "После Занесённого песком болота из хаба идти в Развалины в джунглях → Ядовитые крипты",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a3_ziggurat_encampment_task_2",
+          "text": "Дальше: Заражённые земли → Болото Азак → Топи химеридов → Машинариум Джиквани → Святилище Джиквани",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a3_ziggurat_encampment_task_3",
+          "text": "Финал: Водные пути Матлана → Затопленный город → Расплавленные залы → Осквернённая вершина → Храм Копека → Чёрные палаты",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a3_ziggurat_encampment_task_4",
+          "text": "Храм Хаоса — опционально, заходить только если нужен Trial of Chaos / восхождение",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Хаб Акта 3 и быстрый ориентир по порядку зон"
+      ],
+      "skip": [
+        "Храм Хаоса в быстром маршруте, если не нужен Trial of Chaos"
+      ],
+      "important": [
+        "Акт 3 стартует с Занесённого песком болота; Лагерь на зиккурате — хаб после стартовой зоны.",
+        "Храм Хаоса — боковая опциональная зона."
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Развалины в джунглях",
+      "details": {
+        "route": [
+          "Занесённое песком болото → Лагерь на зиккурате → Развалины в джунглях → Ядовитые крипты",
+          "Заражённые земли → Болото Азак → Топи химеридов → Машинариум Джиквани → Святилище Джиквани",
+          "Водные пути Матлана → Затопленный город → Расплавленные залы → Осквернённая вершина → Храм Копека → Чёрные палаты"
+        ],
+        "rewards": [
+          "Хаб Акта 3 и быстрый ориентир по порядку зон"
+        ],
+        "skip": [
+          "Храм Хаоса — опционально для Trial of Chaos / восхождения"
+        ],
+        "important": [
+          "Лагерь на зиккурате — хаб после стартовой зоны; из него дальше идти в Развалины в джунглях.",
+          "Если запутался, после хаба идти по карточкам Акта 3 сверху вниз; не считать Храм Хаоса обязательным прогрессом."
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "navigation": [
+          "Храм Хаоса находится как боковая ветка: быстрое прохождение кампании обычно идёт мимо него."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_G3_town",
+        "G3_town"
       ]
     },
     {
@@ -4298,7 +4556,7 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Кеджский залив",
+      "next_zone_ru": "Кингсмарш",
       "details": {
         "route": [
           "Убить Дориани",
@@ -4331,6 +4589,91 @@
       "area_ids": [
         "C_G3_17",
         "G3_17"
+      ]
+    },
+    {
+      "id": "a4_kingsmarch",
+      "act": 4,
+      "zone_en": "Kingsmarch",
+      "zone_ru": "Кингсмарш",
+      "aliases": [
+        "Кингсмарк"
+      ],
+      "recommended_level": 40,
+      "recommended_level_label": "Акт 4 / хаб",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "a4_kingsmarch_task_1",
+          "text": "Открыть корабль и идти в Кеджский залив",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a4_kingsmarch_task_2",
+          "text": "Дальше закрывать острова по порядку: Остров Рода → Остров Вакапану → Заброшенная тюрьма → Остров криков → Глаз Хинекоры → Арастас → Нгакану",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "a4_kingsmarch_task_3",
+          "text": "Мыс грабителя — опционально, делать только если собрана карта сокровищ и не ломаешь темп",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Хаб корабля Акта 4"
+      ],
+      "skip": [
+        "Не зависать в хабе: выбрать следующий остров и сразу отплывать"
+      ],
+      "important": [
+        "Порядок корабля: Кеджский залив → Остров Рода → Остров Вакапану → Заброшенная тюрьма → Остров криков → Глаз Хинекоры → Арастас → Мыс грабителя (опционально) → Нгакану"
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Кеджский залив",
+      "details": {
+        "route": [
+          "С корабля сначала идти в Кеджский залив",
+          "Потом закрывать основные острова: Остров Рода → Остров Вакапану → Заброшенная тюрьма → Остров криков → Глаз Хинекоры → Арастас → Нгакану",
+          "Мыс грабителя оставить как опциональную Expedition-точку после карты сокровищ"
+        ],
+        "rewards": [
+          "Хаб корабля Акта 4"
+        ],
+        "skip": [
+          "Мыс грабителя можно пропустить в быстром прохождении",
+          "Не возвращаться в уже закрытые острова без причины"
+        ],
+        "important": [
+          "Кингсмарш — только хаб: сам маршрут по зонам ниже остаётся прежним, эта карточка нужна как памятка порядка отплытия."
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "navigation": [
+          "Если запутался на карте Акта 4: порядок корабля — Кеджский залив, Остров Рода, Остров Вакапану, Заброшенная тюрьма, Остров криков, Глаз Хинекоры, Арастас, Нгакану.",
+          "Мыс грабителя отмечать как боковую точку: идти туда только после Torn Map Pieces / карты сокровищ."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_G4_town",
+        "G4_town"
       ]
     },
     {
@@ -5638,7 +5981,7 @@
         },
         {
           "id": "a4_heart_tribe_task_2",
-          "text": "Вернуться в город и перейти в Интерлюдию 2",
+          "text": "Вернуться в город и перейти в Кхарийский базар",
           "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
@@ -5656,11 +5999,11 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Врата Голай",
+      "next_zone_ru": "Кхарийский базар",
       "details": {
         "route": [
           "Убить Тарукая",
-          "Вернуться в город и перейти в Интерлюдию 2"
+          "Вернуться в город и перейти в Кхарийский базар"
         ],
         "rewards": [
           "Переход в интерлюдии"
@@ -5679,7 +6022,7 @@
           "Держаться правой стены к Heart of the Tribe, главная цель — Tarukai."
         ],
         "town_plan": [
-          "После Tarukai — город/корабль и переход к интерлюдиям."
+          "После Tarukai — город/корабль и переход в Кхарийский базар."
         ]
       },
       "display": {
@@ -5689,6 +6032,79 @@
       "area_ids": [
         "C_G4_11_2",
         "G4_11_2"
+      ]
+    },
+    {
+      "id": "interlude_khari_bazaar",
+      "act": 5,
+      "zone_en": "Khari Bazaar",
+      "zone_ru": "Кхарийский базар",
+      "aliases": [
+        "Khari Bazaar",
+        "Khari Bazaar Town"
+      ],
+      "recommended_level": 48,
+      "recommended_level_label": "48+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "interlude_khari_bazaar_task_1",
+          "text": "Начать вторую страницу акта: идти в Кхарийский перевал",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_khari_bazaar_task_2",
+          "text": "Порядок страниц: 2-я страница → 3-я страница → 1-я страница",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_khari_bazaar_task_3",
+          "text": "После ветки Опушки и Убежища Куачик вернуться к Пристанищу",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [],
+      "skip": [],
+      "important": [
+        "Это хаб начала интерлюдии: сначала закрыть ветку Кхарийского базара, затем Опушку, затем Пристанище."
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Кхарийский перевал",
+      "details": {
+        "route": [
+          "Старт интерлюдии: сначала проходится 2-я страница акта — ветка Кхарийского базара.",
+          "После Кима и Водохранилища Кима маршрут переходит на 3-ю страницу: Опушка → Пепельный лес → ветка Криар.",
+          "После Убежища Куачик вернуться на 1-ю страницу через Пристанище и идти к финалу в Поместье Холтен."
+        ],
+        "important": [
+          "Не прыгать сразу в старые/первые локации: порядок страниц нужен, чтобы маршрут в оверлее не вёл назад-вперёд."
+        ],
+        "navigation": [
+          "Кхарийский базар → Кхарийский перевал → Воды Хаталя → Храм Селари → Врата Галаи."
+        ],
+        "town_plan": [
+          "Хаб-памятка: 2-я страница начинается здесь, 3-я — Опушка, 1-я — Пристанище."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_P2_Town",
+        "P2_Town"
       ]
     },
     {
@@ -5738,7 +6154,7 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Храм Селхари",
+      "next_zone_ru": "Воды Хаталя",
       "details": {
         "route": [
           "Найти расплавленную святыню и взять +5% максимум здоровья.",
@@ -5756,7 +6172,7 @@
         "xp_notes": [],
         "crafting_tips": [],
         "navigation": [
-          "В Кхарийском перевале забрать расплавленную святыню, убить Актхи и Анундра, затем вернуться к Рису за +2 пассивки набора оружия."
+          "После Кхарийского перевала идти в Воды Хаталя, а уже потом в Храм Селари."
         ]
       },
       "display": {
@@ -5784,7 +6200,7 @@
       "checklist": [
         {
           "id": "interlude_pools_khatal_task_1",
-          "text": "Пройти транзитом между Кхарийским перевалом и Храмом Селхари",
+          "text": "Пройти транзитом между Кхарийским перевалом и Храмом Селари",
           "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
@@ -5800,7 +6216,7 @@
         }
       ],
       "rewards": [
-        "Переход по ветке Хаталя / Селхари"
+        "Переход по ветке Хаталя / Селари"
       ],
       "skip": [
         "Не разворачивать карту ради полной зачистки"
@@ -5812,14 +6228,14 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Храм Селхари",
+      "next_zone_ru": "Храм Селари",
       "details": {
         "route": [
-          "Пройти транзитом между Кхарийским перевалом и Храмом Селхари",
+          "Пройти транзитом между Кхарийским перевалом и Храмом Селари",
           "Не чистить полностью, если нет просадки по опыту"
         ],
         "rewards": [
-          "Переход по ветке Хаталя / Селхари"
+          "Переход по ветке Хаталя / Селари"
         ],
         "skip": [
           "Не разворачивать карту ради полной зачистки"
@@ -5832,7 +6248,7 @@
         "xp_notes": [],
         "crafting_tips": [],
         "navigation": [
-          "Держать темп и искать переход дальше по ветке."
+          "Держать темп и искать переход в Храм Селари."
         ],
         "time_saves": [
           "Если XP в норме — не стопориться на боковых карманах."
@@ -5851,12 +6267,13 @@
       "id": "interlude_selvari_sanctuary",
       "act": 5,
       "zone_en": "Sel Khari Sanctuary",
-      "zone_ru": "Храм Селхари",
+      "zone_ru": "Храм Селари",
       "aliases": [
         "Selvari Sanctuary",
         "Святилище Селвари",
         "Святилище Селхари",
-        "Храм Селари"
+        "Храм Селари",
+        "Храм Селхари"
       ],
       "recommended_level": 49,
       "recommended_level_label": "49+",
@@ -5897,7 +6314,7 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "52 уровень",
+      "next_zone_ru": "Врата Галаи",
       "details": {
         "route": [
           "Найти 2 барьера и поставить в пьедесталы вдоль внешней стены",
@@ -5916,10 +6333,10 @@
         "xp_notes": [],
         "crafting_tips": [],
         "navigation": [
-          "Две barrier вставить в пьедесталы по внешней стене, выбрать кольцо/амулет."
+          "Две barrier вставить в пьедесталы по внешней стене, выбрать кольцо/амулет и идти дальше во Врата Галаи."
         ],
         "time_saves": [
-          "После босса поговорить, забрать выбор и возвращаться по ранее поставленному waypoint."
+          "После босса поговорить, забрать выбор и двигаться во Врата Галаи без лишнего фарма."
         ]
       },
       "display": {
@@ -5937,7 +6354,11 @@
       "zone_en": "The Galai Gates",
       "zone_ru": "Ворота Галаи",
       "aliases": [
-        "Galai Gates"
+        "Galai Gates",
+        "Ворота Галаи",
+        "Врата Голай",
+        "Ворота Голай",
+        "Врата Галаи"
       ],
       "recommended_level": 56,
       "recommended_level_label": "56+",
@@ -6020,91 +6441,6 @@
         "C_P2_5",
         "P2_5"
       ]
-    },
-    {
-      "id": "interlude_level_52_power_spike",
-      "act": 5,
-      "zone_en": "Level 52 Power Spike",
-      "zone_ru": "52 уровень",
-      "aliases": [],
-      "recommended_level": 52,
-      "recommended_level_label": "52",
-      "is_good_xp_zone": false,
-      "checklist": [
-        {
-          "id": "i2_level_52_task_1",
-          "text": "Поставить ключевой сетап 52 уровня",
-          "type": "crafting",
-          "required": false,
-          "autoCompleteKeywords": [],
-          "autoCompleteMode": "manual_or_zone_leave_infer"
-        },
-        {
-          "id": "i2_level_52_task_2",
-          "text": "Основной навык + усиление урона/перезарядки + подходящие поддержки",
-          "type": "crafting",
-          "required": false,
-          "autoCompleteKeywords": [],
-          "autoCompleteMode": "manual_or_zone_leave_infer"
-        },
-        {
-          "id": "i2_level_52_task_3",
-          "text": "Использовать большую сферу ювелира",
-          "type": "crafting",
-          "required": false,
-          "autoCompleteKeywords": [],
-          "autoCompleteMode": "manual_or_zone_leave_infer"
-        },
-        {
-          "id": "i2_level_52_task_4",
-          "text": "Добавить подходящие support gems под текущий билд",
-          "type": "route_task",
-          "required": false,
-          "autoCompleteKeywords": [],
-          "autoCompleteMode": "manual_or_zone_leave_infer"
-        }
-      ],
-      "rewards": [
-        "Огромный скачок скорости зачистки"
-      ],
-      "skip": [],
-      "important": [
-        "Для зачистки: используй основной AoE и двигайся дальше — не залипай на каждой пачке"
-      ],
-      "after": [],
-      "boss_tips": [],
-      "xp_notes": [],
-      "crafting_tips": [],
-      "next_zone_ru": "Кима",
-      "details": {
-        "route": [
-          "Поставить ключевой сетап 52 уровня",
-          "Основной навык + усиление урона/перезарядки + подходящие поддержки",
-          "Использовать большую сферу ювелира",
-          "Добавить подходящие support gems под текущий билд"
-        ],
-        "rewards": [
-          "Огромный скачок скорости зачистки"
-        ],
-        "skip": [],
-        "important": [
-          "Для зачистки: используй основной AoE и двигайся дальше — не залипай на каждой пачке"
-        ],
-        "after": [],
-        "boss_tips": [],
-        "xp_notes": [],
-        "crafting_tips": [],
-        "craft_plan": [
-          "На 52: собрать/обновить ключевой сетап, использовать Greater Jeweller при возможности и усилить основной навык подходящими support gems."
-        ],
-        "time_saves": [
-          "После перехода на сильный AoE-сетап чистка идёт на ходу: дал урон и бежишь дальше."
-        ]
-      },
-      "display": {
-        "wideModeRecommended": true,
-        "showAllChecklist": true
-      }
     },
     {
       "id": "i2_kima",
@@ -6213,7 +6549,7 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Деревня Криар",
+      "next_zone_ru": "Опушка",
       "details": {
         "route": [
           "Флаконы у колодцев — опционально для высокоуровневой валюты",
@@ -6233,10 +6569,10 @@
           "Vials можно использовать на колодцах ради валюты, если попались по пути."
         ],
         "navigation": [
-          "Главная цель — убить Asmody и двигаться к Деревне Криар."
+          "После Водохранилища Кима перейти в Опушку, затем идти в Пепельный лес."
         ],
         "time_saves": [
-          "Не забыть нажать/забрать главную barrier/награду после босса."
+          "Не забыть нажать/забрать главную barrier/награду после босса, затем сразу в Опушку."
         ]
       },
       "display": {
@@ -6246,6 +6582,167 @@
       "area_ids": [
         "C_P2_7",
         "P2_7"
+      ]
+    },
+    {
+      "id": "interlude_the_glade",
+      "act": 5,
+      "zone_en": "The Glade",
+      "zone_ru": "Опушка",
+      "aliases": [
+        "The Glade",
+        "Опушка"
+      ],
+      "recommended_level": 54,
+      "recommended_level_label": "54+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "interlude_the_glade_task_1",
+          "text": "Использовать Опушку как транзитный хаб после Водохранилища Кима",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_the_glade_task_2",
+          "text": "Выйти в Пепельный лес",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [],
+      "skip": [
+        "Не задерживаться в хабе: цель — сразу открыть путь в Пепельный лес"
+      ],
+      "important": [
+        "Маршрут после Водохранилища Кима идёт через Опушку, а не сразу в Деревню Криар"
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Пепельный лес",
+      "details": {
+        "route": [
+          "Использовать Опушку как транзитный хаб после Водохранилища Кима",
+          "Выйти в Пепельный лес"
+        ],
+        "rewards": [],
+        "skip": [
+          "Не задерживаться в хабе: цель — сразу открыть путь в Пепельный лес"
+        ],
+        "important": [
+          "Маршрут после Водохранилища Кима идёт через Опушку, а не сразу в Деревню Криар"
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "navigation": [
+          "Маршрут: Водохранилище Кима → Опушка → Пепельный лес."
+        ],
+        "time_saves": [
+          "Опушка — короткий транзитный хаб: не тратить время, сразу идти дальше."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_P3_Town",
+        "P3_Town"
+      ]
+    },
+    {
+      "id": "interlude_ashen_forest",
+      "act": 5,
+      "zone_en": "Ashen Forest",
+      "zone_ru": "Пепельный лес",
+      "aliases": [
+        "Ashen Forest",
+        "Пепельный лес"
+      ],
+      "recommended_level": 54,
+      "recommended_level_label": "54+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "interlude_ashen_forest_task_1",
+          "text": "Пройти Пепельный лес после Опушки",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_ashen_forest_task_2",
+          "text": "Проверить Древний монумент, если он по пути",
+          "type": "reward",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_ashen_forest_task_3",
+          "text": "Найти переход в Деревню Криар",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [
+        "Древний монумент / награда зоны по пути"
+      ],
+      "skip": [
+        "Не чистить боковые карманы, если переход в Деревню Криар уже найден"
+      ],
+      "important": [
+        "Пепельный лес стоит между Опушкой и Деревней Криар"
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Деревня Криар",
+      "details": {
+        "route": [
+          "Пройти Пепельный лес после Опушки",
+          "Проверить Древний монумент, если он по пути",
+          "Найти переход в Деревню Криар"
+        ],
+        "rewards": [
+          "Древний монумент / награда зоны по пути"
+        ],
+        "skip": [
+          "Не чистить боковые карманы, если переход в Деревню Криар уже найден"
+        ],
+        "important": [
+          "Пепельный лес стоит между Опушкой и Деревней Криар"
+        ],
+        "after": [],
+        "boss_tips": [],
+        "xp_notes": [],
+        "crafting_tips": [],
+        "navigation": [
+          "Маршрут: Опушка → Пепельный лес → Деревня Криар."
+        ],
+        "time_saves": [
+          "Древний монумент брать по пути; если уводит в долгую сторону — не ломать темп."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_P3_1",
+        "P3_1"
       ]
     },
     {
@@ -6292,7 +6789,7 @@
       ],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Воющие пещеры",
+      "next_zone_ru": "Ледниковое озеро",
       "details": {
         "route": [
           "Дойти до Литары и убить",
@@ -6314,7 +6811,7 @@
         "xp_notes": [],
         "crafting_tips": [],
         "navigation": [
-          "После Деревни Криар двигаться к Воющим пещерам."
+          "После Деревни Криар идти в Ледниковое озеро."
         ]
       },
       "display": {
@@ -6376,7 +6873,7 @@
       ],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Воющие пещеры / Пики Криар",
+      "next_zone_ru": "Воющие пещеры",
       "details": {
         "route": [
           "Забрать waypoint/переходы, если попал сюда по ветке Криар",
@@ -6399,10 +6896,10 @@
         "xp_notes": [],
         "crafting_tips": [],
         "navigation": [
-          "Использовать как развилку к Воющим пещерам и Пикам Криар."
+          "После Ледникового озера идти в Воющие пещеры."
         ],
         "time_saves": [
-          "Если нужный переход найден — не добирать лишние круги по озеру."
+          "Если переход в Воющие пещеры найден — не добирать лишние круги по озеру."
         ]
       },
       "display": {
@@ -6426,7 +6923,7 @@
       "checklist": [
         {
           "id": "i2_glacial_tarn_task_1",
-          "text": "Держаться правой стены до Воющих пещер",
+          "text": "Пройти Воющие пещеры по ветке Йети",
           "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
@@ -6442,7 +6939,7 @@
         },
         {
           "id": "i2_glacial_tarn_task_3",
-          "text": "Вернуть клыки Хильде за 2 пассивных очка",
+          "text": "Вернуть клыки Хильде за +2 пассивных очка и идти в Пики Криар",
           "type": "reward",
           "required": true,
           "autoCompleteKeywords": [],
@@ -6458,12 +6955,12 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Пики Криар / Финальная интерлюдия",
+      "next_zone_ru": "Пики Криар",
       "details": {
         "route": [
-          "Держаться правой стены до Воющих пещер",
+          "Пройти Воющие пещеры по ветке Йети",
           "Забрать клыки с Abominable Yeti",
-          "Вернуть клыки Хильде за 2 пассивных очка"
+          "Вернуть клыки Хильде за +2 пассивных очка и идти в Пики Криар"
         ],
         "rewards": [
           "2 пассивных очка за клыки Йети"
@@ -6475,10 +6972,10 @@
         "xp_notes": [],
         "crafting_tips": [],
         "navigation": [
-          "Держаться стены/пути к берлоге Йети; после клыков вернуться к Хильде за +2 пассивки."
+          "После Воющих пещер идти в Пики Криар."
         ],
         "time_saves": [
-          "После сдачи клыков возвращаться через waypoint/чекпоинт, не бежать пешком лишний круг."
+          "После сдачи клыков возвращаться через waypoint/чекпоинт и идти в Пики Криар, не бежать пешком лишний круг."
         ],
         "opportunistic": [
           "В этой ветке может быть Мэдокс/уник — брать только если по пути."
@@ -6510,6 +7007,14 @@
           "required": false,
           "autoCompleteKeywords": [],
           "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "i2_kriar_peaks_task_2",
+          "text": "После Пиков Криар идти в Высеченное ущелье",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
         }
       ],
       "rewards": [
@@ -6525,10 +7030,11 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Финальная интерлюдия / Тьма",
+      "next_zone_ru": "Высеченное ущелье",
       "details": {
         "route": [
-          "Если заходишь в Пики Криар, добраться до старейшины Мэдокса"
+          "Если заходишь в Пики Криар, добраться до старейшины Мэдокса",
+          "После Пиков Криар идти в Высеченное ущелье"
         ],
         "rewards": [
           "Опционально: старейшина Мэдокс дарит один уникальный предмет на выбор из нескольких случайных."
@@ -6545,6 +7051,9 @@
         "crafting_tips": [],
         "opportunistic": [
           "Брать только если по пути или если хочется шанс на полезный уник."
+        ],
+        "navigation": [
+          "Маршрут: Пики Криар → Высеченное ущелье → Убежище Куачик."
         ]
       },
       "display": {
@@ -6674,7 +7183,7 @@
         },
         {
           "id": "interlude_cuachic_vault_task_3",
-          "text": "После наград закрыть ветку и вернуться в маршрут",
+          "text": "После наград вернуться в Пристанище и продолжить маршрут",
           "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
@@ -6697,12 +7206,12 @@
       ],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Финальная интерлюдия / Тьма",
+      "next_zone_ru": "Пристанище",
       "details": {
         "route": [
           "Забрать Ancient Treasures / сокровища",
           "Убить Зелину и Золина",
-          "После наград закрыть ветку и вернуться в маршрут"
+          "После наград вернуться в Пристанище и продолжить маршрут"
         ],
         "rewards": [
           "Ancient Treasures",
@@ -6712,7 +7221,7 @@
           "После сокровищ и боссов не задерживаться на полной зачистке"
         ],
         "important": [
-          "Финальная зона этой Vaal-ветки интерлюдии"
+          "Финальная зона ветки Криар перед возвратом в Пристанище"
         ],
         "after": [],
         "boss_tips": [
@@ -6721,7 +7230,7 @@
         "xp_notes": [],
         "crafting_tips": [],
         "navigation": [
-          "Забрать сокровища, закрыть боссов и возвращаться к основной линии."
+          "Забрать сокровища, закрыть боссов и вернуться в Пристанище."
         ],
         "time_saves": [
           "Это не зона для долгой зачистки: цель — награды и выход."
@@ -6737,88 +7246,156 @@
       ]
     },
     {
-      "id": "i_final_darkness",
+      "id": "interlude_refuge",
       "act": 5,
-      "zone_en": "Final Interlude",
-      "zone_ru": "Финальная интерлюдия / Тьма",
-      "aliases": [],
+      "zone_en": "The Refuge",
+      "zone_ru": "Пристанище",
+      "aliases": [
+        "Refuge",
+        "The Refuge"
+      ],
       "recommended_level": 56,
       "recommended_level_label": "56+",
       "is_good_xp_zone": false,
       "checklist": [
         {
-          "id": "i_final_darkness_task_1",
-          "text": "Взять checkpoint рядом с тьмой",
+          "id": "interlude_refuge_task_1",
+          "text": "После Убежища Куачик открыть первую страницу акта",
           "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
           "autoCompleteMode": "manual_or_zone_leave_infer"
         },
         {
-          "id": "i_final_darkness_task_2",
-          "text": "Убить двух боссов",
-          "type": "boss",
+          "id": "interlude_refuge_task_2",
+          "text": "Идти в Выжженные фермерские земли",
+          "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
           "autoCompleteMode": "manual_or_zone_leave_infer"
-        },
+        }
+      ],
+      "rewards": [],
+      "skip": [],
+      "important": [
+        "Это хаб первой страницы маршрута, после него начинается финальная ветка к Поместью Холтен."
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Выжженные фермерские земли",
+      "details": {
+        "route": [
+          "После Убежища Куачик вернуться в Пристанище.",
+          "Дальше идти в Выжженные фермерские земли."
+        ],
+        "important": [
+          "Финальная ветка маршрута: Пристанище → Выжженные фермерские земли → Камни Серли → Чернолесье → Холтен → Вольфенхолд → Поместье Холтен."
+        ],
+        "navigation": [
+          "Пристанище → Выжженные фермерские земли → Камни Серли."
+        ],
+        "town_plan": [
+          "Здесь начинается 1-я страница акта; финал всей цепочки — Поместье Холтен."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_P1_Town",
+        "P1_Town"
+      ]
+    },
+    {
+      "id": "interlude_scorched_farmlands",
+      "act": 5,
+      "zone_en": "Scorched Farmlands",
+      "zone_ru": "Выжженные фермерские земли",
+      "aliases": [
+        "Выжженные фермерские земли",
+        "Выжженые фермерские земли",
+        "Scorched Farmlands"
+      ],
+      "recommended_level": 54,
+      "recommended_level_label": "54+",
+      "is_good_xp_zone": false,
+      "checklist": [
         {
-          "id": "i_final_darkness_task_3",
-          "text": "Кликнуть 6 камней",
+          "id": "interlude_scorched_farmlands_task_1",
+          "text": "Из Пристанища идти в Выжженные фермерские земли",
           "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
           "autoCompleteMode": "manual_or_zone_leave_infer"
         },
         {
-          "id": "i_final_darkness_task_4",
-          "text": "Убить Сеору",
-          "type": "boss",
+          "id": "interlude_scorched_farmlands_task_2",
+          "text": "Забрать гарантированную лиг-награду: камень поддержки 5 уровня",
+          "type": "reward",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_scorched_farmlands_task_3",
+          "text": "Найти переход к Камням Серли",
+          "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
           "autoCompleteMode": "manual_or_zone_leave_infer"
         }
       ],
       "rewards": [
-        "Открытие пути дальше"
+        "Неогранённый камень поддержки, ур. 5"
       ],
-      "skip": [],
+      "skip": [
+        "Не чистить лишние карманы после лиг-награды и найденного перехода"
+      ],
       "important": [
-        "Сеора много двигается — используй контроль/стан-окна, если они есть"
+        "Это часть основного маршрута из Пристанища к Камням Серли"
       ],
       "after": [],
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Чёрный лес",
+      "next_zone_ru": "Камни Серли",
       "details": {
         "route": [
-          "Взять checkpoint рядом с тьмой",
-          "Убить двух боссов",
-          "Кликнуть 6 камней",
-          "Убить Сеору"
+          "Из Пристанища идти в Выжженные фермерские земли",
+          "Забрать гарантированную лиг-награду: камень поддержки 5 уровня",
+          "Найти переход к Камням Серли"
         ],
         "rewards": [
-          "Открытие пути дальше"
+          "Неогранённый камень поддержки, ур. 5"
         ],
-        "skip": [],
+        "skip": [
+          "Не чистить лишние карманы после лиг-награды и найденного перехода"
+        ],
         "important": [
-          "Сеора много двигается — используй контроль/стан-окна, если они есть"
+          "Это часть основного маршрута из Пристанища к Камням Серли"
         ],
         "after": [],
-        "boss_tips": [
-          "Сеора двигается много: stun/контроль помогает удержать окно урона."
-        ],
+        "boss_tips": [],
         "xp_notes": [],
         "crafting_tips": [],
-        "checkpoint": [
-          "Взять чекпоинт у тьмы; убить двух боссов, нажать 6 камней и идти к Сеоре."
+        "navigation": [
+          "Маршрут: Пристанище → Выжженные фермерские земли → Камни Серли."
+        ],
+        "time_saves": [
+          "Саппорт забрал — дальше по маршруту, лишние тупики и пачки не чистить."
         ]
       },
       "display": {
         "wideModeRecommended": true,
         "showAllChecklist": true
-      }
+      },
+      "area_ids": [
+        "C_P1_1",
+        "P1_1"
+      ]
     },
     {
       "id": "interlude_stones_of_serle",
@@ -6832,7 +7409,7 @@
       "checklist": [
         {
           "id": "interlude_stones_serle_task_1",
-          "text": "Опционально: пройти боковую зону от Пристанища",
+          "text": "Идти дальше по маршруту после Выжженных фермерских земель",
           "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
@@ -6859,19 +7436,19 @@
         "Босс и дополнительная добыча"
       ],
       "skip": [
-        "Можно пропустить, если не нужен лут/опыт и важен темп"
+        "Не разворачивать карту ради полной зачистки"
       ],
       "important": [
-        "Боковая зона интерлюдии, не обязательный прогресс"
+        "Часть основного маршрута перед Чернолесьем"
       ],
       "after": [],
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Чернолесье / основная ветка",
+      "next_zone_ru": "Чернолесье",
       "details": {
         "route": [
-          "Опционально: пройти боковую зону от Пристанища",
+          "Идти дальше по маршруту после Выжженных фермерских земель",
           "Убить Сиору, Клинок туманов",
           "После босса вернуться к основной ветке интерлюдии"
         ],
@@ -6879,20 +7456,20 @@
           "Босс и дополнительная добыча"
         ],
         "skip": [
-          "Можно пропустить, если не нужен лут/опыт и важен темп"
+          "Не разворачивать карту ради полной зачистки"
         ],
         "important": [
-          "Боковая зона интерлюдии, не обязательный прогресс"
+          "Часть основного маршрута перед Чернолесьем"
         ],
         "after": [],
         "boss_tips": [],
         "xp_notes": [],
         "crafting_tips": [],
         "opportunistic": [
-          "Зайти, если нужен опыт/лут; иначе не разворачивать маршрут."
+          "Если переход найден быстро — не разворачивать маршрут ради лишнего лута."
         ],
         "navigation": [
-          "После Сиоры возвращаться к основной линии интерлюдии."
+          "После Камней Серли идти дальше в Чернолесье."
         ]
       },
       "display": {
@@ -6967,7 +7544,7 @@
           "Омены из сундука обычно не стоят разворота — можно игнорировать."
         ],
         "navigation": [
-          "После фермы/тьмы идти в Чёрный лес, затем налево к Холтену."
+          "После Камней Серли идти в Чернолесье, затем налево к Холтену."
         ],
         "danger": [
           "Не наступать на красные мины/опасные эффекты по дороге."
@@ -7064,7 +7641,9 @@
         "Вольфенхолд",
         "Wolvenholt",
         "Wolvenhold",
-        "Волвенхолт"
+        "Волвенхолт",
+        "Вольфелхонд",
+        "Волвенхолд"
       ],
       "recommended_level": 58,
       "recommended_level_label": "58+",

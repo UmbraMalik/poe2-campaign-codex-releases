@@ -37,7 +37,7 @@ import {
   DEFAULT_TOWN_TIMER
 } from '../shared/defaults';
 import { buildChecklistDefinition, buildChecklistViewItems } from '../shared/checklist';
-import { getRunTimerDisplayElapsed, getZoneTimerDisplayElapsed } from '../shared/timers';
+import { ENDGAME_T15_ACT, getRunTimerDisplayElapsed, getZoneTimerDisplayElapsed } from '../shared/timers';
 import { getOverlayMinimumSize } from '../shared/overlay-layout';
 import {
   areOverlayBoundsEqual,
@@ -57,6 +57,7 @@ import {
 } from './hotkey-utils';
 import {
   inferActHintFromInternalAreaId as inferActHintFromInternalAreaIdFromScene,
+  inferActHintFromTownScene,
   isActLabelScene,
   isLoginLikeScene,
   isTownSceneWithGuide,
@@ -205,7 +206,19 @@ export function runLogTimerDiagnostics(this: any, event: any, payload: any = {})
         }));
     }
 
+const GENERATED_AREA_LEVEL_REGEX = /Generating level\s+(?<level>\d+)\s+area\b/i;
+const T15_MAP_AREA_LEVEL = 79;
+
+function getGeneratedAreaLevel(line: unknown): number | null {
+        const match = String(line ?? '').match(GENERATED_AREA_LEVEL_REGEX);
+        const level = Number(match?.groups?.level);
+        return Number.isFinite(level) ? level : null;
+    }
+
 export function runProcessRunTimerActivityFromLogLine(this: any, line: any, source: any) {
+        if (source === 'append') {
+            this.completeEndgameT15Run(line);
+        }
         const nowIso = new Date().toISOString();
         const zoneMatch = this.extractZoneMatchFromLogLine(line);
         if (!zoneMatch) {
@@ -220,16 +233,20 @@ export function runProcessRunTimerActivityFromLogLine(this: any, line: any, sour
         if (source === 'bootstrap') {
             if (this.isTownSceneWithGuide(rawSceneSource, matchedGuide)) {
                 const matchedTownGuide = rawSceneSource ? this.guideService.findByZoneName(rawSceneSource) : null;
+                const townActHint = inferActHintFromTownScene(rawSceneSource);
+                const shouldClearGuide = townActHint === ENDGAME_T15_ACT ||
+                    this.normalizeSceneSource(rawSceneSource) === 'clearfell encampment';
                 const nextTownGuide = matchedTownGuide ??
-                    (this.normalizeSceneSource(rawSceneSource) === 'clearfell encampment'
-                        ? null
-                        : this.currentZone.guide);
+                    (shouldClearGuide ? null : this.currentZone.guide);
                 this.currentZone = {
                     rawZoneName: rawSceneSource,
                     guide: nextTownGuide,
                     sceneKind: 'town',
-                    actHint: nextTownGuide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null
+                    actHint: townActHint ?? nextTownGuide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null
                 };
+                if (typeof townActHint === 'number') {
+                    this.runtime.lastGameplayAct = townActHint;
+                }
                 this.syncRuntimeZoneFields(rawSceneSource, this.currentZone.guide);
                 this.logZoneEventDecision(zoneMatch, 'updated');
             }
@@ -299,6 +316,68 @@ export function runProcessRunTimerActivityFromLogLine(this: any, line: any, sour
         }
         this.setSceneWithoutGuide(rawSceneSource, 'log', 'unknown', this.getZoneMatchActHint(zoneMatch));
         this.logZoneEventDecision(zoneMatch, 'updated');
+    }
+
+export function runIsEndgameT15CompletionLogLine(this: any, line: any) {
+        const generatedAreaLevel = getGeneratedAreaLevel(line);
+
+        if (generatedAreaLevel === null || generatedAreaLevel < T15_MAP_AREA_LEVEL) {
+            return false;
+        }
+
+        const runTimer = this.config.runTimer;
+        const timerCanComplete = runTimer.status === 'running' || runTimer.status === 'paused';
+        if (!timerCanComplete) {
+            return false;
+        }
+
+        return this.currentZone.actHint === ENDGAME_T15_ACT ||
+            this.runtime.lastGameplayAct === ENDGAME_T15_ACT ||
+            runTimer.actSplits.some((split: any) => split.act === 5);
+    }
+
+export function runCompleteEndgameT15Run(this: any, line: any) {
+        if (!this.isEndgameT15CompletionLogLine(line)) {
+            return false;
+        }
+
+        const now = Date.now();
+        const previousActHint = this.currentZone.guide?.act ?? this.currentZone.actHint ?? this.runtime.lastGameplayAct ?? null;
+        if (previousActHint !== ENDGAME_T15_ACT) {
+            this.currentZone = {
+                ...this.currentZone,
+                actHint: ENDGAME_T15_ACT
+            };
+            this.runtime.lastGameplayAct = ENDGAME_T15_ACT;
+            this.recordActTransitionByHint(previousActHint, ENDGAME_T15_ACT, now);
+        }
+
+        this.finishRunTimer();
+
+        if (this.config.runTimer.status !== 'finished') {
+            return false;
+        }
+
+        const finishedAt = this.config.runTimer.finishedAt ?? now;
+        const totalElapsedMs = this.config.runTimer.elapsedMs;
+        const savedLabel = `До Т15 · ${new Date(finishedAt).toLocaleString('ru-RU')}`;
+        this.saveCurrentRunToHistory(savedLabel);
+        this.runtime.endgameT15CompletionNotice = {
+            completedAt: new Date(finishedAt).toISOString(),
+            totalElapsedMs,
+            savedLabel
+        };
+        this.logTimerDiagnostics('timer-finish', {
+            source: 'main.endgame-t15-auto-finish',
+            previousStatus: 'running',
+            nextStatus: 'finished',
+            totalElapsedMs,
+            act: ENDGAME_T15_ACT,
+            note: 'entered-level-79-area'
+        });
+        this.refreshTrayMenu();
+        this.broadcastState();
+        return true;
     }
 
 export function runClearRunTimerStartTimer(this: any) {
@@ -412,6 +491,7 @@ export function runStartRunTimerFromAnchor(this: any, startedAt: any, source: an
         const now = Date.now();
         const previousStatus = this.config.runTimer.status;
         this.clearRunTimerStartTimer();
+        this.runtime.endgameT15CompletionNotice = null;
         const nextTownTimer = { ...DEFAULT_TOWN_TIMER };
         this.config = this.configStore.update({
             zoneTimeHistory: [],
@@ -493,6 +573,7 @@ export function runResetRunTimer(this: any) {
         const previousStatus = this.config.runTimer.status;
         const shouldClearPastLeagueStart = typeof this.config.runTimerSettings.leagueStartAt === 'number' &&
             this.config.runTimerSettings.leagueStartAt <= Date.now();
+        this.runtime.endgameT15CompletionNotice = null;
         this.config = this.configStore.update({
             ignoreExistingLogOnNextStart: true,
             runTimer: {

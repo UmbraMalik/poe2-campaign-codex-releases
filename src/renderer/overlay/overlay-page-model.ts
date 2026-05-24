@@ -2,6 +2,7 @@ import leagueMechanicRewardsData from '../../data/league-mechanic-rewards.json';
 import { getNearestPowerSpike, getXpStatus } from '../companion-helpers';
 import { getGuideView, getLevelReminderView, getPowerSpikeView } from '../../i18n/data';
 import { translate } from '../../i18n/translations';
+import { isEndgameT15Act } from '../../shared/timers';
 import type {
   AppLanguage,
   AppSnapshot,
@@ -18,6 +19,10 @@ import type {
 export function formatActTitle(act: ZoneAct | null, language: AppLanguage): string {
   if (act === null) {
     return translate(language, 'overlay.currentZoneFallback');
+  }
+
+  if (typeof act === 'number' && isEndgameT15Act(act)) {
+    return translate(language, 'route.endgameToT15');
   }
 
   return act === 'interlude'

@@ -31,7 +31,10 @@
       "C_G4_town",
       "P1_Town",
       "P2_Town",
-      "P3_Town"
+      "P3_Town",
+      "G_Endgame_Town",
+      "Ziggurat Refuge",
+      "Endgame Town"
     ]
   },
   "events": {

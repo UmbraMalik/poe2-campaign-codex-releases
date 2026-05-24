@@ -1,4 +1,5 @@
 import townScenes from '../data/town-scenes.json';
+import { ENDGAME_T15_ACT } from '../shared/timers';
 import type { GuideEntry } from '../shared/types';
 
 const TOWN_ZONE_HINTS = ['encampment', 'camp', 'town', 'hideout', 'лагерь', 'город', 'убежище'];
@@ -53,7 +54,11 @@ const PENDING_AREA_ID_HOLD_SCENES = new Set([
 const TOWN_ACT_HINTS = new Map<string, number>([
   ['kingsmarch', 4],
   ['кингсмарк', 4],
-  ['кингсмарш', 4]
+  ['кингсмарш', 4],
+  ['g_endgame_town', ENDGAME_T15_ACT],
+  ['убежище в зиккурате', ENDGAME_T15_ACT],
+  ['ziggurat refuge', ENDGAME_T15_ACT],
+  ['endgame town', ENDGAME_T15_ACT]
 ]);
 
 const TOWN_SCENES = new Set(
@@ -71,6 +76,10 @@ export function normalizeSceneText(input: unknown): string {
 
 export function inferActHintFromInternalAreaId(areaId: unknown): number | null {
   const normalized = normalizeSceneText(areaId).replace(/^c_/, '');
+
+  if (normalized === 'g_endgame_town') {
+    return ENDGAME_T15_ACT;
+  }
 
   if (/^g1(?:_|$)/.test(normalized)) {
     return 1;
@@ -117,12 +126,16 @@ export function inferActHintFromTownScene(rawSceneSource: unknown): number | nul
 export function isTownSceneWithGuide(rawSceneSource: unknown, guide: GuideEntry | null | undefined): boolean {
   const normalized = normalizeSceneText(rawSceneSource);
 
-  if (!normalized || guide) {
+  if (!normalized) {
     return false;
   }
 
   if (TOWN_SCENES.has(normalized)) {
     return true;
+  }
+
+  if (guide) {
+    return false;
   }
 
   return TOWN_ZONE_HINTS.some((hint) => normalized.includes(hint));

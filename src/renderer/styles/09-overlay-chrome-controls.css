@@ -595,3 +595,92 @@
   filter: drop-shadow(0 0 5px currentColor);
   transform: translate(calc(-50% + 1px), -50%);
 }
+
+/* Endgame T15 auto-finish: compact in-overlay celebration, not a full-screen modal. */
+.overlay-endgame-completion-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  align-items: start;
+  gap: 10px;
+  border-color: rgba(122, 219, 140, 0.36) !important;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(104, 210, 127, 0.18), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.050), rgba(255, 255, 255, 0.020)),
+    rgba(8, 17, 12, 0.40) !important;
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
+}
+
+.overlay-endgame-completion-title-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+
+.overlay-endgame-completion-title-row h2 {
+  margin: 0 !important;
+  color: #bff5c6 !important;
+}
+
+.overlay-endgame-completion-title-row h2::after {
+  display: none !important;
+}
+
+.overlay-endgame-completion-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  color: #9ef0ab;
+  background: rgba(107, 214, 126, 0.14);
+  box-shadow: 0 0 18px rgba(107, 214, 126, 0.22);
+  font-size: 10px;
+}
+
+.overlay-endgame-completion-copy p {
+  margin: 0;
+  color: rgba(238, 247, 234, 0.90);
+  font-size: var(--font-body);
+  line-height: 1.35;
+}
+
+.overlay-endgame-completion-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.overlay-endgame-completion-meta span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 3px 8px;
+  border: 1px solid rgba(156, 233, 164, 0.26);
+  border-radius: 999px;
+  color: #e9ffe8;
+  background: rgba(96, 180, 108, 0.11);
+  font-size: calc(var(--font-meta) * 0.94);
+  font-weight: 850;
+  letter-spacing: 0.01em;
+}
+
+.overlay-endgame-completion-close {
+  width: 26px !important;
+  min-width: 26px !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  border-color: rgba(156, 233, 164, 0.24) !important;
+}
+
+.overlay-page.density-compact .overlay-endgame-completion-card {
+  gap: 8px;
+}
+
+.overlay-page.density-compact .overlay-endgame-completion-copy p {
+  font-size: calc(var(--font-body) * 0.96);
+}

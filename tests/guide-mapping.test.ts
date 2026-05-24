@@ -93,6 +93,7 @@ test('inferActHintFromInternalAreaId covers G1-G5 and P1-P3 prefixes', () => {
     ['G3_17', 3],
     ['G4_11_2', 4],
     ['G5_demo', 5],
+    ['G_Endgame_Town', 6],
     ['P1_4', 5],
     ['P2_6', 5],
     ['P3_5', 5]
@@ -174,8 +175,12 @@ test('known regression pairs stay separated and do not cross-map', () => {
   const cases = [
     ['P2_6', 'Qimah'],
     ['P2_7', 'Qimah Reservoir'],
+    ['P2_Town', 'Khari Bazaar'],
+    ['P1_Town', 'The Refuge'],
     ['P1_4', 'Holten'],
     ['P1_6', 'Holten Estate'],
+    ['P3_Town', 'The Glade'],
+    ['P3_1', 'Ashen Forest'],
     ['P3_2', 'Kriar Village'],
     ['P3_5', 'Kriar Peaks'],
     ['P3_4', 'Howling Caves'],
@@ -218,9 +223,33 @@ test('automatically detected similar zones still resolve correctly by exact area
   }
 });
 
+
+test('Interlude route keeps audited page order', () => {
+  const zonesById = new Map(getGuideZones().map((zone) => [zone.id, zone]));
+  const route = [
+    ['a4_heart_of_the_tribe', 'Кхарийский базар'],
+    ['interlude_khari_bazaar', 'Кхарийский перевал'],
+    ['i2_kima_reservoir', 'Опушка'],
+    ['interlude_the_glade', 'Пепельный лес'],
+    ['interlude_ashen_forest', 'Деревня Криар'],
+    ['i2_mount_cryer', 'Ледниковое озеро'],
+    ['interlude_glacial_tarn', 'Воющие пещеры'],
+    ['i2_glacial_tarn', 'Пики Криар'],
+    ['i2_kriar_peaks', 'Высеченное ущелье'],
+    ['interlude_etched_ravine', 'Убежище Куачик'],
+    ['interlude_cuachic_vault', 'Пристанище'],
+    ['interlude_refuge', 'Выжженные фермерские земли'],
+    ['i_final_holten_estate', 'Ориат']
+  ] as const;
+
+  for (const [guideId, nextZoneRu] of route) {
+    assert.equal(zonesById.get(guideId)?.next_zone_ru, nextZoneRu, `${guideId} must point to ${nextZoneRu}`);
+  }
+});
+
 test('explicit no-guide English names stay unmapped to guide cards', () => {
   const service = loadGuideService();
-  for (const rawZoneName of ['The Glade', 'Uncharted Vault', 'Forgotten Causeway']) {
+  for (const rawZoneName of ['Uncharted Vault', 'Forgotten Causeway', 'Silent Fen']) {
     const match = service.resolveZoneMatch({
       rawLine: rawZoneName,
       extractedInternalAreaId: null,

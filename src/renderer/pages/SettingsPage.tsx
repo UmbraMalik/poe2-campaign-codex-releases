@@ -21,6 +21,8 @@ import type {
   HotkeySettings,
   OverlayDensity,
   OverlayScale,
+  OverlayTextSize,
+  OverlayVisibleSections,
   RunTimerAutoStartMode,
   RunTimerStatus,
   UpdateCheckResult,
@@ -55,14 +57,15 @@ const HOTKEY_LABELS: Array<{ key: keyof HotkeySettings; labelKey: string; noteKe
   { key: 'toggleOverlayMode', labelKey: 'settings.hotkeyOverlayMode', noteKey: 'settings.hotkeyAlways' }
 ];
 
-const OVERLAY_VISIBILITY_LABELS = [
-  ['showOverlaySkip', 'settings.overlayShowSkip'],
-  ['showOverlayCriticalImportant', 'settings.overlayShowImportant'],
-  ['showOverlayBossTip', 'settings.overlayShowBossTips'],
-  ['showOverlayVendorReminder', 'settings.overlayShowVendor'],
-  ['showOverlayXpStatus', 'settings.overlayShowXp'],
-  ['showOverlayPowerSpike', 'settings.overlayShowPower'],
-  ['overlayTimerOnlyMode', 'settings.overlayTimerOnly']
+const OVERLAY_SECTION_VISIBILITY_LABELS = [
+  ['nearby', 'settings.overlayShowNearby'],
+  ['zoneInfo', 'settings.overlayShowZoneInfo'],
+  ['zoneBonuses', 'settings.overlayShowZoneBonuses'],
+  ['league', 'settings.overlayShowLeague'],
+  ['next', 'settings.overlayShowNext'],
+  ['skip', 'settings.overlayShowSkip'],
+  ['speedrun', 'settings.overlayShowSpeedrun'],
+  ['important', 'settings.overlayShowImportant']
 ] as const;
 
 function hotkeyFromKeyboardEvent(event: KeyboardEvent<HTMLInputElement>): string | null {
@@ -154,6 +157,14 @@ function formatOverlayDensity(value: OverlayDensity, language: AppLanguage): str
     default:
       return translate(language, 'overlayDensity.normal');
   }
+}
+
+function formatOverlayTextSize(value: OverlayTextSize, language: AppLanguage): string {
+  if (value === 0) {
+    return translate(language, 'overlayTextSize.normal');
+  }
+
+  return translate(language, 'overlayTextSize.plus', { value });
 }
 
 function formatLogSelectionMode(mode: 'auto' | 'manual' | null, language: AppLanguage): string {
@@ -1087,6 +1098,23 @@ export function SettingsPage() {
             </label>
 
             <label className="settings-field">
+              <span>{t('settings.overlayTextSize')}</span>
+              <select
+                value={config.overlayTextSize}
+                onChange={(event) => {
+                  void window.poe2Overlay.updateSettings({
+                    overlayTextSize: Number(event.target.value) as OverlayTextSize
+                  });
+                }}
+              >
+                <option value={0}>{formatOverlayTextSize(0, appLanguage)}</option>
+                <option value={1}>{formatOverlayTextSize(1, appLanguage)}</option>
+                <option value={2}>{formatOverlayTextSize(2, appLanguage)}</option>
+                <option value={3}>{formatOverlayTextSize(3, appLanguage)}</option>
+              </select>
+            </label>
+
+            <label className="settings-field">
               <span>{t('settings.overlayDensity')}</span>
               <select
                 value={config.overlayDensity}
@@ -1123,22 +1151,36 @@ export function SettingsPage() {
           <div className="settings-subsection">
             <h3 className="settings-subtitle">{t('settings.overlayShowTitle')}</h3>
             <div className="checkbox-grid">
-              {OVERLAY_VISIBILITY_LABELS.map(([key, labelKey]) => (
+              {OVERLAY_SECTION_VISIBILITY_LABELS.map(([key, labelKey]) => (
                 <label className="toggle-card" key={key}>
                   <input
                     type="checkbox"
-                    checked={config.mainOverlaySettings[key]}
+                    checked={config.overlayVisibleSections[key]}
                     onChange={(event) => {
                       void window.poe2Overlay.updateSettings({
-                        mainOverlaySettings: {
+                        overlayVisibleSections: {
                           [key]: event.target.checked
-                        }
+                        } as Partial<OverlayVisibleSections>
                       });
                     }}
                   />
                   <span>{t(labelKey)}</span>
                 </label>
               ))}
+              <label className="toggle-card">
+                <input
+                  type="checkbox"
+                  checked={config.mainOverlaySettings.overlayTimerOnlyMode}
+                  onChange={(event) => {
+                    void window.poe2Overlay.updateSettings({
+                      mainOverlaySettings: {
+                        overlayTimerOnlyMode: event.target.checked
+                      }
+                    });
+                  }}
+                />
+                <span>{t('settings.overlayTimerOnly')}</span>
+              </label>
             </div>
           </div>
 

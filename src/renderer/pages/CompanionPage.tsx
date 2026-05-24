@@ -19,6 +19,7 @@ import { formatDuration, formatRecommendedLevelLabel } from '../utils';
 import type { ActTimeRow } from '../companion-helpers';
 import { getCampaignBonusView, getGuideView, translateDataText } from '../../i18n/data';
 import { translate } from '../../i18n/translations';
+import { isEndgameT15Act } from '../../shared/timers';
 import { getGuideUpdateClassName } from '../guide-update-highlights';
 import type { AppLanguage, CampaignBonusDefinition, CampaignBonusProgress, GuideEntry, RunSummary, SavedRunHistoryEntry, ZoneAct } from '../../shared/types';
 
@@ -113,6 +114,10 @@ function formatActTitle(act: ZoneAct | null, language: AppLanguage) {
     return translate(language, 'companion.routeTitleFallback');
   }
 
+  if (typeof act === 'number' && isEndgameT15Act(act)) {
+    return translate(language, 'route.endgameToT15');
+  }
+
   return act === 'interlude'
     ? translate(language, 'companion.interludes')
     : translate(language, 'route.act', { act });
@@ -158,7 +163,7 @@ function renderActTimeTable(rows: ActTimeRow[], emptyMessage: string, language: 
         <tbody>
           {rows.map((row) => (
             <tr key={`act-time-${row.act}`}>
-              <td>{row.act}</td>
+              <td>{formatActLabel(row.act, language)}</td>
               <td>{formatDuration(row.elapsedMs)}</td>
               <td>{formatActTimeStatus(row.status, language)}</td>
               <td>{formatDuration(row.totalElapsedMs)}</td>
@@ -172,7 +177,7 @@ function renderActTimeTable(rows: ActTimeRow[], emptyMessage: string, language: 
 
 
 function getCompletedActCount(rows: ActTimeRow[]): number {
-  return rows.filter((row) => row.status === 'finished').length;
+  return rows.filter((row) => row.status === 'finished' && !isEndgameT15Act(row.act)).length;
 }
 
 function getSlowestActRow(rows: ActTimeRow[]): ActTimeRow | null {
@@ -182,7 +187,7 @@ function getSlowestActRow(rows: ActTimeRow[]): ActTimeRow | null {
 }
 
 function getAverageActElapsedMs(rows: ActTimeRow[]): number | null {
-  const finishedRows = rows.filter((row) => row.status === 'finished' && row.elapsedMs > 0);
+  const finishedRows = rows.filter((row) => row.status === 'finished' && row.elapsedMs > 0 && !isEndgameT15Act(row.act));
 
   if (finishedRows.length === 0) {
     return null;
@@ -192,7 +197,19 @@ function getAverageActElapsedMs(rows: ActTimeRow[]): number | null {
 }
 
 function formatActLabel(act: number, language: AppLanguage): string {
-  return translate(language, 'route.act', { act });
+  return isEndgameT15Act(act)
+    ? translate(language, 'route.endgameToT15')
+    : translate(language, 'route.act', { act });
+}
+
+function formatCurrentSegmentMetric(row: ActTimeRow | null, language: AppLanguage): string {
+  if (!row) {
+    return translate(language, 'companion.noCurrentAct');
+  }
+
+  return isEndgameT15Act(row.act)
+    ? translate(language, 'route.endgameToT15')
+    : translate(language, 'companion.currentActMetric', { act: row.act });
 }
 
 function renderMetricCard(
@@ -318,7 +335,7 @@ function renderActTimesDashboard(
           {renderMetricCard(
             translate(language, 'companion.completedActs'),
             `${completedActCount} / ${TOTAL_CAMPAIGN_ACTS}`,
-            currentAct ? translate(language, 'companion.currentActMetric', { act: currentAct.act }) : translate(language, 'companion.noCurrentAct')
+            formatCurrentSegmentMetric(currentAct, language)
           )}
           {renderMetricCard(
             translate(language, 'companion.longestAct'),
@@ -841,7 +858,7 @@ function renderSummary(summary: RunSummary | null, language: AppLanguage) {
       <section className="companion-block summary-longest-card">
         <div className="summary-section-heading">
           <h3>{translate(language, 'companion.longestZones')}</h3>
-          {slowestAct && <span>{translate(language, 'companion.longestActShort', { act: slowestAct.act, time: formatDuration(slowestAct.elapsedMs) })}</span>}
+          {slowestAct && <span>{translate(language, 'companion.longestActShort', { act: formatActLabel(slowestAct.act, language), time: formatDuration(slowestAct.elapsedMs) })}</span>}
         </div>
         {renderLongestZoneList(summary.longestZones, language, translate(language, 'companion.zoneHistoryEmpty'))}
       </section>
@@ -1568,9 +1585,9 @@ export function CompanionPage() {
 
   const summaryTab = (
     <div className="companion-tab-layout companion-summary-layout">
-      {summaryHero}
+      <div className="summary-scroll-body summary-scroll-body--full">
+        {summaryHero}
 
-      <div className="summary-scroll-body">
         <div className="summary-meta-grid">
           <section className="companion-block summary-best-card">
             <h3>{t('companion.bestRun')}</h3>

@@ -81,6 +81,34 @@ test('Una lute reward can be claimed after Ogham Manor town return', () => {
   assert.deepEqual(getDoneBonusIds(app), ['act1_ogham_farmlands_unas_lute_weapon_points']);
 });
 
+
+test('Khari Crossing Risu turn-in can be claimed from Khari Bazaar town', () => {
+  const app = createTestAppInstance();
+  applyAppLogLine(app as never, '2026/05/24 02:25:08 123 [INFO Client] [SCENE] Set Source [Кхарийский базар]');
+  applyAppLogLine(app as never, ': Вы получили 2 очка пассивных умений для набора оружия.');
+
+  assert.deepEqual(getDoneBonusIds(app), ['int2_khari_crossing_aktu_anundr_weapon_points']);
+});
+
+test('Khari Crossing molten shrine life reward matches by scene name', () => {
+  const app = createTestAppInstance();
+  applyAppLogLine(app as never, '2026/05/24 02:27:40 123 [INFO Client] [SCENE] Set Source [Кхарийский перевал]');
+  applyAppLogLine(app as never, ': Игрок Umbra получил +5% к максимуму здоровья.');
+
+  assert.deepEqual(getDoneBonusIds(app), ['int2_khari_crossing_life_percent']);
+});
+
+test('Olswin weapon-set reward can be claimed after checkpoint return to Holten', () => {
+  const app = createTestAppInstance();
+  applyAppLogLine(app as never, '2026/05/24 03:10:10 123 [DEBUG Client] Generating level 58 area "C_P1_5" with seed 1');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Вольфенхолд]');
+  applyAppLogLine(app as never, '2026/05/24 03:12:10 123 [DEBUG Client] Generating level 57 area "C_P1_4" with seed 2');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Холтен]');
+  applyAppLogLine(app as never, ': Вы получили 2 очка пассивных умений для набора оружия.');
+
+  assert.deepEqual(getDoneBonusIds(app), ['int1_wolvenholt_olswin_weapon_points']);
+});
+
 test('reward in town uses last gameplay zone context instead of the first matching bonus', () => {
   const app = createTestAppInstance();
   applyAppLogLine(app as never, '2026/05/16 22:10:10 123 [DEBUG Client] Generating level 6 area "G1_2" with seed 1');
@@ -121,6 +149,29 @@ test('EN campaign bonus fixture marks the correct act-specific bonuses only', ()
   ]);
 });
 
+
+
+test('Yeti tusks weapon-set reward can be claimed after returning to Kriar Village', () => {
+  const app = createTestAppInstance();
+  applyAppLogLine(app as never, '2026/05/24 03:30:10 123 [DEBUG Client] Generating level 55 area "C_P3_4" with seed 1');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Воющие пещеры]');
+  applyAppLogLine(app as never, '2026/05/24 03:32:10 123 [DEBUG Client] Generating level 54 area "C_P3_2" with seed 2');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Деревня Криар]');
+  applyAppLogLine(app as never, ': Вы получили 2 очка пассивных умений для набора оружия.');
+
+  assert.deepEqual(getDoneBonusIds(app), ['int3_howling_caves_yeti_weapon_points']);
+});
+
+test('Final interlude weapon-set reward can be claimed in the endgame refuge', () => {
+  const app = createTestAppInstance();
+  applyAppLogLine(app as never, '2026/05/24 16:50:00 123 [DEBUG Client] Generating level 59 area "P1_6" with seed 1');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Поместье Холтен]');
+  applyAppLogLine(app as never, '2026/05/24 16:59:09 123 [DEBUG Client] Generating level 65 area "G_Endgame_Town" with seed 1');
+  applyAppLogLine(app as never, '[SCENE] Set Source [Убежище в зиккурате]');
+  applyAppLogLine(app as never, ': Вы получили 2 очка пассивных умений для набора оружия.');
+
+  assert.deepEqual(getDoneBonusIds(app), ['int3_final_zolin_zelina_weapon_points']);
+});
 
 test('Servi venom vial choice can be completed after leaving Venom Crypts', () => {
   const app = createTestAppInstance();

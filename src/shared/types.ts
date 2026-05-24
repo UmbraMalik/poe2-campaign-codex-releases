@@ -48,16 +48,32 @@ export interface ChecklistViewItem extends ChecklistItemDefinition {
 
 export type OverlayDensity = 'compact' | 'normal' | 'detailed';
 export type OverlayScale = 70 | 80 | 90 | 100 | 110 | 120;
+export type OverlayTextSize = 0 | 1 | 2 | 3;
 export type OverlayMode = 'full' | 'timer_only';
 export type AppLanguage = 'ru' | 'en';
 
 export interface OverlayVisibleSections {
-  rewards: boolean;
+  /** Compact reminder cards above the current-zone content. */
+  nearby: boolean;
+  /** Main "What is in this zone" card with checklist/no-guide text. */
+  zoneInfo: boolean;
+  /** Campaign bonus card for the current zone. */
+  zoneBonuses: boolean;
+  /** Guaranteed league reward card for the current zone. */
+  league: boolean;
+  /** Next-zone card. */
+  next: boolean;
+  /** Optional skip notes card. */
+  skip: boolean;
+  /** Speedrun/navigation notes card. */
+  speedrun: boolean;
+  /** "Important now" card. */
   important: boolean;
+  // Legacy per-line toggles kept for older user configs and future fine tuning.
+  rewards: boolean;
   boss_tips: boolean;
   xp_notes: boolean;
   crafting_tips: boolean;
-  skip: boolean;
   after: boolean;
 }
 
@@ -376,6 +392,7 @@ export interface AppConfig {
   overlayMovementLocked: boolean;
   realtimePriorityEnabled: boolean;
   overlayScale: OverlayScale;
+  overlayTextSize: OverlayTextSize;
   overlayDensity: OverlayDensity;
   overlayVisibleSections: OverlayVisibleSections;
   mainOverlaySettings: MainOverlaySettings;
@@ -425,6 +442,12 @@ export interface LogWatcherRuntimeState {
   lastMatcherReason: ZoneMatcherReason;
 }
 
+export interface EndgameT15CompletionNotice {
+  completedAt: string;
+  totalElapsedMs: number;
+  savedLabel: string;
+}
+
 export interface RuntimeState {
   timerNowMs: number;
   guideLoadedAt: string | null;
@@ -457,6 +480,7 @@ export interface RuntimeState {
   overlayMode: OverlayMode;
   missedWarningZoneRu: string | null;
   missedWarningItems: string[];
+  endgameT15CompletionNotice: EndgameT15CompletionNotice | null;
 }
 
 export interface AppSnapshot {
@@ -530,6 +554,7 @@ export interface SettingsPatch {
   overlayMovementLocked?: boolean;
   realtimePriorityEnabled?: boolean;
   overlayScale?: OverlayScale;
+  overlayTextSize?: OverlayTextSize;
   overlayDensity?: OverlayDensity;
   overlayVisibleSections?: Partial<OverlayVisibleSections>;
   mainOverlaySettings?: Partial<MainOverlaySettings>;
@@ -648,7 +673,7 @@ export interface ElectronApi {
   sendTimerDiagnostics: (payload: TimerDiagnosticsPayload) => Promise<boolean>;
   getOverlayBounds: () => Promise<OverlayBounds | null>;
   resizeOverlay: (width: number, height: number) => Promise<AppSnapshot>;
-  resizeOverlayHeight: (height: number) => Promise<AppSnapshot>;
+  resizeOverlayHeight: (height: number, options?: { force?: boolean; allowBelowMinimum?: boolean }) => Promise<AppSnapshot>;
   setOverlayAutoResizeSuspended: (suspended: boolean) => Promise<boolean>;
   setOverlayDragActive: (active: boolean) => Promise<boolean>;
   setOverlayPosition: (x: number, y: number) => Promise<boolean>;

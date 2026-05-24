@@ -869,7 +869,48 @@
             "2 очка пассивных умений для набора оружия"
           ],
           "zoneIds": [
-            "i_final_wolvenholt"
+            "i_final_wolvenholt",
+            "i_final_holten"
+          ]
+        },
+        {
+          "all": [
+            "received",
+            "2 Weapon Set Passive Skill Points"
+          ],
+          "zoneIds": [
+            "i_final_wolvenholt",
+            "i_final_holten"
+          ]
+        },
+        {
+          "all": [
+            "получили",
+            "2 очка пассивных умений для набора оружия"
+          ],
+          "sceneNames": [
+            "Вольфенхолд",
+            "Вольфелхонд",
+            "Волвенхолд",
+            "Wolvenhold",
+            "Wolvenholt",
+            "Холтен",
+            "Holten"
+          ]
+        },
+        {
+          "all": [
+            "received",
+            "2 Weapon Set Passive Skill Points"
+          ],
+          "sceneNames": [
+            "Вольфенхолд",
+            "Вольфелхонд",
+            "Волвенхолд",
+            "Wolvenhold",
+            "Wolvenholt",
+            "Холтен",
+            "Holten"
           ]
         }
       ]
@@ -935,6 +976,28 @@
           "zoneIds": [
             "interlude_khari_crossing"
           ]
+        },
+        {
+          "all": [
+            "получил",
+            "+5",
+            "максимуму здоровья"
+          ],
+          "sceneNames": [
+            "Кхарийский перевал",
+            "The Khari Crossing"
+          ]
+        },
+        {
+          "all": [
+            "received",
+            "+5%",
+            "maximum life"
+          ],
+          "sceneNames": [
+            "The Khari Crossing",
+            "Кхарийский перевал"
+          ]
         }
       ]
     },
@@ -962,6 +1025,26 @@
           ],
           "zoneIds": [
             "interlude_khari_crossing"
+          ]
+        },
+        {
+          "all": [
+            "получили",
+            "2 очка пассивных умений для набора оружия"
+          ],
+          "sceneNames": [
+            "Кхарийский базар",
+            "Khari Bazaar"
+          ]
+        },
+        {
+          "all": [
+            "received",
+            "2 Weapon Set Passive Skill Points"
+          ],
+          "sceneNames": [
+            "Khari Bazaar",
+            "Кхарийский базар"
           ]
         }
       ]
@@ -1057,7 +1140,31 @@
             "2 очка пассивных умений для набора оружия"
           ],
           "zoneIds": [
-            "i2_glacial_tarn"
+            "i2_glacial_tarn",
+            "i2_mount_cryer"
+          ]
+        },
+        {
+          "all": [
+            "2",
+            "очк",
+            "набор",
+            "оруж"
+          ],
+          "zoneIds": [
+            "i2_glacial_tarn",
+            "i2_mount_cryer"
+          ]
+        },
+        {
+          "all": [
+            "2",
+            "weapon set",
+            "passive"
+          ],
+          "zoneIds": [
+            "i2_glacial_tarn",
+            "i2_mount_cryer"
           ]
         }
       ]
@@ -1104,7 +1211,46 @@
           ],
           "zoneIds": [
             "i_final_holten_estate",
-            "i_final_darkness"
+            "i_final_darkness",
+            "i_final_holten"
+          ]
+        },
+        {
+          "all": [
+            "2",
+            "очк",
+            "набор",
+            "оруж"
+          ],
+          "zoneIds": [
+            "i_final_holten_estate",
+            "i_final_darkness",
+            "i_final_holten"
+          ]
+        },
+        {
+          "all": [
+            "получили",
+            "2 очка пассивных умений для набора оружия"
+          ],
+          "sceneNames": [
+            "Ориат",
+            "Убежище в зиккурате",
+            "Oriath",
+            "Ziggurat Refuge"
+          ]
+        },
+        {
+          "all": [
+            "2",
+            "weapon set",
+            "passive"
+          ],
+          "sceneNames": [
+            "Ориат",
+            "Убежище в зиккурате",
+            "Oriath",
+            "Ziggurat Refuge"
           ]
         }
       ]

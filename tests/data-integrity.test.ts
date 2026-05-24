@@ -225,7 +225,7 @@ test('guide next-zone references either resolve to the route or stay within allo
   const zones = getGuideZones();
   const zoneLookup = new Map<string, GuideEntry>();
   const crossActTransitions = new Set<string>();
-  let hasAct4ExternalBridge = false;
+  let hasAct4Bridge = false;
 
   for (const zone of zones) {
     for (const candidate of [
@@ -259,6 +259,9 @@ test('guide next-zone references either resolve to the route or stay within allo
         if (Number(zone.act) !== Number(targetZone.act)) {
           crossActTransitions.add(`${zone.act}->${targetZone.act}`);
         }
+        if (Number(zone.act) === 4 && Number(targetZone.act) === 5) {
+          hasAct4Bridge = true;
+        }
         assert.ok(
           isTransitionToExistingAct(zone, targetZone),
           `${zone.id}: next_zone_ru crosses to unexpected act ${targetZone.id}`
@@ -275,16 +278,16 @@ test('guide next-zone references either resolve to the route or stay within allo
     });
 
     if (Number(zone.act) === 4 && parts.some((part) => GUIDE_EXTERNAL_NEXT_REFERENCES.has(part))) {
-      hasAct4ExternalBridge = true;
+      hasAct4Bridge = true;
     }
   }
 
   assert.deepEqual(
     [...crossActTransitions].sort(),
-    ['1->2', '2->3', '3->4'],
+    ['1->2', '2->3', '3->4', '4->5'],
     'guide next-zone chain must preserve the direct in-guide act transitions'
   );
-  assert.equal(hasAct4ExternalBridge, true, 'Act 4 must still bridge into the external Act 5 / interlude transition');
+  assert.equal(hasAct4Bridge, true, 'Act 4 must still bridge into Act 5 / interlude transition');
 });
 
 test('campaign bonuses are structurally valid across all acts and repeated reward families', () => {

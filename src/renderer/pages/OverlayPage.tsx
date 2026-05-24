@@ -27,6 +27,7 @@ import {
 } from '../companion-helpers';
 import { formatDuration, getLevelState } from '../utils';
 import { getOverlayMinimumSize } from '../../shared/overlay-layout';
+import { isEndgameT15Act } from '../../shared/timers';
 import { shouldStartOverlayDrag } from '../../shared/overlay-drag';
 import {
   getOverlayLockButtonIcon,
@@ -59,6 +60,10 @@ import type {
 function formatActTitle(act: ZoneAct | null, language: AppLanguage): string {
   if (act === null) {
     return translate(language, 'overlay.currentZoneFallback');
+  }
+
+  if (typeof act === 'number' && isEndgameT15Act(act)) {
+    return translate(language, 'route.endgameToT15');
   }
 
   return act === 'interlude'
@@ -853,17 +858,30 @@ export function OverlayPage() {
   const overlayShellRef = useRef<HTMLElement | null>(null);
   const autoResizeFrameRef = useRef<OverlayRenderTask | null>(null);
   const adaptiveOverlayHeightSuspendedUntilRef = useRef(0);
+  const [isOverlayCollapsed, setIsOverlayCollapsed] = useState(false);
+  const [dismissedEndgameNoticeAt, setDismissedEndgameNoticeAt] = useState<string | null>(null);
+  const isTimerOnlySnapshot = snapshot?.runtime.overlayMode === 'timer_only';
   const autoResizeMinimumHeight = snapshot
-    ? getOverlayMinimumSize(
-        snapshot.runtime.overlayMode,
-        snapshot.config.overlayDensity,
-        snapshot.config.overlayScale
-      ).height
+    ? isOverlayCollapsed && !isTimerOnlySnapshot
+      ? snapshot.config.overlayDensity === 'compact'
+        ? 52
+        : 56
+      : getOverlayMinimumSize(
+          snapshot.runtime.overlayMode,
+          snapshot.config.overlayDensity,
+          snapshot.config.overlayScale
+        ).height
     : DEFAULT_OVERLAY_MINIMUM_SIZE.height;
 
   useEffect(() => {
     overlayMovementLockedRef.current = Boolean(snapshot?.config.overlayMovementLocked);
   }, [snapshot?.config.overlayMovementLocked]);
+
+  useEffect(() => {
+    if (snapshot?.runtime.overlayMode === 'timer_only' && isOverlayCollapsed) {
+      setIsOverlayCollapsed(false);
+    }
+  }, [isOverlayCollapsed, snapshot?.runtime.overlayMode]);
 
   const isAdaptiveOverlayHeightSuspended = useCallback(() => (
     Date.now() < adaptiveOverlayHeightSuspendedUntilRef.current
@@ -885,8 +903,14 @@ export function OverlayPage() {
     void window.poe2Overlay?.setOverlayAutoResizeSuspended(false);
   }, []);
 
-  const scheduleAdaptiveOverlayHeight = useCallback((options?: { allowDuringManualResize?: boolean }) => {
+  const scheduleAdaptiveOverlayHeight = useCallback((options?: {
+    allowDuringManualResize?: boolean;
+    force?: boolean;
+    allowBelowMinimum?: boolean;
+  }) => {
     const allowDuringManualResize = Boolean(options?.allowDuringManualResize);
+    const force = Boolean(options?.force);
+    const allowBelowMinimum = Boolean(options?.allowBelowMinimum ?? isOverlayCollapsed);
 
     if (autoResizeFrameRef.current !== null) {
       autoResizeFrameRef.current.cancel();
@@ -907,7 +931,7 @@ export function OverlayPage() {
         !shell ||
         !api ||
         overlayDragStateRef.current ||
-        isAdaptiveOverlayHeightSuspended() ||
+        (!force && isAdaptiveOverlayHeightSuspended()) ||
         (resizeStateRef.current && !allowDuringManualResize)
       ) {
         return;
@@ -931,27 +955,59 @@ export function OverlayPage() {
         return Math.max(max, child.offsetTop + child.offsetHeight);
       }, 0);
       const dragStripHeight = dragStrip?.getBoundingClientRect().height ?? 0;
+      const contentHeight = Math.max(shell.scrollHeight, contentBottom + shellPaddingBottom);
       const desiredHeight = Math.ceil(
         pagePaddingY +
           dragStripHeight +
-          contentBottom +
-          shellPaddingBottom +
+          contentHeight +
           shellBorderY +
           2
       );
       const nextHeight = Math.max(autoResizeMinimumHeight, desiredHeight);
       const currentHeight = getRendererViewportHeight();
 
-      if (Math.abs(currentHeight - nextHeight) < 8) {
+      if (!force && Math.abs(currentHeight - nextHeight) < 8) {
         return;
       }
 
       // Keep width as the main-process source of truth so adaptive height never widens
       // the overlay while the user is only moving it.
-      void api.resizeOverlayHeight(nextHeight);
+      void api.resizeOverlayHeight(nextHeight, { force, allowBelowMinimum });
       }
     });
-  }, [autoResizeMinimumHeight, isAdaptiveOverlayHeightSuspended]);
+  }, [autoResizeMinimumHeight, isAdaptiveOverlayHeightSuspended, isOverlayCollapsed]);
+
+  useEffect(() => {
+    let firstFrame: number | null = null;
+    let secondFrame: number | null = null;
+    const timers: number[] = [];
+    const resizeForCurrentCollapseState = () => {
+      scheduleAdaptiveOverlayHeight({
+        force: true,
+        allowBelowMinimum: isOverlayCollapsed
+      });
+    };
+
+    firstFrame = window.requestAnimationFrame(() => {
+      resizeForCurrentCollapseState();
+      secondFrame = window.requestAnimationFrame(resizeForCurrentCollapseState);
+    });
+
+    timers.push(window.setTimeout(resizeForCurrentCollapseState, 90));
+    timers.push(window.setTimeout(resizeForCurrentCollapseState, 220));
+
+    return () => {
+      if (firstFrame !== null) {
+        window.cancelAnimationFrame(firstFrame);
+      }
+
+      if (secondFrame !== null) {
+        window.cancelAnimationFrame(secondFrame);
+      }
+
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [isOverlayCollapsed, scheduleAdaptiveOverlayHeight]);
 
   useEffect(() => {
     const page = overlayPageRef.current;
@@ -985,13 +1041,24 @@ export function OverlayPage() {
     snapshot?.currentGuideEntry?.id,
     snapshot?.currentGuideEntry?.checklist?.length,
     snapshot?.config.overlayScale,
+    snapshot?.config.overlayTextSize,
     snapshot?.config.overlayDensity,
+    snapshot?.config.overlayVisibleSections.nearby,
+    snapshot?.config.overlayVisibleSections.zoneInfo,
+    snapshot?.config.overlayVisibleSections.zoneBonuses,
+    snapshot?.config.overlayVisibleSections.league,
+    snapshot?.config.overlayVisibleSections.next,
+    snapshot?.config.overlayVisibleSections.skip,
+    snapshot?.config.overlayVisibleSections.speedrun,
+    snapshot?.config.overlayVisibleSections.important,
+    isOverlayCollapsed,
     snapshot?.config.mainOverlaySettings.showOverlaySkip,
     snapshot?.config.mainOverlaySettings.showOverlayCriticalImportant,
     snapshot?.config.mainOverlaySettings.showOverlayBossTip,
     snapshot?.config.mainOverlaySettings.showOverlayVendorReminder,
     snapshot?.config.mainOverlaySettings.showOverlayXpStatus,
-    snapshot?.config.mainOverlaySettings.showOverlayPowerSpike
+    snapshot?.config.mainOverlaySettings.showOverlayPowerSpike,
+    snapshot?.runtime.endgameT15CompletionNotice?.completedAt
   ]);
 
   const beginOverlayDrag = useCallback((event: ReactPointerEvent<HTMLElement>) => {
@@ -1138,8 +1205,16 @@ export function OverlayPage() {
     // final snapshot. Avoid an extra pre-switch auto-height IPC here, because it
     // can save stale timer-only/full heights and briefly render the old layout in
     // the new window size.
-    void window.poe2Overlay?.toggleOverlayMode();
-  }, []);
+    void window.poe2Overlay?.toggleOverlayMode().then(() => {
+      const forceResize = () => {
+        scheduleAdaptiveOverlayHeight({ force: true, allowBelowMinimum: false });
+      };
+
+      window.requestAnimationFrame(forceResize);
+      window.setTimeout(forceResize, 90);
+      window.setTimeout(forceResize, 240);
+    });
+  }, [scheduleAdaptiveOverlayHeight]);
 
   useDocumentTitle(t('titles.overlay'));
 
@@ -1149,20 +1224,27 @@ export function OverlayPage() {
 
   const { config, currentGuideEntry, currentZone, runtime } = snapshot;
   const displayRunTimer = syncedRunTimer ?? config.runTimer;
+  const endgameT15CompletionNotice = runtime.endgameT15CompletionNotice;
+  const showEndgameT15CompletionNotice = Boolean(endgameT15CompletionNotice) &&
+    dismissedEndgameNoticeAt !== endgameT15CompletionNotice?.completedAt &&
+    displayRunTimer.status === 'finished';
+  const endgameT15CompletionDuration = formatDuration(
+    endgameT15CompletionNotice?.totalElapsedMs ?? config.lastRunSummary?.totalElapsedMs ?? displayRunTimer.elapsedMs
+  );
   const guide = currentGuideEntry;
   const guideView = getGuideView(guide, language);
   const guideChecklist = guideView?.checklist ?? [];
   const sceneName = getSceneDisplayName(snapshot, language);
   const levelState = getLevelState(snapshot);
   const currentActTimerAct =
-    guide && typeof guide.act === 'number'
-      ? guide.act
-      : typeof currentZone.actHint === 'number'
-        ? currentZone.actHint
+    typeof currentZone.actHint === 'number'
+      ? currentZone.actHint
+      : guide && typeof guide.act === 'number'
+        ? guide.act
         : runtime.lastGameplayAct ?? null;
   const currentActTimerLabel =
     currentActTimerAct !== null
-      ? translate(language, 'route.act', { act: currentActTimerAct })
+      ? formatActTitle(currentActTimerAct, language)
       : guide?.act === 'interlude' || currentZone.actHint === 'interlude'
         ? translate(language, 'route.interludes')
         : null;
@@ -1172,11 +1254,12 @@ export function OverlayPage() {
   // Always keep near-level vendor/power reminders visible in the main overlay.
   // Rule: show reminders from the current level up to +2 levels, and hide them after the target level is passed.
   const upcomingOverlayReminders = getOverlayUpcomingReminders(snapshot, language);
+  const visibleSections = config.overlayVisibleSections;
   const skipLines =
-    config.mainOverlaySettings.showOverlaySkip && guide
+    visibleSections.skip && guide
       ? (guideView?.skip ?? []).slice(0, 3)
       : [];
-  const speedrunLines = getOverlaySpeedrunLines(guide, language);
+  const speedrunLines = visibleSections.speedrun ? getOverlaySpeedrunLines(guide, language) : [];
   const actTitle = formatActTitle(currentZone.actHint ?? guide?.act ?? null, language);
   const overlayTitle = guide ? `${actTitle} · ${sceneName}` : sceneName;
   const overlayZoneName = sceneName;
@@ -1305,13 +1388,18 @@ export function OverlayPage() {
       return;
     }
 
-    await api.resizeOverlayHeight(getRendererViewportHeight());
-
     await api.updateSettings({
       overlayDensity: isCompactOverlay ? 'normal' : 'compact'
     });
 
-    window.setTimeout(scheduleAdaptiveOverlayHeight, 0);
+    const forceResize = () => {
+      scheduleAdaptiveOverlayHeight({ force: true, allowBelowMinimum: false });
+    };
+
+    forceResize();
+    window.requestAnimationFrame(forceResize);
+    window.setTimeout(forceResize, 80);
+    window.setTimeout(forceResize, 220);
   };
 
   const handleTimerOnlyExpand = async () => {
@@ -1324,6 +1412,19 @@ export function OverlayPage() {
     // process also restores normal density when leaving timer-only mode, so this
     // avoids the old three-step sequence: resize -> density update -> mode update.
     await api.toggleOverlayMode();
+
+    const forceResize = () => {
+      scheduleAdaptiveOverlayHeight({ force: true, allowBelowMinimum: false });
+    };
+
+    window.requestAnimationFrame(forceResize);
+    window.setTimeout(forceResize, 90);
+    window.setTimeout(forceResize, 240);
+  };
+
+  const handleOverlayCollapsedToggle = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    stopOverlayControlPropagation(event);
+    setIsOverlayCollapsed((value) => !value);
   };
 
   const handleLanguageChange = (nextLanguage: AppLanguage) => {
@@ -1411,6 +1512,22 @@ export function OverlayPage() {
       <span className="overlay-icon-glyph overlay-icon-glyph-close" aria-hidden="true">×</span>
     </button>
   );
+  const overlayCollapseButton = (
+    <button
+      className={`overlay-icon-button overlay-collapse-icon-button no-drag${isOverlayCollapsed ? ' is-collapsed' : ''}`}
+      type="button"
+      title={t(isOverlayCollapsed ? 'overlay.expandPanel' : 'overlay.collapsePanel')}
+      aria-label={t(isOverlayCollapsed ? 'overlay.expandPanel' : 'overlay.collapsePanel')}
+      aria-expanded={!isOverlayCollapsed}
+      onPointerDown={stopOverlayControlPropagation}
+      onMouseDown={stopOverlayControlPropagation}
+      onClick={handleOverlayCollapsedToggle}
+    >
+      <span className="overlay-icon-glyph overlay-icon-glyph-collapse" aria-hidden="true">
+        {isOverlayCollapsed ? '▾' : '▴'}
+      </span>
+    </button>
+  );
   const overlayLanguageToggle = (
     <div
       className={`overlay-language-toggle is-${language} no-drag`}
@@ -1446,6 +1563,7 @@ export function OverlayPage() {
   const overlayQuickActions = (
     <div className="overlay-quick-actions no-drag" aria-label={t('overlay.quickActions')}>
       {overlayLanguageToggle}
+      {!isTimerOnlyMode && overlayCollapseButton}
       {overlayLockButton}
       {overlayOpenCompanionButton}
       {overlayOpenSettingsButton}
@@ -1506,11 +1624,38 @@ export function OverlayPage() {
     </div>
   );
 
+  const endgameT15CompletionBlock = showEndgameT15CompletionNotice ? (
+    <section className="hud-block overlay-endgame-completion-card no-drag" role="status" aria-live="polite">
+      <div className="overlay-endgame-completion-copy">
+        <div className="overlay-endgame-completion-title-row">
+          <span className="overlay-endgame-completion-mark" aria-hidden="true">◆</span>
+          <h2>{t('overlay.endgameT15CompleteTitle')}</h2>
+        </div>
+        <p>{t('overlay.endgameT15CompleteMessage')}</p>
+        <div className="overlay-endgame-completion-meta">
+          <span>{t('overlay.endgameT15CompleteTime', { duration: endgameT15CompletionDuration })}</span>
+          <span>{t('overlay.endgameT15CompleteSaved')}</span>
+        </div>
+      </div>
+      <button
+        className="overlay-icon-button overlay-endgame-completion-close no-drag"
+        type="button"
+        title={t('overlay.dismissEndgameNotice')}
+        aria-label={t('overlay.dismissEndgameNotice')}
+        onPointerDown={stopOverlayControlPropagation}
+        onMouseDown={stopOverlayControlPropagation}
+        onClick={() => setDismissedEndgameNoticeAt(endgameT15CompletionNotice?.completedAt ?? null)}
+      >
+        <span className="overlay-icon-glyph overlay-icon-glyph-close" aria-hidden="true">×</span>
+      </button>
+    </section>
+  ) : null;
+
   if (isTimerOnlyMode) {
     return (
       <main
         ref={overlayPageRef}
-        className={`overlay-page overlay-page-timer-only density-${config.overlayDensity} scale-${config.overlayScale}`}
+        className={`overlay-page overlay-page-timer-only density-${config.overlayDensity} scale-${config.overlayScale} text-size-${config.overlayTextSize}`}
         onPointerDownCapture={beginOverlayDrag}
       >
         <section ref={overlayShellRef} className="overlay-shell overlay-hud overlay-timer-only-card">
@@ -1579,10 +1724,33 @@ export function OverlayPage() {
     );
   }
 
+  if (isOverlayCollapsed) {
+    return (
+      <main
+        ref={overlayPageRef}
+        className={`overlay-page is-overlay-collapsed density-${config.overlayDensity} scale-${config.overlayScale} text-size-${config.overlayTextSize}`}
+        onPointerDownCapture={beginOverlayDrag}
+      >
+        <section ref={overlayShellRef} className="overlay-shell overlay-hud overlay-main-compact overlay-collapsed-shell">
+          <header className="hud-collapsed-bar">
+            <div className="hud-collapsed-main">
+              <span className="hud-zone-act-pill">{overlayActLabel}</span>
+              {timerPrimaryButton}
+              <h1 className="hud-collapsed-zone-name" title={overlayZoneName}>{overlayZoneName}</h1>
+            </div>
+            <div className="hud-title-actions no-drag">
+              {overlayQuickActions}
+            </div>
+          </header>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main
       ref={overlayPageRef}
-      className={`overlay-page density-${config.overlayDensity} scale-${config.overlayScale}`}
+      className={`overlay-page density-${config.overlayDensity} scale-${config.overlayScale} text-size-${config.overlayTextSize}`}
       onPointerDownCapture={beginOverlayDrag}
     >
       <section ref={overlayShellRef} className="overlay-shell overlay-hud overlay-main-compact">
@@ -1617,13 +1785,15 @@ export function OverlayPage() {
           </p>
         </header>
 
+        {endgameT15CompletionBlock}
+
         {runtime.logWatcherStatus !== 'ready' && (
           <section className="hud-banner">
             <strong>{translateSystemText(runtime.logWatcherMessage, language)}</strong>
           </section>
         )}
 
-        {!isCompactOverlay && upcomingOverlayReminders.length > 0 && (
+        {visibleSections.nearby && !isCompactOverlay && upcomingOverlayReminders.length > 0 && (
           <section className="hud-block reminder-section upcoming-overlay-section">
             <div className="reminder-header-row">
               <h2>{t('overlay.nearby')}</h2>
@@ -1651,7 +1821,8 @@ export function OverlayPage() {
           </section>
         )}
 
-        <section className="hud-block checklist-section">
+        {visibleSections.zoneInfo && (
+          <section className="hud-block checklist-section">
           <h2>{t('overlay.inThisZone')}</h2>
           {guide ? (
             guideChecklist.length > 0 ? (
@@ -1675,9 +1846,10 @@ export function OverlayPage() {
           ) : (
             shouldShowNoGuideForZone ? overlayNoGuideBlock : overlayOnboardingBlock
           )}
-        </section>
+          </section>
+        )}
 
-        {!isCompactOverlay && zoneBonusItems.length > 0 && (
+        {visibleSections.zoneBonuses && !isCompactOverlay && zoneBonusItems.length > 0 && (
           <section className="hud-block zone-bonuses-section">
             <h2>{t('overlay.zoneBonuses')}</h2>
             <ul className="section-list compact-list overlay-bonus-list">
@@ -1694,7 +1866,7 @@ export function OverlayPage() {
             </ul>
           </section>
         )}
-        {!isCompactOverlay && leagueRewardItem && (
+        {visibleSections.league && !isCompactOverlay && leagueRewardItem && (
           <section className="hud-block league-reward-section">
             <h2>{t('overlay.league')}</h2>
             <div className="league-reward-line">
@@ -1712,12 +1884,14 @@ export function OverlayPage() {
           </section>
         )}
 
-        <section className="hud-block hud-next-block">
-          <h2>{t('overlay.next')}</h2>
-          <p className="hud-next-zone">{guideView?.nextZoneName || t('common.notAvailable')}</p>
-        </section>
+        {visibleSections.next && (
+          <section className="hud-block hud-next-block">
+            <h2>{t('overlay.next')}</h2>
+            <p className="hud-next-zone">{guideView?.nextZoneName || t('common.notAvailable')}</p>
+          </section>
+        )}
 
-        {!isCompactOverlay && skipLines.length > 0 && (
+        {visibleSections.skip && !isCompactOverlay && skipLines.length > 0 && (
           <section className="hud-block skip-section">
             <h2>{t('common.skip')}</h2>
             <ul className="section-list compact-list">
@@ -1728,7 +1902,7 @@ export function OverlayPage() {
           </section>
         )}
 
-        {!isCompactOverlay && speedrunLines.length > 0 && (
+        {visibleSections.speedrun && !isCompactOverlay && speedrunLines.length > 0 && (
           <section className="hud-block speedrun-section">
             <h2>{t('overlay.speedrun')}</h2>
             <ul className="section-list compact-list">
@@ -1739,7 +1913,7 @@ export function OverlayPage() {
           </section>
         )}
 
-        {!isCompactOverlay && importantLines.length > 0 && (
+        {visibleSections.important && !isCompactOverlay && importantLines.length > 0 && (
           <section className="hud-block info-section">
             <h2>{t('common.important')}</h2>
             <ul className="section-list compact-list">

@@ -58,9 +58,15 @@ textarea,
   padding: 6px;
   overflow: hidden;
   font-family: var(--font-ui);
-  --font-body: 13px;
-  --font-meta: 12px;
-  --font-heading: 11px;
+  --font-body-base: 13px;
+  --font-meta-base: 12px;
+  --font-heading-base: 11px;
+  --font-body-boost: 0px;
+  --font-meta-boost: 0px;
+  --font-heading-boost: 0px;
+  --font-body: calc(var(--font-body-base) + var(--font-body-boost));
+  --font-meta: calc(var(--font-meta-base) + var(--font-meta-boost));
+  --font-heading: calc(var(--font-heading-base) + var(--font-heading-boost));
   --font-title: 22px;
   --space-page: 12px;
   --space-section: 8px;
@@ -69,9 +75,9 @@ textarea,
 }
 
 .overlay-page.scale-70 {
-  --font-body: 11px;
-  --font-meta: 10px;
-  --font-heading: 9px;
+  --font-body-base: 11px;
+  --font-meta-base: 10px;
+  --font-heading-base: 9px;
   --font-title: 18px;
   --space-page: 8px;
   --space-section: 5px;
@@ -80,9 +86,9 @@ textarea,
 }
 
 .overlay-page.scale-80 {
-  --font-body: 12px;
-  --font-meta: 11px;
-  --font-heading: 10px;
+  --font-body-base: 12px;
+  --font-meta-base: 11px;
+  --font-heading-base: 10px;
   --font-title: 19px;
   --space-page: 9px;
   --space-section: 6px;
@@ -91,9 +97,9 @@ textarea,
 }
 
 .overlay-page.scale-90 {
-  --font-body: 12.5px;
-  --font-meta: 11px;
-  --font-heading: 10px;
+  --font-body-base: 12.5px;
+  --font-meta-base: 11px;
+  --font-heading-base: 10px;
   --font-title: 20px;
   --space-page: 10px;
   --space-section: 7px;
@@ -102,9 +108,9 @@ textarea,
 }
 
 .overlay-page.scale-100 {
-  --font-body: 13px;
-  --font-meta: 12px;
-  --font-heading: 11px;
+  --font-body-base: 13px;
+  --font-meta-base: 12px;
+  --font-heading-base: 11px;
   --font-title: 22px;
   --space-page: 12px;
   --space-section: 8px;
@@ -113,9 +119,9 @@ textarea,
 }
 
 .overlay-page.scale-110 {
-  --font-body: 14px;
-  --font-meta: 13px;
-  --font-heading: 12px;
+  --font-body-base: 14px;
+  --font-meta-base: 13px;
+  --font-heading-base: 12px;
   --font-title: 24px;
   --space-page: 15px;
   --space-section: 10px;
@@ -124,14 +130,33 @@ textarea,
 }
 
 .overlay-page.scale-120 {
-  --font-body: 15px;
-  --font-meta: 13px;
-  --font-heading: 12px;
+  --font-body-base: 15px;
+  --font-meta-base: 13px;
+  --font-heading-base: 12px;
   --font-title: 26px;
   --space-page: 18px;
   --space-section: 12px;
   --space-card-y: 12px;
   --space-card-x: 16px;
+}
+
+
+.overlay-page.text-size-1 {
+  --font-body-boost: 1px;
+  --font-meta-boost: 0.75px;
+  --font-heading-boost: 0.5px;
+}
+
+.overlay-page.text-size-2 {
+  --font-body-boost: 2px;
+  --font-meta-boost: 1.5px;
+  --font-heading-boost: 1px;
+}
+
+.overlay-page.text-size-3 {
+  --font-body-boost: 3px;
+  --font-meta-boost: 2px;
+  --font-heading-boost: 1.5px;
 }
 
 .overlay-page.density-compact {

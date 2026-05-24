@@ -124,6 +124,8 @@ const baseTranslations = {
       openCompanion: 'Открыть/закрыть подробную панель ({hotkey})',
       openSettings: 'Открыть/закрыть настройки',
       closeWindow: 'Закрыть приложение',
+      collapsePanel: 'Свернуть оверлей в строку',
+      expandPanel: 'Развернуть оверлей',
       noGuideTitle: 'Инфы по этой локации нет',
       noGuideText: 'Логи подключены, зона определена как {zone}, но для неё пока нет подсказок в гайде.',
       noGuideHint: 'Можно продолжать забег: таймер и ручные панели остаются доступны.',
@@ -165,7 +167,12 @@ const baseTranslations = {
       nextLabel: 'Дальше: {zone}',
       powerSpike: 'Скачок силы: ур. {level} · {title}',
       logHintWaiting: 'Ожидание лог-файла',
-      timerOnlyCountdownLabel: 'СТАРТ ЧЕРЕЗ'
+      timerOnlyCountdownLabel: 'СТАРТ ЧЕРЕЗ',
+      endgameT15CompleteTitle: 'Т15 открыт',
+      endgameT15CompleteMessage: 'Поздравляем, ты дошёл до Т15 карт. Таймер остановлен, забег сохранён во «Времени актов». Спасибо, что использовал(а) оверлей.',
+      endgameT15CompleteTime: 'Результат: {duration}',
+      endgameT15CompleteSaved: 'Сохранено автоматически',
+      dismissEndgameNotice: 'Скрыть поздравление'
     },
     settings: {
       title: 'Настройки',
@@ -228,12 +235,19 @@ const baseTranslations = {
       overlayDescription: 'Основной оверлей показывает краткую памятку по текущей локации: что важно забрать, куда идти дальше, что можно пропустить, подсказки по боссу и таймер.',
       overlayOpacity: 'Прозрачность: {value}%',
       overlayScale: 'Масштаб интерфейса',
+      overlayTextSize: 'Размер текста',
       overlayDensity: 'Плотность',
       realtimePriorityTitle: 'Экстремальный режим отрисовки',
       realtimePriorityDescription: 'Ставит процессы приложения в приоритет “Реального времени”. Может помочь, если таймер или оверлей обновляются с задержкой под нагрузкой. Используйте только если есть проблемы с отзывчивостью.',
       realtimePriorityWarning: 'Если после включения система или игра ведёт себя странно — выключите режим или перезапустите приложение.',
       overlayShowTitle: 'ОТОБРАЖАТЬ В ОВЕРЛЕЕ',
+      overlayShowNearby: 'Показывать блок “Ближайшее”',
+      overlayShowZoneInfo: 'Показывать блок “Что в локации”',
+      overlayShowZoneBonuses: 'Показывать блок “Бонусы зоны”',
+      overlayShowLeague: 'Показывать блок “Лига”',
+      overlayShowNext: 'Показывать блок “Дальше”',
       overlayShowSkip: 'Показывать блок “Скип”',
+      overlayShowSpeedrun: 'Показывать блок “Спидран”',
       overlayShowImportant: 'Показывать блок “Сейчас важно”',
       overlayShowBossTips: 'Показывать подсказки по боссу',
       overlayShowVendor: 'Показывать напоминания торговцев',
@@ -353,8 +367,8 @@ const baseTranslations = {
       longestZones: 'Самые долгие зоны',
       actTimesEmptyFinished: 'В этом забеге не записались сплиты по актам.',
       actTimesEmptyRunning: 'Время актов появится после перехода между актами.',
-      actTimesTitle: 'Время актов',
-      actTimesIntro: 'Разбивка забега по актам: отдельное время акта, статус и накопленное общее время.',
+      actTimesTitle: 'Время актов и До Т15',
+      actTimesIntro: 'Разбивка забега по актам и отдельный сегмент эндгейма до Т15 карт: время сегмента, статус и накопленное общее время.',
       totalTimeHint: 'С начала текущего забега',
       completedActs: 'Завершено актов',
       completedActsHint: 'По записанным переходам между актами',
@@ -581,7 +595,8 @@ const baseTranslations = {
     },
     route: {
       act: 'Акт {act}',
-      interludes: 'Интерлюдии'
+      interludes: 'Интерлюдии',
+      endgameToT15: 'До Т15'
     },
     states: {
       unknown: 'НЕИЗВЕСТНО',
@@ -605,6 +620,10 @@ const baseTranslations = {
       compact: 'Компактно',
       normal: 'Обычно',
       detailed: 'Подробно'
+    },
+    overlayTextSize: {
+      normal: 'Обычный',
+      plus: '+{value} пкс'
     },
     logSelectionMode: {
       auto: 'Автопоиск',
@@ -757,6 +776,8 @@ const baseTranslations = {
       openCompanion: 'Open/close the detailed panel ({hotkey})',
       openSettings: 'Open/close settings',
       closeWindow: 'Close app',
+      collapsePanel: 'Collapse overlay to a bar',
+      expandPanel: 'Expand overlay',
       noGuideTitle: 'No guide card for this zone yet',
       noGuideText: 'Logs are connected and the zone was detected as <strong>{zone}</strong>, but there are no guide notes for it yet.',
       noGuideHint: 'You can keep running: the timer and manual panels are still available.',
@@ -798,7 +819,12 @@ const baseTranslations = {
       nextLabel: 'Next: {zone}',
       powerSpike: 'Power spike: Lv. {level} · {title}',
       logHintWaiting: 'Waiting for the log file',
-      timerOnlyCountdownLabel: 'START IN'
+      timerOnlyCountdownLabel: 'START IN',
+      endgameT15CompleteTitle: 'T15 reached',
+      endgameT15CompleteMessage: 'Congratulations, you reached Tier 15 maps. The timer stopped and the run was saved in Act Times. Thanks for using the overlay.',
+      endgameT15CompleteTime: 'Result: {duration}',
+      endgameT15CompleteSaved: 'Saved automatically',
+      dismissEndgameNotice: 'Dismiss completion notice'
     },
     settings: {
       title: 'Settings',
@@ -861,12 +887,19 @@ const baseTranslations = {
       overlayDescription: 'The main overlay shows a short summary for the current zone: what to pick up, where to go next, what can be skipped, boss tips, and the timer.',
       overlayOpacity: 'Opacity: {value}%',
       overlayScale: 'UI scale',
+      overlayTextSize: 'Text size',
       overlayDensity: 'Density',
       realtimePriorityTitle: 'Extreme rendering mode',
       realtimePriorityDescription: 'Sets the application processes to Real-time priority. This can help when the timer or overlay updates with a delay under load. Use only if you have responsiveness issues.',
       realtimePriorityWarning: 'If the system or game starts behaving strangely, turn this mode off or restart the app.',
       overlayShowTitle: 'SHOW IN OVERLAY',
+      overlayShowNearby: 'Show the “Nearby” block',
+      overlayShowZoneInfo: 'Show the “In this zone” block',
+      overlayShowZoneBonuses: 'Show the “Zone bonuses” block',
+      overlayShowLeague: 'Show the “League” block',
+      overlayShowNext: 'Show the “Next” block',
       overlayShowSkip: 'Show the “Skip” block',
+      overlayShowSpeedrun: 'Show the “Speedrun” block',
       overlayShowImportant: 'Show the “Important Now” block',
       overlayShowBossTips: 'Show boss tips',
       overlayShowVendor: 'Show vendor reminders',
@@ -986,8 +1019,8 @@ const baseTranslations = {
       longestZones: 'Longest Zones',
       actTimesEmptyFinished: 'No act splits were recorded in this run.',
       actTimesEmptyRunning: 'Act times will appear after you transition between acts.',
-      actTimesTitle: 'Act Times',
-      actTimesIntro: 'Run breakdown by act: act time, status, and cumulative total time.',
+      actTimesTitle: 'Act Times and To T15',
+      actTimesIntro: 'Run breakdown by act plus a separate endgame-to-T15 segment: segment time, status, and cumulative total time.',
       totalTimeHint: 'Since the start of the current run',
       completedActs: 'Completed acts',
       completedActsHint: 'Based on recorded act transitions',
@@ -1214,7 +1247,8 @@ const baseTranslations = {
     },
     route: {
       act: 'Act {act}',
-      interludes: 'Interludes'
+      interludes: 'Interludes',
+      endgameToT15: 'To T15'
     },
     states: {
       unknown: 'UNKNOWN',
@@ -1238,6 +1272,10 @@ const baseTranslations = {
       compact: 'Compact',
       normal: 'Normal',
       detailed: 'Detailed'
+    },
+    overlayTextSize: {
+      normal: 'Normal',
+      plus: '+{value}px'
     },
     logSelectionMode: {
       auto: 'Auto search',
