@@ -214,6 +214,8 @@ import {
   runBuildTimerDiagnosticsRecord as runBuildTimerDiagnosticsRecordMethod,
   runLogTimerDiagnostics as runLogTimerDiagnosticsMethod,
   runProcessRunTimerActivityFromLogLine as runProcessRunTimerActivityFromLogLineMethod,
+  runIsEndgameT15CompletionLogLine as runIsEndgameT15CompletionLogLineMethod,
+  runCompleteEndgameT15Run as runCompleteEndgameT15RunMethod,
   runClearRunTimerStartTimer as runClearRunTimerStartTimerMethod,
   runPersistRunTimer as runPersistRunTimerMethod,
   runScheduleRunTimerAutoStart as runScheduleRunTimerAutoStartMethod,
@@ -427,7 +429,8 @@ export class PoeOverlayApp {
             lastSceneSourceAt: null,
             overlayMode: 'full',
             missedWarningZoneRu: null,
-            missedWarningItems: []
+            missedWarningItems: [],
+            endgameT15CompletionNotice: null
         };
         this.isQuitting = false;
         this.isClosingOverlayWindow = false;
@@ -848,6 +851,12 @@ export class PoeOverlayApp {
     }
     setSceneWithoutGuide(rawZoneName: any, source: any, sceneKind: any, actHint: any = null) {
         return runSetSceneWithoutGuideMethod.apply(this, arguments as any);
+    }
+    isEndgameT15CompletionLogLine(line: any) {
+        return runIsEndgameT15CompletionLogLineMethod.apply(this, arguments as any);
+    }
+    completeEndgameT15Run(line: any) {
+        return runCompleteEndgameT15RunMethod.apply(this, arguments as any);
     }
     setTownScene(rawZoneName: any, source: any) {
         return runSetTownSceneMethod.apply(this, arguments as any);

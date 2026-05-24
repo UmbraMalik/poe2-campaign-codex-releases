@@ -167,7 +167,12 @@ const baseTranslations = {
       nextLabel: 'Дальше: {zone}',
       powerSpike: 'Скачок силы: ур. {level} · {title}',
       logHintWaiting: 'Ожидание лог-файла',
-      timerOnlyCountdownLabel: 'СТАРТ ЧЕРЕЗ'
+      timerOnlyCountdownLabel: 'СТАРТ ЧЕРЕЗ',
+      endgameT15CompleteTitle: 'Т15 открыт',
+      endgameT15CompleteMessage: 'Поздравляем, ты дошёл до Т15 карт. Таймер остановлен, забег сохранён во «Времени актов». Спасибо, что использовал оверлей.',
+      endgameT15CompleteTime: 'Результат: {duration}',
+      endgameT15CompleteSaved: 'Сохранено автоматически',
+      dismissEndgameNotice: 'Скрыть поздравление'
     },
     settings: {
       title: 'Настройки',
@@ -808,7 +813,12 @@ const baseTranslations = {
       nextLabel: 'Next: {zone}',
       powerSpike: 'Power spike: Lv. {level} · {title}',
       logHintWaiting: 'Waiting for the log file',
-      timerOnlyCountdownLabel: 'START IN'
+      timerOnlyCountdownLabel: 'START IN',
+      endgameT15CompleteTitle: 'T15 reached',
+      endgameT15CompleteMessage: 'Congratulations, you reached Tier 15 maps. The timer stopped and the run was saved in Act Times. Thanks for using the overlay.',
+      endgameT15CompleteTime: 'Result: {duration}',
+      endgameT15CompleteSaved: 'Saved automatically',
+      dismissEndgameNotice: 'Dismiss completion notice'
     },
     settings: {
       title: 'Settings',

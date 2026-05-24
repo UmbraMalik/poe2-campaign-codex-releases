@@ -250,7 +250,8 @@ export function getPreviewSnapshot(): AppSnapshot {
       lastSceneSourceAt: '2026-05-12T12:00:00.000Z',
       overlayMode: params.get('overlayMode') === 'timer_only' ? 'timer_only' : 'full',
       missedWarningZoneRu: null,
-      missedWarningItems: []
+      missedWarningItems: [],
+      endgameT15CompletionNotice: null
     }
   };
 }

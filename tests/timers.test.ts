@@ -159,6 +159,35 @@ test('Endgame refuge starts the To T15 segment after Act 5', () => {
   assert.equal(getCurrentActElapsedMsForAct(runTimer, 6, 2_000), 0);
 });
 
+test('level 79 map area auto-finishes and saves the To T15 run', () => {
+  const app = createTestAppInstance();
+
+  withMockedNow(1_000, () => {
+    applyAppLogLine(app as never, '2026/05/24 16:50:00 123 [DEBUG Client] Generating level 59 area "P1_6" with seed 1');
+    applyAppLogLine(app as never, '[SCENE] Set Source [Поместье Холтен]');
+    (app as any).startRunTimerFromAnchor(1_000);
+  });
+
+  withMockedNow(2_000, () => {
+    applyAppLogLine(app as never, '2026/05/24 16:59:09 123 [DEBUG Client] Generating level 65 area "G_Endgame_Town" with seed 1');
+    applyAppLogLine(app as never, '[SCENE] Set Source [Убежище в зиккурате]');
+  });
+
+  withMockedNow(5_000, () => {
+    applyAppLogLine(app as never, '2026/05/24 17:47:33 123 [DEBUG Client] Generating level 79 area "MapWorldsT15_Test" with seed 1');
+  });
+
+  const runTimer = (app as any).config.runTimer;
+  assert.equal(runTimer.status, 'finished');
+  assert.equal(runTimer.elapsedMs, 4_000);
+  assert.deepEqual(runTimer.actSplits.map((split: { act: number }) => split.act), [5, 6]);
+  assert.equal((app as any).config.runHistory.length, 1);
+  assert.equal((app as any).config.runHistory[0].status, 'finished');
+  assert.equal((app as any).config.runHistory[0].totalElapsedMs, 4_000);
+  assert.ok((app as any).runtime.endgameT15CompletionNotice);
+  assert.equal((app as any).runtime.endgameT15CompletionNotice.totalElapsedMs, 4_000);
+});
+
 test('Kingsmarch town scene starts Act 4 timer after Act 3', () => {
   const app = createTestAppInstance();
 

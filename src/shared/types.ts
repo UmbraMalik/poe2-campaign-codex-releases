@@ -427,6 +427,12 @@ export interface LogWatcherRuntimeState {
   lastMatcherReason: ZoneMatcherReason;
 }
 
+export interface EndgameT15CompletionNotice {
+  completedAt: string;
+  totalElapsedMs: number;
+  savedLabel: string;
+}
+
 export interface RuntimeState {
   timerNowMs: number;
   guideLoadedAt: string | null;
@@ -459,6 +465,7 @@ export interface RuntimeState {
   overlayMode: OverlayMode;
   missedWarningZoneRu: string | null;
   missedWarningItems: string[];
+  endgameT15CompletionNotice: EndgameT15CompletionNotice | null;
 }
 
 export interface AppSnapshot {

@@ -83,7 +83,8 @@ function makeSnapshot(): AppSnapshot {
       lastSceneSourceAt: '2026-05-17T12:00:00.000Z',
       overlayMode: 'full',
       missedWarningZoneRu: null,
-      missedWarningItems: []
+      missedWarningItems: [],
+      endgameT15CompletionNotice: null
     }
   };
 }

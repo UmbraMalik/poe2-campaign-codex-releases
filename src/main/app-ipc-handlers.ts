@@ -246,6 +246,7 @@ export function runRegisterIpc(this: any) {
             this.runtime.lastLevelUpDetectedAt = null;
             this.runtime.missedWarningZoneRu = null;
             this.runtime.missedWarningItems = [];
+            this.runtime.endgameT15CompletionNotice = null;
             this.broadcastState();
             return this.getSnapshot();
         });

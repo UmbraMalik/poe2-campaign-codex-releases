@@ -859,6 +859,7 @@ export function OverlayPage() {
   const autoResizeFrameRef = useRef<OverlayRenderTask | null>(null);
   const adaptiveOverlayHeightSuspendedUntilRef = useRef(0);
   const [isOverlayCollapsed, setIsOverlayCollapsed] = useState(false);
+  const [dismissedEndgameNoticeAt, setDismissedEndgameNoticeAt] = useState<string | null>(null);
   const isTimerOnlySnapshot = snapshot?.runtime.overlayMode === 'timer_only';
   const autoResizeMinimumHeight = snapshot
     ? isOverlayCollapsed && !isTimerOnlySnapshot
@@ -1048,7 +1049,8 @@ export function OverlayPage() {
     snapshot?.config.mainOverlaySettings.showOverlayBossTip,
     snapshot?.config.mainOverlaySettings.showOverlayVendorReminder,
     snapshot?.config.mainOverlaySettings.showOverlayXpStatus,
-    snapshot?.config.mainOverlaySettings.showOverlayPowerSpike
+    snapshot?.config.mainOverlaySettings.showOverlayPowerSpike,
+    snapshot?.runtime.endgameT15CompletionNotice?.completedAt
   ]);
 
   const beginOverlayDrag = useCallback((event: ReactPointerEvent<HTMLElement>) => {
@@ -1214,6 +1216,13 @@ export function OverlayPage() {
 
   const { config, currentGuideEntry, currentZone, runtime } = snapshot;
   const displayRunTimer = syncedRunTimer ?? config.runTimer;
+  const endgameT15CompletionNotice = runtime.endgameT15CompletionNotice;
+  const showEndgameT15CompletionNotice = Boolean(endgameT15CompletionNotice) &&
+    dismissedEndgameNoticeAt !== endgameT15CompletionNotice?.completedAt &&
+    displayRunTimer.status === 'finished';
+  const endgameT15CompletionDuration = formatDuration(
+    endgameT15CompletionNotice?.totalElapsedMs ?? config.lastRunSummary?.totalElapsedMs ?? displayRunTimer.elapsedMs
+  );
   const guide = currentGuideEntry;
   const guideView = getGuideView(guide, language);
   const guideChecklist = guideView?.checklist ?? [];
@@ -1606,6 +1615,33 @@ export function OverlayPage() {
     </div>
   );
 
+  const endgameT15CompletionBlock = showEndgameT15CompletionNotice ? (
+    <section className="hud-block overlay-endgame-completion-card no-drag" role="status" aria-live="polite">
+      <div className="overlay-endgame-completion-copy">
+        <div className="overlay-endgame-completion-title-row">
+          <span className="overlay-endgame-completion-mark" aria-hidden="true">◆</span>
+          <h2>{t('overlay.endgameT15CompleteTitle')}</h2>
+        </div>
+        <p>{t('overlay.endgameT15CompleteMessage')}</p>
+        <div className="overlay-endgame-completion-meta">
+          <span>{t('overlay.endgameT15CompleteTime', { duration: endgameT15CompletionDuration })}</span>
+          <span>{t('overlay.endgameT15CompleteSaved')}</span>
+        </div>
+      </div>
+      <button
+        className="overlay-icon-button overlay-endgame-completion-close no-drag"
+        type="button"
+        title={t('overlay.dismissEndgameNotice')}
+        aria-label={t('overlay.dismissEndgameNotice')}
+        onPointerDown={stopOverlayControlPropagation}
+        onMouseDown={stopOverlayControlPropagation}
+        onClick={() => setDismissedEndgameNoticeAt(endgameT15CompletionNotice?.completedAt ?? null)}
+      >
+        <span className="overlay-icon-glyph overlay-icon-glyph-close" aria-hidden="true">×</span>
+      </button>
+    </section>
+  ) : null;
+
   if (isTimerOnlyMode) {
     return (
       <main
@@ -1739,6 +1775,8 @@ export function OverlayPage() {
             />
           </p>
         </header>
+
+        {endgameT15CompletionBlock}
 
         {runtime.logWatcherStatus !== 'ready' && (
           <section className="hud-banner">
