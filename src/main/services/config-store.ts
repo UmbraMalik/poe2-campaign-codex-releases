@@ -14,6 +14,7 @@ import type {
   OverlayBounds,
   OverlayDensity,
   OverlayScale,
+  OverlayTextSize,
   OverlayVisibleSections,
   RunTimerActSplit,
   RunTimerState,
@@ -29,6 +30,7 @@ import type {
 import { normalizeHotkeyAccelerator } from '../hotkey-utils';
 
 const OVERLAY_SCALES: OverlayScale[] = [70, 80, 90, 100, 110, 120];
+const OVERLAY_TEXT_SIZES: OverlayTextSize[] = [0, 1, 2, 3];
 const OVERLAY_DENSITIES: OverlayDensity[] = ['compact', 'normal', 'detailed'];
 const RUN_TIMER_STATUSES: RunTimerStatus[] = ['not_started', 'armed', 'running', 'paused', 'finished'];
 const HOTKEY_KEYS: Array<keyof HotkeySettings> = [
@@ -120,6 +122,13 @@ function normalizeOverlayScale(value: unknown): OverlayScale {
   return OVERLAY_SCALES.reduce((closest, candidate) =>
     Math.abs(candidate - clamped) < Math.abs(closest - clamped) ? candidate : closest
   );
+}
+
+function normalizeOverlayTextSize(value: unknown): OverlayTextSize {
+  const normalized = finiteInteger(value, OVERLAY_TEXT_SIZES[0], OVERLAY_TEXT_SIZES[OVERLAY_TEXT_SIZES.length - 1]);
+  return OVERLAY_TEXT_SIZES.includes(normalized as OverlayTextSize)
+    ? (normalized as OverlayTextSize)
+    : DEFAULT_CONFIG.overlayTextSize;
 }
 
 function normalizeOverlayDensity(value: unknown): OverlayDensity {
@@ -497,6 +506,7 @@ export function normalizeAppConfig(config: Partial<AppConfig> = {}): AppConfig {
     overlayMovementLocked: safeBoolean(rawConfig.overlayMovementLocked, DEFAULT_CONFIG.overlayMovementLocked),
     realtimePriorityEnabled: safeBoolean(rawConfig.realtimePriorityEnabled, DEFAULT_CONFIG.realtimePriorityEnabled),
     overlayScale: normalizeOverlayScale(rawConfig.overlayScale),
+    overlayTextSize: normalizeOverlayTextSize(rawConfig.overlayTextSize),
     overlayDensity: normalizeOverlayDensity(rawConfig.overlayDensity),
     overlayVisibleSections: normalizeOverlayVisibleSections(rawConfig.overlayVisibleSections),
     mainOverlaySettings: normalizeMainOverlaySettings(rawConfig.mainOverlaySettings),
@@ -574,6 +584,9 @@ export class ConfigStore {
         : {}),
       ...(patch.overlayScale !== undefined
         ? { overlayScale: patch.overlayScale }
+        : {}),
+      ...(patch.overlayTextSize !== undefined
+        ? { overlayTextSize: patch.overlayTextSize }
         : {}),
       ...(patch.overlayDensity !== undefined
         ? { overlayDensity: patch.overlayDensity }

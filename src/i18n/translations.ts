@@ -228,6 +228,7 @@ const baseTranslations = {
       overlayDescription: 'Основной оверлей показывает краткую памятку по текущей локации: что важно забрать, куда идти дальше, что можно пропустить, подсказки по боссу и таймер.',
       overlayOpacity: 'Прозрачность: {value}%',
       overlayScale: 'Масштаб интерфейса',
+      overlayTextSize: 'Размер текста',
       overlayDensity: 'Плотность',
       realtimePriorityTitle: 'Экстремальный режим отрисовки',
       realtimePriorityDescription: 'Ставит процессы приложения в приоритет “Реального времени”. Может помочь, если таймер или оверлей обновляются с задержкой под нагрузкой. Используйте только если есть проблемы с отзывчивостью.',
@@ -606,6 +607,10 @@ const baseTranslations = {
       normal: 'Обычно',
       detailed: 'Подробно'
     },
+    overlayTextSize: {
+      normal: 'Обычный',
+      plus: '+{value} пкс'
+    },
     logSelectionMode: {
       auto: 'Автопоиск',
       manual: 'Выбран вручную',
@@ -861,6 +866,7 @@ const baseTranslations = {
       overlayDescription: 'The main overlay shows a short summary for the current zone: what to pick up, where to go next, what can be skipped, boss tips, and the timer.',
       overlayOpacity: 'Opacity: {value}%',
       overlayScale: 'UI scale',
+      overlayTextSize: 'Text size',
       overlayDensity: 'Density',
       realtimePriorityTitle: 'Extreme rendering mode',
       realtimePriorityDescription: 'Sets the application processes to Real-time priority. This can help when the timer or overlay updates with a delay under load. Use only if you have responsiveness issues.',
@@ -1238,6 +1244,10 @@ const baseTranslations = {
       compact: 'Compact',
       normal: 'Normal',
       detailed: 'Detailed'
+    },
+    overlayTextSize: {
+      normal: 'Normal',
+      plus: '+{value}px'
     },
     logSelectionMode: {
       auto: 'Auto search',

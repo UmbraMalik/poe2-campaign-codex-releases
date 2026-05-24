@@ -985,6 +985,7 @@ export function OverlayPage() {
     snapshot?.currentGuideEntry?.id,
     snapshot?.currentGuideEntry?.checklist?.length,
     snapshot?.config.overlayScale,
+    snapshot?.config.overlayTextSize,
     snapshot?.config.overlayDensity,
     snapshot?.config.mainOverlaySettings.showOverlaySkip,
     snapshot?.config.mainOverlaySettings.showOverlayCriticalImportant,
@@ -1510,7 +1511,7 @@ export function OverlayPage() {
     return (
       <main
         ref={overlayPageRef}
-        className={`overlay-page overlay-page-timer-only density-${config.overlayDensity} scale-${config.overlayScale}`}
+        className={`overlay-page overlay-page-timer-only density-${config.overlayDensity} scale-${config.overlayScale} text-size-${config.overlayTextSize}`}
         onPointerDownCapture={beginOverlayDrag}
       >
         <section ref={overlayShellRef} className="overlay-shell overlay-hud overlay-timer-only-card">
@@ -1582,7 +1583,7 @@ export function OverlayPage() {
   return (
     <main
       ref={overlayPageRef}
-      className={`overlay-page density-${config.overlayDensity} scale-${config.overlayScale}`}
+      className={`overlay-page density-${config.overlayDensity} scale-${config.overlayScale} text-size-${config.overlayTextSize}`}
       onPointerDownCapture={beginOverlayDrag}
     >
       <section ref={overlayShellRef} className="overlay-shell overlay-hud overlay-main-compact">

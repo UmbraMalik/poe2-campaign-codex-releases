@@ -21,6 +21,7 @@ import type {
   HotkeySettings,
   OverlayDensity,
   OverlayScale,
+  OverlayTextSize,
   RunTimerAutoStartMode,
   RunTimerStatus,
   UpdateCheckResult,
@@ -154,6 +155,14 @@ function formatOverlayDensity(value: OverlayDensity, language: AppLanguage): str
     default:
       return translate(language, 'overlayDensity.normal');
   }
+}
+
+function formatOverlayTextSize(value: OverlayTextSize, language: AppLanguage): string {
+  if (value === 0) {
+    return translate(language, 'overlayTextSize.normal');
+  }
+
+  return translate(language, 'overlayTextSize.plus', { value });
 }
 
 function formatLogSelectionMode(mode: 'auto' | 'manual' | null, language: AppLanguage): string {
@@ -1083,6 +1092,23 @@ export function SettingsPage() {
                 <option value={100}>100%</option>
                 <option value={110}>110%</option>
                 <option value={120}>120%</option>
+              </select>
+            </label>
+
+            <label className="settings-field">
+              <span>{t('settings.overlayTextSize')}</span>
+              <select
+                value={config.overlayTextSize}
+                onChange={(event) => {
+                  void window.poe2Overlay.updateSettings({
+                    overlayTextSize: Number(event.target.value) as OverlayTextSize
+                  });
+                }}
+              >
+                <option value={0}>{formatOverlayTextSize(0, appLanguage)}</option>
+                <option value={1}>{formatOverlayTextSize(1, appLanguage)}</option>
+                <option value={2}>{formatOverlayTextSize(2, appLanguage)}</option>
+                <option value={3}>{formatOverlayTextSize(3, appLanguage)}</option>
               </select>
             </label>
 

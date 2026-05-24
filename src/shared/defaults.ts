@@ -82,6 +82,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   overlayMovementLocked: false,
   realtimePriorityEnabled: false,
   overlayScale: 90,
+  overlayTextSize: 0,
   overlayDensity: 'normal',
   overlayVisibleSections: {
     rewards: true,
