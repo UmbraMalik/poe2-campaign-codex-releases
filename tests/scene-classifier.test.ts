@@ -29,8 +29,11 @@ test('scene classifier separates town/login/act-label scenes from gameplay scene
   assert.equal(isActLabelScene('Акт 3'), true);
   assert.equal(isLoginLikeScene('Character Selection'), true);
 
+  const clearfellGuide = { id: 'a1_clearfell_encampment' } as never;
   assert.equal(isTownSceneWithGuide('Clearfell Encampment', null), true);
+  assert.equal(isTownSceneWithGuide('Clearfell Encampment', clearfellGuide), true);
   assert.equal(isValidGameplaySceneSource('Clearfell Encampment', null), false);
+  assert.equal(isValidGameplaySceneSource('Clearfell Encampment', clearfellGuide), false);
   assert.equal(isValidGameplaySceneSource('The Riverbank', null), true);
   assert.equal(isValidGameplaySceneSource('Акт 2', null), false);
 });

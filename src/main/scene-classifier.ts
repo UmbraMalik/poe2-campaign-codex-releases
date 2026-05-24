@@ -117,12 +117,16 @@ export function inferActHintFromTownScene(rawSceneSource: unknown): number | nul
 export function isTownSceneWithGuide(rawSceneSource: unknown, guide: GuideEntry | null | undefined): boolean {
   const normalized = normalizeSceneText(rawSceneSource);
 
-  if (!normalized || guide) {
+  if (!normalized) {
     return false;
   }
 
   if (TOWN_SCENES.has(normalized)) {
     return true;
+  }
+
+  if (guide) {
+    return false;
   }
 
   return TOWN_ZONE_HINTS.some((hint) => normalized.includes(hint));
