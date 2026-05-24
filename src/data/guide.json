@@ -5638,7 +5638,7 @@
         },
         {
           "id": "a4_heart_tribe_task_2",
-          "text": "Вернуться в город и перейти в Интерлюдию 2",
+          "text": "Вернуться в город и перейти в Кхарийский базар",
           "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
@@ -5656,11 +5656,11 @@
       "boss_tips": [],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Врата Голай",
+      "next_zone_ru": "Кхарийский базар",
       "details": {
         "route": [
           "Убить Тарукая",
-          "Вернуться в город и перейти в Интерлюдию 2"
+          "Вернуться в город и перейти в Кхарийский базар"
         ],
         "rewards": [
           "Переход в интерлюдии"
@@ -5679,7 +5679,7 @@
           "Держаться правой стены к Heart of the Tribe, главная цель — Tarukai."
         ],
         "town_plan": [
-          "После Tarukai — город/корабль и переход к интерлюдиям."
+          "После Tarukai — город/корабль и переход в Кхарийский базар."
         ]
       },
       "display": {
@@ -5689,6 +5689,79 @@
       "area_ids": [
         "C_G4_11_2",
         "G4_11_2"
+      ]
+    },
+    {
+      "id": "interlude_khari_bazaar",
+      "act": 5,
+      "zone_en": "Khari Bazaar",
+      "zone_ru": "Кхарийский базар",
+      "aliases": [
+        "Khari Bazaar",
+        "Khari Bazaar Town"
+      ],
+      "recommended_level": 48,
+      "recommended_level_label": "48+",
+      "is_good_xp_zone": false,
+      "checklist": [
+        {
+          "id": "interlude_khari_bazaar_task_1",
+          "text": "Начать вторую страницу акта: идти в Кхарийский перевал",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_khari_bazaar_task_2",
+          "text": "Порядок страниц: 2-я страница → 3-я страница → 1-я страница",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        },
+        {
+          "id": "interlude_khari_bazaar_task_3",
+          "text": "После ветки Опушки и Убежища Куачик вернуться к Пристанищу",
+          "type": "route_task",
+          "required": false,
+          "autoCompleteKeywords": [],
+          "autoCompleteMode": "manual_or_zone_leave_infer"
+        }
+      ],
+      "rewards": [],
+      "skip": [],
+      "important": [
+        "Это хаб начала интерлюдии: сначала закрыть ветку Кхарийского базара, затем Опушку, затем Пристанище."
+      ],
+      "after": [],
+      "boss_tips": [],
+      "xp_notes": [],
+      "crafting_tips": [],
+      "next_zone_ru": "Кхарийский перевал",
+      "details": {
+        "route": [
+          "Старт интерлюдии: сначала проходится 2-я страница акта — ветка Кхарийского базара.",
+          "После Кима и Водохранилища Кима маршрут переходит на 3-ю страницу: Опушка → Пепельный лес → ветка Криар.",
+          "После Убежища Куачик вернуться на 1-ю страницу через Пристанище и идти к финалу в Поместье Холтен."
+        ],
+        "important": [
+          "Не прыгать сразу в старые/первые локации: порядок страниц нужен, чтобы маршрут в оверлее не вёл назад-вперёд."
+        ],
+        "navigation": [
+          "Кхарийский базар → Кхарийский перевал → Воды Хаталя → Храм Селари → Врата Галаи."
+        ],
+        "town_plan": [
+          "Хаб-памятка: 2-я страница начинается здесь, 3-я — Опушка, 1-я — Пристанище."
+        ]
+      },
+      "display": {
+        "wideModeRecommended": true,
+        "showAllChecklist": true
+      },
+      "area_ids": [
+        "C_P2_Town",
+        "P2_Town"
       ]
     },
     {
@@ -6025,91 +6098,6 @@
         "C_P2_5",
         "P2_5"
       ]
-    },
-    {
-      "id": "interlude_level_52_power_spike",
-      "act": 5,
-      "zone_en": "Level 52 Power Spike",
-      "zone_ru": "52 уровень",
-      "aliases": [],
-      "recommended_level": 52,
-      "recommended_level_label": "52",
-      "is_good_xp_zone": false,
-      "checklist": [
-        {
-          "id": "i2_level_52_task_1",
-          "text": "Поставить ключевой сетап 52 уровня",
-          "type": "crafting",
-          "required": false,
-          "autoCompleteKeywords": [],
-          "autoCompleteMode": "manual_or_zone_leave_infer"
-        },
-        {
-          "id": "i2_level_52_task_2",
-          "text": "Основной навык + усиление урона/перезарядки + подходящие поддержки",
-          "type": "crafting",
-          "required": false,
-          "autoCompleteKeywords": [],
-          "autoCompleteMode": "manual_or_zone_leave_infer"
-        },
-        {
-          "id": "i2_level_52_task_3",
-          "text": "Использовать большую сферу ювелира",
-          "type": "crafting",
-          "required": false,
-          "autoCompleteKeywords": [],
-          "autoCompleteMode": "manual_or_zone_leave_infer"
-        },
-        {
-          "id": "i2_level_52_task_4",
-          "text": "Добавить подходящие support gems под текущий билд",
-          "type": "route_task",
-          "required": false,
-          "autoCompleteKeywords": [],
-          "autoCompleteMode": "manual_or_zone_leave_infer"
-        }
-      ],
-      "rewards": [
-        "Огромный скачок скорости зачистки"
-      ],
-      "skip": [],
-      "important": [
-        "Для зачистки: используй основной AoE и двигайся дальше — не залипай на каждой пачке"
-      ],
-      "after": [],
-      "boss_tips": [],
-      "xp_notes": [],
-      "crafting_tips": [],
-      "next_zone_ru": "Кима",
-      "details": {
-        "route": [
-          "Поставить ключевой сетап 52 уровня",
-          "Основной навык + усиление урона/перезарядки + подходящие поддержки",
-          "Использовать большую сферу ювелира",
-          "Добавить подходящие support gems под текущий билд"
-        ],
-        "rewards": [
-          "Огромный скачок скорости зачистки"
-        ],
-        "skip": [],
-        "important": [
-          "Для зачистки: используй основной AoE и двигайся дальше — не залипай на каждой пачке"
-        ],
-        "after": [],
-        "boss_tips": [],
-        "xp_notes": [],
-        "crafting_tips": [],
-        "craft_plan": [
-          "На 52: собрать/обновить ключевой сетап, использовать Greater Jeweller при возможности и усилить основной навык подходящими support gems."
-        ],
-        "time_saves": [
-          "После перехода на сильный AoE-сетап чистка идёт на ходу: дал урон и бежишь дальше."
-        ]
-      },
-      "display": {
-        "wideModeRecommended": true,
-        "showAllChecklist": true
-      }
     },
     {
       "id": "i2_kima",
@@ -6852,7 +6840,7 @@
         },
         {
           "id": "interlude_cuachic_vault_task_3",
-          "text": "После наград закрыть ветку и вернуться в маршрут",
+          "text": "После наград вернуться в Пристанище и продолжить маршрут",
           "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
@@ -6875,12 +6863,12 @@
       ],
       "xp_notes": [],
       "crafting_tips": [],
-      "next_zone_ru": "Финальная интерлюдия / Тьма",
+      "next_zone_ru": "Пристанище",
       "details": {
         "route": [
           "Забрать Ancient Treasures / сокровища",
           "Убить Зелину и Золина",
-          "После наград закрыть ветку и вернуться в маршрут"
+          "После наград вернуться в Пристанище и продолжить маршрут"
         ],
         "rewards": [
           "Ancient Treasures",
@@ -6890,7 +6878,7 @@
           "После сокровищ и боссов не задерживаться на полной зачистке"
         ],
         "important": [
-          "Финальная зона этой Vaal-ветки интерлюдии"
+          "Финальная зона ветки Криар перед возвратом в Пристанище"
         ],
         "after": [],
         "boss_tips": [
@@ -6899,7 +6887,7 @@
         "xp_notes": [],
         "crafting_tips": [],
         "navigation": [
-          "Забрать сокровища, закрыть боссов и возвращаться к основной линии."
+          "Забрать сокровища, закрыть боссов и вернуться в Пристанище."
         ],
         "time_saves": [
           "Это не зона для долгой зачистки: цель — награды и выход."
@@ -6915,54 +6903,39 @@
       ]
     },
     {
-      "id": "i_final_darkness",
+      "id": "interlude_refuge",
       "act": 5,
-      "zone_en": "Final Interlude",
-      "zone_ru": "Финальная интерлюдия / Тьма",
-      "aliases": [],
+      "zone_en": "The Refuge",
+      "zone_ru": "Пристанище",
+      "aliases": [
+        "Refuge",
+        "The Refuge"
+      ],
       "recommended_level": 56,
       "recommended_level_label": "56+",
       "is_good_xp_zone": false,
       "checklist": [
         {
-          "id": "i_final_darkness_task_1",
-          "text": "Взять checkpoint рядом с тьмой",
+          "id": "interlude_refuge_task_1",
+          "text": "После Убежища Куачик открыть первую страницу акта",
           "type": "route_task",
           "required": false,
           "autoCompleteKeywords": [],
           "autoCompleteMode": "manual_or_zone_leave_infer"
         },
         {
-          "id": "i_final_darkness_task_2",
-          "text": "Убить двух боссов",
-          "type": "boss",
-          "required": false,
-          "autoCompleteKeywords": [],
-          "autoCompleteMode": "manual_or_zone_leave_infer"
-        },
-        {
-          "id": "i_final_darkness_task_3",
-          "text": "Кликнуть 6 камней",
+          "id": "interlude_refuge_task_2",
+          "text": "Идти в Выжженные фермерские земли",
           "type": "route_task",
-          "required": false,
-          "autoCompleteKeywords": [],
-          "autoCompleteMode": "manual_or_zone_leave_infer"
-        },
-        {
-          "id": "i_final_darkness_task_4",
-          "text": "Убить Сеору",
-          "type": "boss",
           "required": false,
           "autoCompleteKeywords": [],
           "autoCompleteMode": "manual_or_zone_leave_infer"
         }
       ],
-      "rewards": [
-        "Открытие пути дальше"
-      ],
+      "rewards": [],
       "skip": [],
       "important": [
-        "Сеора много двигается — используй контроль/стан-окна, если они есть"
+        "Это хаб первой страницы маршрута, после него начинается финальная ветка к Поместью Холтен."
       ],
       "after": [],
       "boss_tips": [],
@@ -6971,32 +6944,27 @@
       "next_zone_ru": "Выжженные фермерские земли",
       "details": {
         "route": [
-          "Взять checkpoint рядом с тьмой",
-          "Убить двух боссов",
-          "Кликнуть 6 камней",
-          "Убить Сеору"
+          "После Убежища Куачик вернуться в Пристанище.",
+          "Дальше идти в Выжженные фермерские земли."
         ],
-        "rewards": [
-          "Открытие пути дальше"
-        ],
-        "skip": [],
         "important": [
-          "Сеора много двигается — используй контроль/стан-окна, если они есть"
+          "Финальная ветка маршрута: Пристанище → Выжженные фермерские земли → Камни Серли → Чернолесье → Холтен → Вольфенхолд → Поместье Холтен."
         ],
-        "after": [],
-        "boss_tips": [
-          "Сеора двигается много: stun/контроль помогает удержать окно урона."
+        "navigation": [
+          "Пристанище → Выжженные фермерские земли → Камни Серли."
         ],
-        "xp_notes": [],
-        "crafting_tips": [],
-        "checkpoint": [
-          "Взять чекпоинт у тьмы; убить двух боссов, нажать 6 камней и после выхода идти из Пристанища в Выжженные фермерские земли."
+        "town_plan": [
+          "Здесь начинается 1-я страница акта; финал всей цепочки — Поместье Холтен."
         ]
       },
       "display": {
         "wideModeRecommended": true,
         "showAllChecklist": true
-      }
+      },
+      "area_ids": [
+        "C_P1_Town",
+        "P1_Town"
+      ]
     },
     {
       "id": "interlude_scorched_farmlands",

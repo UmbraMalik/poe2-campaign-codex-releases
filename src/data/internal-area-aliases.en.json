@@ -11,7 +11,8 @@
     "2026-05-16: fixed Act 1 internal area mapping: G1_11/C_G1_11 -> Hunting Grounds, G1_12/C_G1_12 -> Freythorn, G1_13_1 -> Ogham Farmlands; also synced G1_5/G1_6 and G1_8/G1_9 with conservative mapping.",
     "2026-05-17: added guide cards for Mud Burrow, Lightless Passage, Temple of Chaos, Trial of the Ancestors, Plunder's Point, and Interlude side zones; Kedge Bay/Kid's Bay wording intentionally unchanged.",
     "2026-05-24: added P1_1/C_P1_1 -> Scorched Farmlands and fixed Interlude 1/2 route chain names.",
-    "2026-05-24: added P3_Town/C_P3_Town -> The Glade and P3_1/C_P3_1 -> Ashen Forest for the Kriar branch route."
+    "2026-05-24: added P3_Town/C_P3_Town -> The Glade and P3_1/C_P3_1 -> Ashen Forest for the Kriar branch route.",
+    "2026-05-24: added P2_Town/C_P2_Town -> Khari Bazaar and P1_Town/C_P1_Town -> The Refuge; route now goes Heart of the Tribe -> Khari Bazaar and Cuachic Vault -> Refuge."
   ],
   "areaToGuideId": {
     "abyss_intro": "a2_lightless_passage",
@@ -195,7 +196,11 @@
     "c_p3_town": "interlude_the_glade",
     "p3_town": "interlude_the_glade",
     "c_p3_1": "interlude_ashen_forest",
-    "p3_1": "interlude_ashen_forest"
+    "p3_1": "interlude_ashen_forest",
+    "c_p2_town": "interlude_khari_bazaar",
+    "p2_town": "interlude_khari_bazaar",
+    "c_p1_town": "interlude_refuge",
+    "p1_town": "interlude_refuge"
   },
   "knownTownAreaIds": [
     "g1_town",

@@ -117,6 +117,8 @@ test('similar-zone regression pairs stay separated by exact area id', () => {
   const cases = [
     ['P2_6', 'Qimah'],
     ['P2_7', 'Qimah Reservoir'],
+    ['P2_Town', 'Khari Bazaar'],
+    ['P1_Town', 'The Refuge'],
     ['P1_4', 'Holten'],
     ['P1_6', 'Holten Estate'],
     ['P3_Town', 'The Glade'],

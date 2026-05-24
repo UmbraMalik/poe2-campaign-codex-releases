@@ -689,6 +689,16 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
     ]
   },
   {
+    "id": "interlude_khari_bazaar",
+    "act": 5,
+    "zoneRu": "Кхарийский базар",
+    "zoneEn": "Khari Bazaar",
+    "areaIds": [
+      "C_P2_Town",
+      "P2_Town"
+    ]
+  },
+  {
     "id": "interlude_khari_crossing",
     "act": 5,
     "zoneRu": "Кхарийский перевал",
@@ -727,13 +737,6 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
       "C_P2_5",
       "P2_5"
     ]
-  },
-  {
-    "id": "interlude_level_52_power_spike",
-    "act": 5,
-    "zoneRu": "52 уровень",
-    "zoneEn": "Level 52 Power Spike",
-    "areaIds": []
   },
   {
     "id": "i2_kima",
@@ -836,11 +839,14 @@ const LOCKED_CAMPAIGN_ZONES: LockedCampaignZone[] = [
     ]
   },
   {
-    "id": "i_final_darkness",
+    "id": "interlude_refuge",
     "act": 5,
-    "zoneRu": "Финальная интерлюдия / Тьма",
-    "zoneEn": "Final Interlude",
-    "areaIds": []
+    "zoneRu": "Пристанище",
+    "zoneEn": "The Refuge",
+    "areaIds": [
+      "C_P1_Town",
+      "P1_Town"
+    ]
   },
   {
     "id": "interlude_scorched_farmlands",
