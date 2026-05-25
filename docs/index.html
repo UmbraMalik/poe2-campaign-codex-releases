@@ -4,10 +4,10 @@
   <link rel="icon" href="./favicon.ico" sizes="any">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>POE2 Act Companion Overlay — оверлей для актов POE2</title>
-  <meta name="description" content="Безопасный оверлей для Path of Exile 2: адаптирован под русский и английский клиент, читает логи игры, показывает текущую зону, маршрут, таймер, время актов, подсказки и автообновления через GitHub Releases." />
+  <title>POE2 Act Companion Overlay — оверлей для кампании и эндгейма POE2</title>
+  <meta name="description" content="Безопасный оверлей для Path of Exile 2: RU/EN клиент, маршруты актов, бонусы, таймер, сплиты, итоги забега, гибкие настройки блоков и трекинг эндгейма до T15." />
   <meta property="og:title" content="POE2 Act Companion Overlay" />
-  <meta property="og:description" content="Безопасный русский оверлей для кампании Path of Exile 2: подсказки по зонам, таймер, время актов и автообновления." />
+  <meta property="og:description" content="POE2 Act Companion Overlay: подсказки по зонам, маршруты, бонусы, таймер актов, итоги забега и трекинг до T15." />
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#0b0f14" />
   <link rel="stylesheet" href="./styles.css" />
@@ -43,6 +43,7 @@
     <div class="header-controls">
       <nav class="top-nav" aria-label="Навигация">
         <a href="#features">Что умеет</a>
+        <a href="#v040">v0.4.0</a>
         <a href="#demo">Демо</a>
         <a href="#source">Исходники</a>
         <a href="#screens">Скрины</a>
@@ -66,12 +67,12 @@
       <div class="hero-copy">
         <div class="eyebrow">
           <span class="dot"></span>
-          beta · русский и английский клиент · работает по логам игры
+          v0.4.0 · RU/EN клиент · кампания + До Т15 · работает по логам игры
         </div>
         <h1>Оверлей для быстрого прохождения актов Path of Exile 2</h1>
         <p class="lead">
           POE2 Act Companion Overlay читает лог-файл игры, определяет текущую зону и показывает памятку “Что в локации”,
-          следующий переход, скипы, бонусы, статус уровня, таймер забега и время актов — без инжекта в клиент игры.
+          следующий переход, скипы, бонусы, статус уровня, таймер забега, время актов, итоги и путь до T15 — без инжекта в клиент игры.
         </p>
 
         <div class="hero-actions">
@@ -114,6 +115,7 @@
           <span>Без чтения памяти</span>
           <span>Без инжекта</span>
           <span>LatestClient.txt</span>
+          <span>До Т15</span>
           <span>Автообновления</span>
           <span>Windows</span>
         </div>
@@ -131,8 +133,8 @@
         <p class="eyebrow">зачем оно нужно</p>
         <h2>Чтобы не держать всю кампанию в голове</h2>
         <p>
-          Вся рутина актов собирается в один боевой HUD: что важно в зоне, что забрать,
-          что скипнуть, куда идти дальше, когда добрать уровень и сколько времени ушло на акт.
+          Вся рутина кампании собирается в один боевой HUD: что важно в зоне, что забрать,
+          что скипнуть, куда идти дальше, когда добрать уровень, сколько времени ушло на акт и как быстро ты дошёл до T15.
         </p>
       </div>
 
@@ -155,7 +157,17 @@
         <article class="feature-card">
           <span class="icon">⏱</span>
           <h3>Таймер забега</h3>
-          <p>Общее время, время текущего акта, таблица времени актов, итоги забега и режим “Только таймер” для опытных игроков.</p>
+          <p>Общее время, текущий акт, сплиты, итоги, история забегов, сравнение с лучшим результатом и отдельный сегмент “До Т15”.</p>
+        </article>
+        <article class="feature-card">
+          <span class="icon">T15</span>
+          <h3>Эндгейм до T15</h3>
+          <p>После кампании оверлей продолжает отдельный трек “До Т15”, а при входе в карту 79 уровня автоматически останавливает таймер и сохраняет результат.</p>
+        </article>
+        <article class="feature-card">
+          <span class="icon">☑</span>
+          <h3>Настраиваемые блоки</h3>
+          <p>Можно включать и выключать отдельные карточки оверлея: ближайшее, бонусы, лигу, маршрут, скипы, спидран и важные подсказки.</p>
         </article>
         <article class="feature-card">
           <span class="icon">⇡</span>
@@ -170,12 +182,60 @@
         <article class="feature-card">
           <span class="icon">▣</span>
           <h3>Подробная панель</h3>
-          <p>Отдельное окно с маршрутом, бонусами, таймером, временем актов, напоминаниями и итогами забега.</p>
+          <p>Отдельное окно с маршрутом, бонусами, таймером, временем актов, напоминаниями, итогами забега и историей результатов.</p>
+        </article>
+        <article class="feature-card">
+          <span class="icon">↧</span>
+          <h3>Быстрое сворачивание</h3>
+          <p>Оверлей можно свернуть в компактную строку, быстро освободить место под инвентарь или гемы и развернуть обратно.</p>
+        </article>
+        <article class="feature-card">
+          <span class="icon">Aa</span>
+          <h3>Размер текста</h3>
+          <p>Размер полезного текста регулируется отдельно от масштаба интерфейса — удобно для широких и высоких разрешений.</p>
         </article>
         <article class="feature-card">
           <span class="icon">↻</span>
           <h3>Автообновления</h3>
           <p>Приложение проверяет GitHub Releases, скачивает обновление внутри приложения и ставит его только после подтверждения.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="v040" class="section release-section">
+      <div class="section-head">
+        <p class="eyebrow">v0.4.0</p>
+        <h2>Теперь это не просто подсказки по актам</h2>
+        <p>
+          Версия 0.4.0 превращает оверлей в полноценную панель забега: хаб-гайды, гибкая настройка блоков,
+          путь до T15, автофиниш, история результатов и аккуратные режимы для игры на любом экране.
+        </p>
+      </div>
+
+      <div class="release-grid">
+        <article class="release-card release-card-main">
+          <span class="release-tag">До Т15</span>
+          <h3>Кампания больше не заканчивается на Актах</h3>
+          <p>
+            После входа в эндгейм-хаб запускается отдельный сегмент “До Т15”. Когда в логах появляется карта 79 уровня,
+            таймер останавливается сам, результат сохраняется, а оверлей показывает компактное поздравление.
+          </p>
+        </article>
+        <article class="release-card">
+          <span class="release-tag">Хабы</span>
+          <h3>Гайды для ключевых городов</h3>
+          <p>
+            Добавлены хаб-гайды для Лагеря Клирфелл, Каравана Ардура, Лагеря на зиккурате и Кингсмарша,
+            чтобы порядок прохождения был понятен ещё до выхода в следующую зону.
+          </p>
+        </article>
+        <article class="release-card">
+          <span class="release-tag">UI</span>
+          <h3>Оверлей под себя</h3>
+          <p>
+            Можно скрывать отдельные блоки, менять размер полезного текста и быстро сворачивать панель,
+            когда она мешает инвентарю, гемам или интерфейсу игры.
+          </p>
         </article>
       </div>
     </section>
@@ -256,7 +316,7 @@
       <div class="section-head">
         <p class="eyebrow">как выглядит</p>
         <h2>Скриншоты приложения</h2>
-        <p>Актуальный вид основного оверлея, подробной панели, бонусов актов, режима “Только таймер” и компактного режима в текущей beta-версии.</p>
+        <p>Актуальный вид основного оверлея, подробной панели, бонусов актов, режима “Только таймер” и компактного режима в версии 0.4.0.</p>
       </div>
 
       <div class="screens-showcase">
@@ -269,9 +329,10 @@
             data-screen-image="./assets/screens/overlay-real-reference.png"
             data-screen-image-ru="./assets/screens/overlay-real-reference.png"
             data-screen-image-en="./assets/screens/en-overlay-main.png"
-            data-screen-alt="Основной overlay: текущая зона, памятка Что в локации, следующий переход, скипы и статус уровня"
+            data-screen-alt="Основной overlay: текущая зона, памятка, следующий переход, скипы, статус уровня и настраиваемые блоки"
             data-screen-title="Основной overlay"
-            data-screen-text="Текущая зона, памятка “Что в локации”, следующий переход, скипы, важные подсказки и статус уровня прямо поверх игры."
+            data-screen-key="main-overlay"
+            data-screen-text="Текущая зона, памятка “Что в локации”, следующий переход, скипы, важные подсказки, статус уровня и блоки, которые можно включать или скрывать."
             data-screen-variant="portrait"
           >
             Основной overlay
@@ -286,7 +347,8 @@
             data-screen-image-en="./assets/screens/en-companion-panel.png"
             data-screen-alt="Подробная панель: маршрут, бонусы, таймер, напоминания и итоги забега"
             data-screen-title="Подробная панель"
-            data-screen-text="Отдельное окно с маршрутом, бонусами, таймером, временем актов, напоминаниями и итогами забега — когда нужен весь контекст сразу."
+            data-screen-key="companion-panel"
+            data-screen-text="Отдельное окно с маршрутом, бонусами, таймером, временем актов, сегментом “До Т15”, напоминаниями, итогами и историей забегов."
             data-screen-variant="landscape"
           >
             Подробная панель
@@ -301,6 +363,7 @@
             data-screen-image-en="./assets/screens/en-timer-mode.png"
             data-screen-alt="Режим только таймер: вид с таймером, уровнем и следующим переходом"
             data-screen-title="Режим “только таймер”"
+            data-screen-key="timer-mode"
             data-screen-text="Режим для тех, кто хочет держать на экране таймер, уровень и ближайший переход без подробной панели."
             data-screen-variant="timer"
           >
@@ -316,6 +379,7 @@
             data-screen-image-en="./assets/screens/en-compact-mode.png"
             data-screen-alt="Компактный режим: узкая панель с общим временем, актом, уровнем и рекомендацией"
             data-screen-title="Компактный режим"
+            data-screen-key="compact-mode"
             data-screen-text="Самый компактный вариант: узкая панель с ключевой информацией для тех, кому нужен минимум визуального шума."
             data-screen-variant="compact"
           >
@@ -339,15 +403,23 @@
                   src="./assets/screens/overlay-real-reference.png"
                   data-image-ru="./assets/screens/overlay-real-reference.png"
                   data-image-en="./assets/screens/en-overlay-main.png"
-                  alt="Основной overlay: текущая зона, памятка Что в локации, следующий переход, скипы и статус уровня"
+                  alt="Основной overlay: текущая зона, памятка, следующий переход, скипы, статус уровня и настраиваемые блоки"
                   loading="lazy"
                 />
               </div>
             </div>
+            <button class="screen-gallery-arrow screen-gallery-arrow-prev" type="button" data-screen-gallery-prev aria-label="Предыдущий экран">‹</button>
+            <button class="screen-gallery-arrow screen-gallery-arrow-next" type="button" data-screen-gallery-next aria-label="Следующий экран">›</button>
           </div>
+          <div class="screen-gallery-tabs" data-screen-gallery-tabs aria-label="Разделы подробной панели" hidden></div>
           <figcaption class="screen-stage-caption">
-            <h3 id="screen-preview-title">Основной overlay</h3>
-            <p id="screen-preview-text">Текущая зона, памятка “Что в локации”, следующий переход, скипы, важные подсказки и статус уровня прямо поверх игры.</p>
+            <div class="screen-stage-caption-main">
+              <h3 id="screen-preview-title">Основной overlay</h3>
+              <p id="screen-preview-text">Текущая зона, памятка “Что в локации”, следующий переход, скипы, важные подсказки, статус уровня и блоки, которые можно включать или скрывать.</p>
+            </div>
+            <div class="screen-gallery-meta" data-screen-gallery-meta hidden>
+              <span data-screen-gallery-label>Экран 1 из 1</span>
+            </div>
           </figcaption>
         </figure>
       </div>
@@ -468,7 +540,7 @@
           <span>04</span>
           <h3>Играй</h3>
           <p class="step-copy">Оверлей начнёт обновляться по логам и сразу покажет нужный контекст по текущей зоне.</p>
-          <div class="step-hint">Зоны RU/EN клиента, уровень, маршрут, подсказки, бонусы, таймер и время актов — всё в одном месте.</div>
+          <div class="step-hint">Зоны RU/EN клиента, уровень, маршрут, подсказки, бонусы, таймер, время актов и “До Т15” — всё в одном месте.</div>
         </article>
       </div>
     </section>
