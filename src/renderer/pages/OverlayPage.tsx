@@ -1560,8 +1560,20 @@ export function OverlayPage() {
       </button>
     </div>
   );
+  const timerPrimaryButton = (
+    <button
+      className={`overlay-timer-control overlay-timer-icon-control overlay-timer-control-${timerPrimaryTone} no-drag`}
+      type="button"
+      title={timerPrimaryTitle}
+      aria-label={timerPrimaryTitle}
+      onClick={handleTimerPrimaryAction}
+    >
+      <span className="timer-button-glyph" aria-hidden="true">{timerPrimaryIcon}</span>
+    </button>
+  );
   const overlayQuickActions = (
     <div className="overlay-quick-actions no-drag" aria-label={t('overlay.quickActions')}>
+      {!isTimerOnlyMode && timerPrimaryButton}
       {overlayLanguageToggle}
       {!isTimerOnlyMode && overlayCollapseButton}
       {overlayLockButton}
@@ -1606,18 +1618,6 @@ export function OverlayPage() {
       <p className="overlay-onboarding-move-hint">{t('overlay.onboardingMoveHint')}</p>
     </div>
   );
-  const timerPrimaryButton = (
-    <button
-      className={`overlay-timer-control overlay-timer-icon-control overlay-timer-control-${timerPrimaryTone} no-drag`}
-      type="button"
-      title={timerPrimaryTitle}
-      aria-label={timerPrimaryTitle}
-      onClick={handleTimerPrimaryAction}
-    >
-      <span className="timer-button-glyph" aria-hidden="true">{timerPrimaryIcon}</span>
-    </button>
-  );
-
   const timerControls = (
     <div className="overlay-timer-controls no-drag" aria-label={t('overlay.timerControls')}>
       {timerPrimaryButton}
@@ -1685,18 +1685,20 @@ export function OverlayPage() {
 
           <section className="timer-only-main-panel" aria-label={t('overlay.mainTimer')}>
             <p className="timer-only-main-label">{timerOnlyPrimaryLabel}</p>
-            <div className="timer-only-time">
-              <LiveRunTimeText
-                runTimer={displayRunTimer}
-                settings={config.runTimerSettings}
-                snapshotNowMs={runtime.timerNowMs}
-                componentName="timer-only-run-time-text"
-                overlayMode={runtime.overlayMode}
-                zoneName={guide?.zone_ru ?? currentZone.rawZoneName ?? overlayZoneName}
-                act={currentActTimerAct}
-              />
+            <div className="timer-only-time-control-row">
+              <div className="timer-only-time">
+                <LiveRunTimeText
+                  runTimer={displayRunTimer}
+                  settings={config.runTimerSettings}
+                  snapshotNowMs={runtime.timerNowMs}
+                  componentName="timer-only-run-time-text"
+                  overlayMode={runtime.overlayMode}
+                  zoneName={guide?.zone_ru ?? currentZone.rawZoneName ?? overlayZoneName}
+                  act={currentActTimerAct}
+                />
+              </div>
+              <div className="timer-only-controls-row">{timerControls}</div>
             </div>
-            <div className="timer-only-controls-row">{timerControls}</div>
           </section>
 
           <div className="timer-only-info-grid">
@@ -1735,7 +1737,6 @@ export function OverlayPage() {
           <header className="hud-collapsed-bar">
             <div className="hud-collapsed-main">
               <span className="hud-zone-act-pill">{overlayActLabel}</span>
-              {timerPrimaryButton}
               <h1 className="hud-collapsed-zone-name" title={overlayZoneName}>{overlayZoneName}</h1>
             </div>
             <div className="hud-title-actions no-drag">
@@ -1759,7 +1760,6 @@ export function OverlayPage() {
             <div className="hud-zone-title-card">
               <div className="hud-zone-kicker-row">
                 <span className="hud-zone-act-pill">{overlayActLabel}</span>
-                {timerPrimaryButton}
               </div>
               <h1 className="hud-zone-name">{overlayZoneName}</h1>
             </div>
