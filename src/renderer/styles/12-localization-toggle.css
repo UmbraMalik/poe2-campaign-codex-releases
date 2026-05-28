@@ -1022,19 +1022,21 @@
 .timer-only-main-panel .timer-only-time-control-row {
   width: 100%;
   min-width: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(34px, 1fr) auto minmax(34px, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: 10px;
+  column-gap: 8px;
 }
 
 .timer-only-main-panel .timer-only-time {
-  flex: 0 1 auto;
+  grid-column: 2;
+  justify-self: center;
   min-width: 0;
 }
 
 .timer-only-main-panel .timer-only-controls-row {
-  flex: 0 0 auto;
+  grid-column: 3;
+  justify-self: start;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1056,6 +1058,7 @@
 
 @media (max-width: 260px) {
   .timer-only-main-panel .timer-only-time-control-row {
-    gap: 7px;
+    grid-template-columns: minmax(30px, 1fr) auto minmax(30px, 1fr);
+    column-gap: 6px;
   }
 }
